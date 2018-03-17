@@ -1,5 +1,8 @@
-Hydra library for Python
-========================
+python-hydra-agent
+==================
+
+A fork of hydra-py [4]_. The license of the original fork is LGPLv3.
+
 
 The primary goal is to provide a lib for easily writing Hydra-enabled clients [1]_.
 
@@ -85,4 +88,5 @@ References
 .. [1] http://www.hydra-cg.com/
 .. [2] http://www.hydra-cg.com/spec/latest/triple-pattern-fragments/
 .. [3] https://rdflib.readthedocs.org/
+.. [4] https://github.com/pchampin/hydra-py
 

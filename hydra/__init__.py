@@ -1,3 +1,10 @@
+"""
+Licensed under LGPLv3
+by
+Pierre-Antoine Champin
+"""
+__author__ = 'pchampin@liris.cnrs.fr'
+
 from httplib2 import Http, HttpLib2ErrorWithResponse
 import json
 import logging

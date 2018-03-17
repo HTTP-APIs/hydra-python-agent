@@ -2,7 +2,13 @@
 Triple Pattern Fragments client
 
 http://www.hydra-cg.com/spec/latest/triple-pattern-fragments/
+
+Licensed under LGPLv3
+by
+Pierre-Antoine Champin
 """
+__author__ = 'pchampin@liris.cnrs.fr'
+
 import logging
 from rdflib import Namespace, RDF
 from rdflib.plugin import register, Store

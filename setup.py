@@ -27,17 +27,17 @@ with open('requirements.txt', 'r') as f:
     # Get requirements depencies as written in the file
     INSTALL_REQ = [ i[:-1] for i in f if i[0] != "#" ]
 
-setup(name = 'hydra',
+setup(name = 'python-hydra-agent',
       version = get_version(),
       package_dir = {'': 'lib'},
       packages = ['hydra'],
       description = 'A Hydra implementation for Python',
       long_description = README,
-      author='Pierre-Antoine Champin',
-      author_email='pchampin@liris.cnrs.fr',
+      author='W3C Hydra Contributors',
+      author_email='public-hydra@w3.org',
       license='LGPL v3',
       platforms='OS Independant',
-      url='http://github.com/pchampin/hydra-py',
+      url='https://github.com/HTTP-APIs/python-hydra-agent',
       include_package_data=True,
       install_requires=INSTALL_REQ,
       scripts=[],
