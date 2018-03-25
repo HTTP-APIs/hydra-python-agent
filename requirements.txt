@@ -2,3 +2,4 @@ rdflib
 rdflib-jsonld
 uritemplate
 httplib2
+hydra
