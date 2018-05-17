@@ -8,7 +8,7 @@ from setuptools import setup
 
 from ast import literal_eval
 
-def get_version(source='lib/hydra/__init__.py'):
+def get_version(source='hydra/__init__.py'):
     """
     Retrieve version number without importing the script.
     """
@@ -29,7 +29,6 @@ with open('requirements.txt', 'r') as f:
 
 setup(name = 'python-hydra-agent',
       version = get_version(),
-      package_dir = {'': 'lib'},
       packages = ['hydra'],
       description = 'A Hydra implementation for Python',
       long_description = README,
@@ -42,3 +41,4 @@ setup(name = 'python-hydra-agent',
       install_requires=INSTALL_REQ,
       scripts=[],
      )
+
