@@ -1,0 +1,7 @@
+Requirements for redis_graph.py file acoording to my local env.
+    install redis-graph ref: http://redisgraph.io/#linux-ubuntu-1604
+    install and load module redis ref: http://redisgraph.io/#loading-the-module-to-redis
+    now for python client usage:
+    pip install redis
+    pip install redisgraph // you can change the client.py with your requirements
+    and then first run the redis server and then run redis_graph.py file
