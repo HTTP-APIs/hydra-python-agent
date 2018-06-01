@@ -270,6 +270,7 @@ def endpointCollection(collection_node, url_node):
         print("commit endpointcollection")
         redis_graph.commit()
         print("every collection obj node ", obj_collection_node)
+        connect_nodes(url_node, "has" + obj, obj_collection_node)
         collectionobjects(
             obj_collection_node,
             new_file["members"],
