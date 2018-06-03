@@ -1,4 +1,4 @@
-Requirements for redis_graph.py file acoording to my local env.
+Requirements for redis_graph.py file according to my local env.
     install redis-graph ref: http://redisgraph.io/#linux-ubuntu-1604
     install and load module redis ref: http://redisgraph.io/#loading-the-module-to-redis
     now for python client usage:
@@ -16,4 +16,12 @@ you should do :
     src/redis-server --loadmodule /home/sandeep/demo/redis-module-graph/src/redisgraph.so
  it will run the redis server then you can run your redis file in different terminal but in same env.   
 
-    **docker image will provided early for now you can use the same configuration.
+-------------------------------------------------------------------------------------------------------
+
+There is also an alternate method for running the redis server 
+you should run `redis_setup.sh` after once read it.
+In redis_setup first install docker-ce
+and then use the docker image of redisgraph for running the server.
+After the running of redis server
+you can run the file redisgraph_demo1.py
+ 
