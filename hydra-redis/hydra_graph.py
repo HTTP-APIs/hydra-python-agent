@@ -68,9 +68,13 @@ if __name__ == "__main__":
     redis_graph.commit()
     # creating whole the graph in redis
     print("done!!!!")
-    g = Digraph('redis_graph', filename='hydra_graph.gv')
-    # using graphviz for visualization of graph stored in redis
-    for edge in redis_graph.edges:
-        g.edge(edge.src_node.alias, edge.dest_node.alias)
-    g.view()
+    #uncomment below 2 lines for getting nodes for whole graph
+#    for node in redis_graph.nodes:
+#        print("\n",node)
+    #uncomment the below lines for show the graph stored in redis
+#    g = Digraph('redis_graph', filename='hydra_graph.gv')
+#    # using graphviz for visualization of graph stored in redis
+#    for edge in redis_graph.edges:
+#        g.edge(edge.src_node.alias, edge.dest_node.alias)
+#    g.view()
     # see the graph generaated by graphviz

@@ -40,15 +40,15 @@ class Classes:
             # key for the node of the object
             print(obj_alias)
             obj_node = Node(
-                label="id",
+                label="object",
                 alias=obj_alias,
                 properties=objects_properties)
             self.redis_graph.add_node(obj_node)
             edge = Edge(objects_node, "has" + str(obj), obj_node)
             self.redis_graph.add_edge(edge)
             # set edge between the object and its parent object
-            print("commit object property")
-            self.redis_graph.commit()
+#            print("commit object property")
+#            self.redis_graph.commit()
             # create the graph in redis
             if obj_properties_classlist:
                 self.objects_property(
@@ -99,15 +99,15 @@ class Classes:
             member["@type"] = str(new_file["@type"])
             obj_properties["property"] = str(member)
             class_object_node = Node(
-                label="id",
+                label="classes",
                 alias=str(obj),
                 properties=obj_properties)
             self.redis_graph.add_node(class_object_node)
             edge = Edge(url_node, "has" + obj, class_object_node)
             self.redis_graph.add_edge(edge)
             # set edge between the entrypoint and the class endpoint/object
-            print("commit classesendpoint")
-            self.redis_graph.commit()
+#            print("commit classesendpoint")
+#            self.redis_graph.commit()
             # create the graph in redis
             if obj_properties_classlist:
                 print("in obj_properties_classlist", obj_properties_classlist)

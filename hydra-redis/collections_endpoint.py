@@ -74,22 +74,22 @@ class Collections:
                 member["@type"] = str(obj["@type"])
                 obj_properties["property"] = str(member)
                 objects_node = Node(
-                    label="id",
+                    label="objects",
                     alias=str(member_alias),
                     properties=obj_properties)
                 self.redis_graph.add_node(objects_node)
                 # add object as a node in redis
-                print("commiting collection object", member_alias)
-                self.redis_graph.commit()
-                print(
-                    "property of obj which can be class")
+#                print("commiting collection object", member_alias)
+#                self.redis_graph.commit()
+#                print(
+#                    "property of obj which can be class")
                 edge = Edge(obj_collection_node, "has_" +
                             str(obj["@type"]),
                             objects_node)
                 self.redis_graph.add_edge(edge)
                 # set an edge between the collection and its object
-                print("commiting collection object", member_alias)
-                self.redis_graph.commit()
+#                print("commiting collection object", member_alias)
+#                self.redis_graph.commit()
                 # put/create the graph in redis
                 print(
                     "property of obj which can be class",
@@ -143,13 +143,13 @@ class Collections:
             # retrieving the objects from the collection endpoint
             obj_properties["members"] = str(new_file["members"])
             obj_collection_node = Node(
-                label="id", alias=obj, properties=obj_properties)
+                label="collection", alias=obj, properties=obj_properties)
             self.redis_graph.add_node(obj_collection_node)
             edge = Edge(url_node, "has_collection", obj_collection_node)
             self.redis_graph.add_edge(edge)
             # set an edge between the entrypoint and collection endpoint
-            print("commit endpoint collection")
-            self.redis_graph.commit()
+#            print("commit endpoint collection")
+#            self.redis_graph.commit()
             # create the graph in redis
             self.collectionobjects(
                 obj_collection_node,
