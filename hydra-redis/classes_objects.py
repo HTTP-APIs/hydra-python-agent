@@ -37,6 +37,7 @@ class ClassEndpoints:
             self,
             objects_node,
             new_list,
+            no_endpoint_property,
             entrypoint_node,
             api_doc):
         """Nodes for every that property which is itself an object"""
@@ -56,6 +57,7 @@ class ClassEndpoints:
                     endpoint_prop.append(support_property.title)
             # store all operation and property of object
             node_properties["property"] = str(properties_title)
+            node_properties["property_value"] = str(no_endpoint_property)
             node_alias = str(objects_node.alias + str(obj)).lower()
             # key for the node of the object
             node_properties["parent_id"] = str(objects_node.properties["@id"])
@@ -107,12 +109,14 @@ class ClassEndpoints:
                     elif support_property.title in api_doc.parsed_classes:
                         endpoint_property.append(support_property.title)
 
-                if isinstance(new_file[support_property.title], str):
-                    if support_property.title in new_file:
+                if support_property.title in new_file:
+                    if isinstance(new_file[support_property.title], str):
                         member[support_property.title] = str(
                             new_file[support_property.title].replace(" ", ""))
                     else:
-                        member[support_property.title] = "null"
+                        no_endpoint_property=new_file[support_property.title]
+                else:
+                    member[support_property.title] = "null"
             endpoint_property_list[endpoint] = property_list
             # member is using for storing the fetched data in node.
             node_properties["@id"] = str(new_file["@id"])
@@ -127,6 +131,7 @@ class ClassEndpoints:
                 self.objects_property(
                     class_object_node,
                     endpoint_property,
+                    no_endpoint_property,
                     entrypoint_node,
                     api_doc)
         # for connect the nodes to endpoint which have endpoint as a property.

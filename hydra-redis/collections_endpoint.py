@@ -30,7 +30,7 @@ class CollectionEndpoints:
             clas = ClassEndpoints(self.redis_graph)
             for endpoint in endpoint_list:
                 node_properties = {}
-                no_endpoint_property = []
+                no_endpoint_list = []
                 endpoint_method = []
                 member = {}
                 endpoint_property_list = []
@@ -65,17 +65,16 @@ class CollectionEndpoints:
                         endpoint_property_list.append(
                             str(support_property.title))
                     elif support_property.title in api_doc.parsed_classes:
-                        no_endpoint_property.append(support_property.title)
+                        no_endpoint_list.append(support_property.title)
 
-                    if isinstance(new_file1[support_property.title], str):
-                        if support_property.title in new_file1:
+                    if support_property.title in new_file1:
+                        if isinstance(new_file1[support_property.title], str):
                             member[support_property.title] = str(
-                                new_file1[
-                                    support_property.title].replace(" ", ""))
+                                new_file1[support_property.title].replace(" ", ""))
                         else:
-                            member[support_property.title] = "null"
-                no_endpoint_list = no_endpoint_property
-                # all property which itself is an object
+                            no_endpoint_property = new_file1[support_property.title]
+                    else:
+                        member[support_property.title] = "null"
 
                 node_properties["@id"] = str(endpoint["@id"])
                 node_properties["@type"] = str(endpoint["@type"])
@@ -103,6 +102,7 @@ class CollectionEndpoints:
                     clas.objects_property(
                         collection_object_node,
                         no_endpoint_list,
+                        no_endpoint_property,
                         entrypoint_node,
                         api_doc)
         else:
