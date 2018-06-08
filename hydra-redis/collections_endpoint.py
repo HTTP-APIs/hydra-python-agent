@@ -34,6 +34,7 @@ class CollectionEndpoints:
                 endpoint_method = []
                 member = {}
                 endpoint_property_list = []
+                supported_property_list = []
                 match_obj = re.match(
                     r'/(.*)/(.*)/(.*)?', endpoint["@id"], re.M | re.I)
                 base_url = "/{0}/{1}/".format(match_obj.group(1),
@@ -53,12 +54,13 @@ class CollectionEndpoints:
                                                       ]["class"
                                                         ].supportedOperation:
                     endpoint_method.append(support_operation.method)
-                node_properties["methods"] = str(endpoint_method)
+                node_properties["operations"] = str(endpoint_method)
                 # all the operations for the object is stored in method
                 for support_property in api_doc.parsed_classes[
                                                       endpoint["@type"]
                                                       ]["class"
                                                         ].supportedProperty:
+                    supported_property_list.append(support_property.title)
                     if support_property.title in self.class_endpoints:
                         endpoint_property_list.append(
                             str(support_property.title))
@@ -73,13 +75,12 @@ class CollectionEndpoints:
                         else:
                             member[support_property.title] = "null"
                 no_endpoint_list = no_endpoint_property
-                node_properties["class_property"] = str(
-                    no_endpoint_list)
                 # all property which itself is an object
 
-                member["@id"] = str(endpoint["@id"])
-                member["@type"] = str(endpoint["@type"])
-                node_properties["property"] = str(member)
+                node_properties["@id"] = str(endpoint["@id"])
+                node_properties["@type"] = str(endpoint["@type"])
+                node_properties["property_value"] = str(member)
+                node_properties["properties"] = str(supported_property_list)
                 collection_object_node = clas.addNode(
                     "objects", str(member_alias), node_properties)
                 # add object as a node in redis
@@ -87,9 +88,8 @@ class CollectionEndpoints:
                              str(endpoint["@type"]), collection_object_node)
                 # set an edge between the collection and its object
                 print(
-                    "property of obj which can be class",
-                    node_properties["class_property"],
-                    "collection"
+                    "property of endpoint which can be class but not endpoint",
+                    no_endpoint_list
                 )
                 if endpoint_property_list:
                     for endpoint_property in endpoint_property_list:
@@ -133,7 +133,7 @@ class CollectionEndpoints:
                 endpoint_method.append(support_operation.method)
             node_properties["operations"] = str(endpoint_method)
             # all the operations for the collection endpoint is stored in
-            print(node_properties["operations"])
+            print("supportedOperations",node_properties["operations"])
             node_properties["@id"] = str(collection_endpoint[endpoint])
             new_file = self.fetch_data(new_url)
             # retrieving the objects from the collection endpoint

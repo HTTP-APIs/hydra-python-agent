@@ -56,12 +56,10 @@ class ClassEndpoints:
                     endpoint_prop.append(support_property.title)
             # store all operation and property of object
             node_properties["property"] = str(properties_title)
-            node_properties["class_property"] = str(
-                endpoint_prop)
             node_alias = str(objects_node.alias + str(obj)).lower()
             # key for the node of the object
+            node_properties["parent_id"] = str(objects_node.properties["@id"])
             object_node = self.addNode("object", node_alias, node_properties)
-            print("node", object_node)
             self.addEdge(objects_node, "has" + str(obj), object_node)
             # set edge between the object and its parent object
             if endpoint_prop:
@@ -79,6 +77,7 @@ class ClassEndpoints:
         endpoint_property_list = {}
         # contain all endpoints which have other endpoints as a property.
         for endpoint in class_endpoints:
+            supported_properties_list=[]
             node_properties = {}
             # node_properties is used for set the properties of node.
             member = {}
@@ -101,6 +100,7 @@ class ClassEndpoints:
             for support_property in api_doc.parsed_classes[
                                                    endpoint][
                                                    "class"].supportedProperty:
+                supported_properties_list.append(support_property.title)
                 if endpoint != support_property.title:
                     if support_property.title in class_endpoints:
                         property_list.append(support_property.title)
@@ -113,22 +113,20 @@ class ClassEndpoints:
                             new_file[support_property.title].replace(" ", ""))
                     else:
                         member[support_property.title] = "null"
-            supported_properties_list = endpoint_property
             endpoint_property_list[endpoint] = property_list
-            node_properties["class_property"] = str(
-                supported_properties_list)
             # member is using for storing the fetched data in node.
-            member["@id"] = str(new_file["@id"])
-            member["@type"] = str(new_file["@type"])
-            node_properties["property"] = str(member)
+            node_properties["@id"] = str(new_file["@id"])
+            node_properties["@type"] = str(new_file["@type"])
+            node_properties["property_value"] = str(member)
+            node_properties["properties"]= str(supported_properties_list)
             class_object_node = self.addNode(
                 "classes", str(endpoint), node_properties)
             self.addEdge(entrypoint_node, "has" + endpoint, class_object_node)
             # set edge between the entrypoint and the class endpoint/object
-            if supported_properties_list:
+            if endpoint_property:
                 self.objects_property(
                     class_object_node,
-                    supported_properties_list,
+                    endpoint_property,
                     entrypoint_node,
                     api_doc)
         # for connect the nodes to endpoint which have endpoint as a property.
