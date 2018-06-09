@@ -6,8 +6,8 @@ class Tests:
     def entry_point(self):
         """Test for testing the data stored in entrypoint endpoint"""
 
-        print("entrypoint")
-        r = redis.StrictRedis()
+        print("entrypoint db=0")
+        r = redis.StrictRedis(host='localhost', port=6379, db=0)
         reply = r.execute_command('GRAPH.QUERY',
                                   'apidoc', "MATCH (p:id) RETURN p")
         property_list = []
@@ -33,8 +33,8 @@ class Tests:
     def collection_endpoints(self):
         """Test for testing the data stored in collection endpoints"""
 
-        print("collection endpoints")
-        r = redis.StrictRedis()
+        print("collection endpoints db=0")
+        r = redis.StrictRedis(host='localhost', port=6379, db=0)
         reply = r.execute_command('GRAPH.QUERY',
                                   'apidoc', "MATCH (p:collection) RETURN p")
         property_list = []
@@ -60,8 +60,8 @@ class Tests:
     def class_endpoints(self):
         """Test for testing the data stored in classes endpoints"""
 
-        print("class endpoints")
-        r = redis.StrictRedis()
+        print("class endpoints db=0")
+        r = redis.StrictRedis(host='localhost', port=6379, db=0)
         reply = r.execute_command('GRAPH.QUERY',
                                   'apidoc', "MATCH (p:classes) RETURN p")
         property_list = []
@@ -89,6 +89,13 @@ class Tests:
 class TestRedisStructure(unittest.TestCase):
     test_redis = Tests()
 
+    @classmethod
+    def setUpClass(cls):
+        cls.test_database=redis.StrictRedis(host='localhost', port=6379, db=5)
+        cls.test_database.set("foo","bar")
+        cls.test_database.set("hydra","redis")
+        print("setUpClass db=5 keys:",cls.test_database.keys())
+
     def test_entrypoint(self):
         self.assertTrue(self.test_redis.entry_point())
 
@@ -98,6 +105,10 @@ class TestRedisStructure(unittest.TestCase):
     def test_classEndpoints(self):
         self.assertTrue(self.test_redis.class_endpoints())
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.test_database.flushdb()
+        print("tearDownClass db=5 keys:",cls.test_database.get("foo"))
 
 if __name__ == '__main__':
     unittest.main()
