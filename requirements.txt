@@ -2,3 +2,7 @@ rdflib
 rdflib-jsonld
 uritemplate
 httplib2
+redis
+redisgraph
+hydrus
+graphviz
