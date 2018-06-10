@@ -5,3 +5,4 @@ httplib2
 redis
 redisgraph
 hydrus
+graphviz

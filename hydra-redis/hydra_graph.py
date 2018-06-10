@@ -68,7 +68,7 @@ def get_endpoints(api_doc):
 if __name__ == "__main__":
     redis_con = redis.Redis(host='localhost', port=6379)
     redis_graph = Graph("apidoc", redis_con)
-    url = "http://35.224.198.158:8081/api"
+    url = "https://storage.googleapis.com/api2/api"
     # you also can use https://storage.googleapis.com/api2/api as url
     apidoc = final_file(url + "/vocab")
     api_doc = doc_maker.create_doc(apidoc)
