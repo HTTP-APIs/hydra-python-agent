@@ -37,8 +37,8 @@ def get_apistructure(entrypoint_node, api_doc):
     print("class_endpoints", class_endpoints)
     print("collection_endpoints", collection_endpoints)
     if classes == 1:
-        clas = ClassEndpoints(redis_graph)
-        clas.endpointclasses(class_endpoints, entrypoint_node, api_doc, url)
+        clas = ClassEndpoints(redis_graph,class_endpoints)
+        clas.endpointclasses(entrypoint_node, api_doc, url)
 
     if collection == 1:
         coll = CollectionEndpoints(redis_graph, class_endpoints)
@@ -70,6 +70,7 @@ if __name__ == "__main__":
     redis_graph = Graph("apidoc", redis_con)
     url = "http://35.224.198.158:8080/api"
     # you also can use https://storage.googleapis.com/api2/api as url
+    print("loading... of graph")
     apidoc = final_file(url + "/vocab")
     api_doc = doc_maker.create_doc(apidoc)
     get_endpoints(api_doc)

@@ -21,7 +21,6 @@ class CollectionEndpoints:
             endpoint_collection_node,
             endpoint_list,
             new_url,
-            entrypoint_node,
             api_doc,
             url):
         """Creating nodes for all objects stored in collection."""
@@ -103,10 +102,43 @@ class CollectionEndpoints:
                         collection_object_node,
                         no_endpoint_list,
                         no_endpoint_property,
-                        entrypoint_node,
                         api_doc)
         else:
             print("NO MEMBERS")
+
+
+    def load_from_server(
+            self,
+            collection_endpoint_id,
+            endpoint,
+            api_doc,
+            url):
+        """Load data or members from collection endpoint"""
+        print(
+            "check url for endpoint",
+            url +
+            collection_endpoint_id)
+        new_url = url + \
+            collection_endpoint_id
+        # url for every collection endpoint
+        new_file = self.fetch_data(new_url)
+        #retrieving the objects from the collection endpoint
+        for node in self.redis_graph.nodes.values():
+            if node.alias == endpoint:
+                node.properties["members"] = str(new_file["members"])
+                #update the properties of node by its members
+                self.redis_graph.commit()
+                endpoint_collection_node = node
+                print (endpoint_collection_node)
+        
+        self.collectionobjects(
+            endpoint_collection_node,
+            new_file["members"],
+            new_url,
+            api_doc,
+            url
+        )
+
 
     def endpointCollection(
             self,
@@ -116,40 +148,24 @@ class CollectionEndpoints:
             url):
         """It makes a node for every collection endpoint."""
         print("accessing every collection in entrypoint")
-        clas = ClassEndpoints(self.redis_graph)
+        clas = ClassEndpoints(self.redis_graph,self.class_endpoints)
         for endpoint in collection_endpoint:
             endpoint_method = []
             node_properties = {}
-            print(
-                "check url for endpoint",
-                url +
-                collection_endpoint[endpoint].replace("vocab:EntryPoint", ""))
-            new_url = url + \
-                collection_endpoint[endpoint].replace("vocab:EntryPoint", "")
-            # url for every collection endpoint
             for support_operation in api_doc.collections[
                     endpoint][
                     "collection"].supportedOperation:
                 endpoint_method.append(support_operation.method)
             node_properties["operations"] = str(endpoint_method)
             # all the operations for the collection endpoint is stored in
-            print("supportedOperations",node_properties["operations"])
+#            print("supportedOperations",node_properties["operations"])
             node_properties["@id"] = str(collection_endpoint[endpoint])
-            new_file = self.fetch_data(new_url)
-            # retrieving the objects from the collection endpoint
-            node_properties["members"] = str(new_file["members"])
+            node_properties["@type"] = str(endpoint)
             endpoint_collection_node = clas.addNode(
                 "collection", endpoint, node_properties)
+            print (endpoint_collection_node)
             clas.addEdge(
                 entrypoint_node,
                 "has_collection",
                 endpoint_collection_node)
             # set an edge between the entrypoint and collection endpoint
-            self.collectionobjects(
-                endpoint_collection_node,
-                new_file["members"],
-                new_url,
-                entrypoint_node,
-                api_doc,
-                url
-            )
