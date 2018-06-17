@@ -49,16 +49,16 @@ class CollectionEndpoints:
                 new_file1 = self.fetch_data(new_url1)
                 # object data retrieving from the server
                 for support_operation in api_doc.parsed_classes[
-                                                      endpoint["@type"]
-                                                      ]["class"
-                                                        ].supportedOperation:
+                    endpoint["@type"]
+                ]["class"
+                  ].supportedOperation:
                     endpoint_method.append(support_operation.method)
                 node_properties["operations"] = str(endpoint_method)
                 # all the operations for the object is stored in method
                 for support_property in api_doc.parsed_classes[
-                                                      endpoint["@type"]
-                                                      ]["class"
-                                                        ].supportedProperty:
+                    endpoint["@type"]
+                ]["class"
+                  ].supportedProperty:
                     supported_property_list.append(support_property.title)
                     if support_property.title in self.class_endpoints:
                         endpoint_property_list.append(
@@ -69,9 +69,11 @@ class CollectionEndpoints:
                     if support_property.title in new_file1:
                         if isinstance(new_file1[support_property.title], str):
                             member[support_property.title] = str(
-                                new_file1[support_property.title].replace(" ", ""))
+                                new_file1[
+                                    support_property.title].replace(" ", ""))
                         else:
-                            no_endpoint_property = new_file1[support_property.title]
+                            no_endpoint_property = new_file1[
+                                                       support_property.title]
                     else:
                         member[support_property.title] = "null"
 
@@ -106,7 +108,6 @@ class CollectionEndpoints:
         else:
             print("NO MEMBERS")
 
-
     def load_from_server(
             self,
             collection_endpoint_id,
@@ -122,15 +123,15 @@ class CollectionEndpoints:
             collection_endpoint_id
         # url for every collection endpoint
         new_file = self.fetch_data(new_url)
-        #retrieving the objects from the collection endpoint
+        # retrieving the objects from the collection endpoint
         for node in self.redis_graph.nodes.values():
             if node.alias == endpoint:
                 node.properties["members"] = str(new_file["members"])
-                #update the properties of node by its members
+                # update the properties of node by its members
                 self.redis_graph.commit()
                 endpoint_collection_node = node
-                print (endpoint_collection_node)
-        
+                print(endpoint_collection_node)
+
         self.collectionobjects(
             endpoint_collection_node,
             new_file["members"],
@@ -138,7 +139,6 @@ class CollectionEndpoints:
             api_doc,
             url
         )
-
 
     def endpointCollection(
             self,
@@ -148,7 +148,7 @@ class CollectionEndpoints:
             url):
         """It makes a node for every collection endpoint."""
         print("accessing every collection in entrypoint")
-        clas = ClassEndpoints(self.redis_graph,self.class_endpoints)
+        clas = ClassEndpoints(self.redis_graph, self.class_endpoints)
         for endpoint in collection_endpoint:
             endpoint_method = []
             node_properties = {}
@@ -163,7 +163,7 @@ class CollectionEndpoints:
             node_properties["@type"] = str(endpoint)
             endpoint_collection_node = clas.addNode(
                 "collection", endpoint, node_properties)
-            print (endpoint_collection_node)
+            print(endpoint_collection_node)
             clas.addEdge(
                 entrypoint_node,
                 "has_collection",

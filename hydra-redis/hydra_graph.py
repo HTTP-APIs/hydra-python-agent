@@ -37,7 +37,7 @@ def get_apistructure(entrypoint_node, api_doc):
     print("class_endpoints", class_endpoints)
     print("collection_endpoints", collection_endpoints)
     if classes == 1:
-        clas = ClassEndpoints(redis_graph,class_endpoints)
+        clas = ClassEndpoints(redis_graph, class_endpoints)
         clas.endpointclasses(entrypoint_node, api_doc, url)
 
     if collection == 1:
