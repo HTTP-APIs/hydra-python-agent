@@ -29,7 +29,7 @@ class ClassEndpoints:
                 endpoint][
                 "class"].supportedOperation:
             endpoint_method.append(support_operation.method)
-        print("supportedOperation", endpoint_method)
+#        print("supportedOperation", endpoint_method)
         # all the operations for the object is stored in endpoint_method
 
         return str(endpoint_method)
@@ -56,12 +56,12 @@ class ClassEndpoints:
                 if support_property.title in api_doc.parsed_classes:
                     endpoint_prop.append(support_property.title)
             # store all operation and property of object
-            node_properties["property"] = str(properties_title)
+            node_properties["properties"] = str(properties_title)
             node_properties["property_value"] = str(no_endpoint_property)
             node_alias = str(objects_node.alias + str(obj)).lower()
             # key for the node of the object
             node_properties["parent_id"] = str(objects_node.properties["@id"])
-            object_node = self.addNode("object", node_alias, node_properties)
+            object_node = self.addNode(str("object"+str(objects_node.properties["@type"])), node_alias, node_properties)
             self.addEdge(objects_node, "has" + str(obj), object_node)
             # set edge between the object and its parent object
             if endpoint_prop:
@@ -70,7 +70,6 @@ class ClassEndpoints:
 
     def load_from_server(
             self,
-            class_endpoint_id,
             endpoint,
             api_doc,
             base_url):
@@ -79,7 +78,7 @@ class ClassEndpoints:
         member = {}
         endpoint_property = []
         new_url = base_url + \
-            class_endpoint_id
+            endpoint
         # url for the classes endpoint
         print(new_url)
         response = urllib.request.urlopen(new_url)
@@ -148,7 +147,7 @@ class ClassEndpoints:
             node_properties["properties"] = str(supported_properties_list)
             class_object_node = self.addNode(
                 "classes", str(endpoint), node_properties)
-            print(class_object_node)
+#            print(class_object_node)
             self.addEdge(entrypoint_node, "has" + endpoint, class_object_node)
             # set edge between the entrypoint and the class endpoint/object
         # for connect the nodes to endpoint which have endpoint as a property.

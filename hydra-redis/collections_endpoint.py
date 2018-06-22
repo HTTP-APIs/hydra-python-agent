@@ -26,7 +26,7 @@ class CollectionEndpoints:
         """Creating nodes for all objects stored in collection."""
         print("accesing the collection object like events or drones")
         if endpoint_list:
-            clas = ClassEndpoints(self.redis_graph)
+            clas = ClassEndpoints(self.redis_graph,self.class_endpoints)
             for endpoint in endpoint_list:
                 node_properties = {}
                 no_endpoint_list = []
@@ -40,11 +40,11 @@ class CollectionEndpoints:
                                               match_obj.group(2))
                 entrypoint_member = endpoint["@type"].lower(
                 ) + match_obj.group(3)
-                print(base_url, entrypoint_member)
+#                print(base_url, entrypoint_member,endpoint["@type"])
                 member_alias = entrypoint_member
                 # key for the object node is memeber_alias
                 member_id = match_obj.group(3)
-                print("member alias and id", member_alias, member_id)
+#                print("member alias and id", member_alias, member_id)
                 new_url1 = new_url + "/" + member_id
                 new_file1 = self.fetch_data(new_url1)
                 # object data retrieving from the server
@@ -79,13 +79,15 @@ class CollectionEndpoints:
 
                 node_properties["@id"] = str(endpoint["@id"])
                 node_properties["@type"] = str(endpoint["@type"])
+                member[endpoint["@type"]]= str(endpoint["@id"])
                 node_properties["property_value"] = str(member)
                 node_properties["properties"] = str(supported_property_list)
                 collection_object_node = clas.addNode(
-                    "objects", str(member_alias), node_properties)
+                    str("objects"+str(endpoint["@type"])), str(member_alias), node_properties)
                 # add object as a node in redis
                 clas.addEdge(endpoint_collection_node, "has_" +
                              str(endpoint["@type"]), collection_object_node)
+                
                 # set an edge between the collection and its object
                 print(
                     "property of endpoint which can be class but not endpoint",
@@ -105,22 +107,22 @@ class CollectionEndpoints:
                         no_endpoint_list,
                         no_endpoint_property,
                         api_doc)
+            self.redis_graph.commit()
         else:
             print("NO MEMBERS")
 
     def load_from_server(
             self,
-            collection_endpoint_id,
             endpoint,
             api_doc,
             url):
         """Load data or members from collection endpoint"""
         print(
             "check url for endpoint",
-            url +
-            collection_endpoint_id)
-        new_url = url + \
-            collection_endpoint_id
+            url + "/" +
+            endpoint)
+        new_url = url + "/"+\
+            endpoint
         # url for every collection endpoint
         new_file = self.fetch_data(new_url)
         # retrieving the objects from the collection endpoint
@@ -130,7 +132,7 @@ class CollectionEndpoints:
                 # update the properties of node by its members
                 self.redis_graph.commit()
                 endpoint_collection_node = node
-                print(endpoint_collection_node)
+#                print(endpoint_collection_node)
 
         self.collectionobjects(
             endpoint_collection_node,
@@ -139,6 +141,8 @@ class CollectionEndpoints:
             api_doc,
             url
         )
+#        for node in self.redis_graph.nodes.values():
+#            print("\n",node.alias)
 
     def endpointCollection(
             self,
@@ -163,7 +167,7 @@ class CollectionEndpoints:
             node_properties["@type"] = str(endpoint)
             endpoint_collection_node = clas.addNode(
                 "collection", endpoint, node_properties)
-            print(endpoint_collection_node)
+#            print(endpoint_collection_node)
             clas.addEdge(
                 entrypoint_node,
                 "has_collection",
