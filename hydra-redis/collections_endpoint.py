@@ -44,7 +44,7 @@ class CollectionEndpoints:
                 member_alias = entrypoint_member
                 # key for the object node is memeber_alias
                 member_id = match_obj.group(3)
-#                print("member alias and id", member_alias, member_id)
+                print("member alias and id", member_alias.capitalize(), member_id)
                 new_url1 = new_url + "/" + member_id
                 new_file1 = self.fetch_data(new_url1)
                 # object data retrieving from the server
@@ -83,7 +83,7 @@ class CollectionEndpoints:
                 node_properties["property_value"] = str(member)
                 node_properties["properties"] = str(supported_property_list)
                 collection_object_node = clas.addNode(
-                    str("objects"+str(endpoint["@type"])), str(member_alias), node_properties)
+                    str("objects"+str(endpoint["@type"])), str(member_alias.capitalize()), node_properties)
                 # add object as a node in redis
                 clas.addEdge(endpoint_collection_node, "has_" +
                              str(endpoint["@type"]), collection_object_node)
@@ -93,6 +93,7 @@ class CollectionEndpoints:
                     "property of endpoint which can be class but not endpoint",
                     no_endpoint_list
                 )
+                clas.property_value(collection_object_node,member,member_alias.capitalize())
                 if endpoint_property_list:
                     for endpoint_property in endpoint_property_list:
                         for nodes in self.redis_graph.nodes.values():
@@ -107,7 +108,7 @@ class CollectionEndpoints:
                         no_endpoint_list,
                         no_endpoint_property,
                         api_doc)
-            self.redis_graph.commit()
+#            self.redis_graph.commit()
         else:
             print("NO MEMBERS")
 
@@ -130,7 +131,7 @@ class CollectionEndpoints:
             if node.alias == endpoint:
                 node.properties["members"] = str(new_file["members"])
                 # update the properties of node by its members
-                self.redis_graph.commit()
+#                self.redis_graph.commit()
                 endpoint_collection_node = node
 #                print(endpoint_collection_node)
 
@@ -141,6 +142,7 @@ class CollectionEndpoints:
             api_doc,
             url
         )
+        self.redis_graph.commit()
 #        for node in self.redis_graph.nodes.values():
 #            print("\n",node.alias)
 

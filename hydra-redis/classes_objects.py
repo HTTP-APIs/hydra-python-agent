@@ -34,6 +34,16 @@ class ClassEndpoints:
 
         return str(endpoint_method)
 
+    def property_value(self,src_node,member,id_):
+        id_=str("objects"+id_)
+        node_properties = {}
+        for members in member:
+            node_properties[members] = str(member[members])
+        node = Node(label = "properties",alias = str(id_), properties = node_properties)
+        self.redis_graph.add_node(node)
+        edge = Edge(src_node,"hasproperty",node)
+        self.redis_graph.add_edge(edge)
+
     def objects_property(
             self,
             objects_node,

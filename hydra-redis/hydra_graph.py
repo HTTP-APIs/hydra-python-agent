@@ -72,7 +72,6 @@ def main(new_url,api_doc):
     global url
     url=new_url
     redis_graph = Graph("apidoc", redis_con)
-    # you also can use https://storage.googleapis.com/api2/api as url
     print("loading... of graph")
     get_endpoints(api_doc)
     print("commiting")
