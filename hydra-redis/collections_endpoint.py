@@ -26,7 +26,7 @@ class CollectionEndpoints:
         """Creating nodes for all objects stored in collection."""
         print("accesing the collection object like events or drones")
         if endpoint_list:
-            clas = ClassEndpoints(self.redis_graph,self.class_endpoints)
+            clas = ClassEndpoints(self.redis_graph, self.class_endpoints)
             for endpoint in endpoint_list:
                 node_properties = {}
                 no_endpoint_list = []
@@ -44,7 +44,9 @@ class CollectionEndpoints:
                 member_alias = entrypoint_member
                 # key for the object node is memeber_alias
                 member_id = match_obj.group(3)
-                print("member alias and id", member_alias.capitalize(), member_id)
+                print("member alias and url+id",
+                      member_alias.capitalize(),
+                      base_url+member_id)
                 new_url1 = new_url + "/" + member_id
                 new_file1 = self.fetch_data(new_url1)
                 # object data retrieving from the server
@@ -79,21 +81,27 @@ class CollectionEndpoints:
 
                 node_properties["@id"] = str(endpoint["@id"])
                 node_properties["@type"] = str(endpoint["@type"])
-                member[endpoint["@type"]]= str(endpoint["@id"])
+                member[endpoint["@type"]] = str(endpoint["@id"])
                 node_properties["property_value"] = str(member)
                 node_properties["properties"] = str(supported_property_list)
                 collection_object_node = clas.addNode(
-                    str("objects"+str(endpoint["@type"])), str(member_alias.capitalize()), node_properties)
+                    str("objects"+str(endpoint["@type"])),
+                    str(member_alias.capitalize()),
+                    node_properties)
                 # add object as a node in redis
-                clas.addEdge(endpoint_collection_node, "has_" +
-                             str(endpoint["@type"]), collection_object_node)
-                
+                clas.addEdge(endpoint_collection_node,
+                    "has_" + str(endpoint["@type"]),
+                    collection_object_node)
+
                 # set an edge between the collection and its object
                 print(
                     "property of endpoint which can be class but not endpoint",
                     no_endpoint_list
                 )
-                clas.property_value(collection_object_node,member,member_alias.capitalize())
+                clas.property_value(
+                    collection_object_node,
+                    member,
+                    member_alias.capitalize())
                 if endpoint_property_list:
                     for endpoint_property in endpoint_property_list:
                         for nodes in self.redis_graph.nodes.values():
@@ -122,8 +130,7 @@ class CollectionEndpoints:
             "check url for endpoint",
             url + "/" +
             endpoint)
-        new_url = url + "/"+\
-            endpoint
+        new_url = url + "/" + endpoint
         # url for every collection endpoint
         new_file = self.fetch_data(new_url)
         # retrieving the objects from the collection endpoint

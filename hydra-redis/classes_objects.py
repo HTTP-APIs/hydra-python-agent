@@ -34,14 +34,17 @@ class ClassEndpoints:
 
         return str(endpoint_method)
 
-    def property_value(self,src_node,member,id_):
-        id_=str("objects"+id_)
+    def property_value(self, src_node, member, id_):
+        id_ = str("objects" + id_)
         node_properties = {}
         for members in member:
             node_properties[members] = str(member[members])
-        node = Node(label = "properties",alias = str(id_), properties = node_properties)
+        node = Node(
+            label="properties",
+            alias=str(id_),
+            properties=node_properties)
         self.redis_graph.add_node(node)
-        edge = Edge(src_node,"hasproperty",node)
+        edge = Edge(src_node, "hasproperty", node)
         self.redis_graph.add_edge(edge)
 
     def objects_property(
@@ -71,7 +74,10 @@ class ClassEndpoints:
             node_alias = str(objects_node.alias + str(obj)).lower()
             # key for the node of the object
             node_properties["parent_id"] = str(objects_node.properties["@id"])
-            object_node = self.addNode(str("object"+str(objects_node.properties["@type"])), node_alias, node_properties)
+            object_node = self.addNode(
+                str("object"+str(objects_node.properties["@type"])),
+                node_alias,
+                node_properties)
             self.addEdge(objects_node, "has" + str(obj), object_node)
             # set edge between the object and its parent object
             if endpoint_prop:
