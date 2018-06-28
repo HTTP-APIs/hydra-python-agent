@@ -5,6 +5,7 @@ import json
 from hydrus.hydraspec import doc_maker
 from urllib.error import URLError, HTTPError
 from collections_endpoint import CollectionEndpoints
+from classes_objects import ClassEndpoints
 
 
 class HandleData:
@@ -133,7 +134,10 @@ class CollectionmembersQuery:
         """
         Load data from the server for first time.
         """
-        self.collect.load_from_server(endpoint, self.api_doc, self.url)
+        self.collect.load_from_server(endpoint,
+                                      self.api_doc,
+                                      self.url,
+                                      self.connection)
 
         get_data = self.connection.execute_command(
             'GRAPH.QUERY',
@@ -182,6 +186,7 @@ class PropertiesQuery:
         """
         Show the given type of property of given Class endpoint.
         """
+        query = query.replace("class", "")
         endpoint, query = query.split(" ")
         get_data = self.connection.execute_command(
             'GRAPH.QUERY',
@@ -244,12 +249,116 @@ class PropertiesQuery:
         return self._data.show_data(get_data)
 
 
+class ClassPropertiesValue:
+    """
+    ClassPropertiesValue is used for geting the values for properties of class
+    And once values get from server and then it stored in Redis.
+    """
+
+    def __init__(self, api_doc, url):
+        self.redis_connection = RedisProxy()
+        self.handle_data = HandleData()
+        self.connection = self.redis_connection.get_connection()
+        self._data = self.handle_data
+        self.clas = ClassEndpoints(graph.redis_graph,
+                                   graph.class_endpoints)
+
+        self.api_doc = api_doc
+        self.url = url
+
+    def data_from_server(self, endpoint):
+        """
+        Load data from the server for once.
+        """
+        self.clas.load_from_server(endpoint,
+                                   self.api_doc,
+                                   self.url,
+                                   self.connection)
+
+        get_data = self.connection.execute_command(
+            'GRAPH.QUERY',
+            'apidoc',
+            """MATCH(p:classes)
+               WHERE(p.type='{}')
+               RETURN p.property_value""".format(
+                endpoint))
+        return get_data
+
+    def get_property_value(self, query):
+        """
+        Load data in Redis if data is not in it with help of checklist.
+        Checklist have the track on endpoints.
+        And access the properties values and show them.
+        """
+        query = query.replace("class", "")
+        endpoint = query.replace(" property_value", "")
+        print(check_list)
+        if endpoint in check_list:
+            get_data = self.connection.execute_command(
+                'GRAPH.QUERY',
+                'apidoc',
+                """MATCH (p:classes)
+                   WHERE (p.type = '{}')
+                   RETURN p.property_value""".format(
+                    endpoint))
+        else:
+            check_list.append(endpoint)
+            print(check_list)
+            get_data = self.data_from_server(endpoint)
+
+        print(endpoint, "property_value")
+        return self._data.show_data(get_data)
+
+
 class CompareProperties:
-    """pending, I'll update with faceted indexing'
+    """
+    CompareProperties is used for extracting endpoints with help of properties
+    Like input: name Drone1 and model xyz
+    then output: /api/DroneCollection/2
+    with follows objects_property_comparison_list()
     """
 
     def __init__(self):
-        """pending"""
+        self.redis_connection = RedisProxy()
+        self.handle_data = HandleData()
+        self.connection = self.redis_connection.get_connection()
+        self._data = self.handle_data
+
+    def faceted_key(self, key, value):
+        """
+        It is simply concatenate the arguments and make faceted key.
+        """
+        return ("{}".format("fs:" + key + ":" + value))
+
+    def object_property_comparison_list(self, query):
+        """
+        It takes the argument as a string that can contain many keys and value
+        And make a list of all keys and values and identify operator(if there)
+        And execute sinter or sunion commands of Redis over faceted keys.
+        """
+        union = 0
+        faceted_list = []
+        while(1):
+            if query.count(" ") > 1:
+                key, value, query = query.split(" ", 2)
+                faceted_list.append(self.faceted_key(key, value))
+            else:
+                key, value = query.split(" ")
+                query = ""
+                faceted_list.append(self.faceted_key(key, value))
+            if len(query) > 0:
+                operation, query = query.split(" ", 1)
+                if operation == "or":
+                    union = 1
+
+            else:
+                break
+        if union == 1:
+            get_data = self.connection.sunion(*faceted_list)
+            print(get_data)
+        else:
+            get_data = self.connection.sinter(*faceted_list)
+            print(get_data)
 
 
 class QueryFacades:
@@ -263,6 +372,7 @@ class QueryFacades:
         self.api_doc = api_doc
         self.url = url
         self.properties = PropertiesQuery()
+        self.compare = CompareProperties()
 
     def initialize(self):
         """
@@ -276,6 +386,7 @@ class QueryFacades:
         """
         It calls function based on queries type.
         """
+        query = query.replace("show ", "")
         if query == "endpoints":
             self.endpoint_query.get_allEndpoints(query)
         elif query == "classEndpoints":
@@ -291,8 +402,13 @@ class QueryFacades:
             self.properties.get_object_property(query)
         elif "Collection" in query:
             self.properties.get_collection_properties(query)
-        else:
+        elif "class" in query and "property_value" in query:
+            self.class_property = ClassPropertiesValue(self.api_doc, self.url)
+            self.class_property.get_property_value(query)
+        elif "class" in query:
             self.properties.get_classes_properties(query)
+        else:
+            self.compare.object_property_comparison_list(query)
 
 
 def main():
@@ -335,8 +451,10 @@ if __name__ == "__main__":
     print("for properties of any member:-",
           "show object<id_of_member> properties ")
     print("for properties of objects:- show objects<endpoint> properties")
-    print("for collection or class properties:-",
-          "show <collection_endpoint or class_endpoint> properties")
+    print("for collection properties:-",
+          "show <collection_endpoint> properties")
+    print("for classes properties:- show class<class_endpoint> properties")
+    print("for compare properties:-show <key> <value> and/or <key1> <value1>")
     main()
 #    query = input()
 #    query = query.replace("show ","")

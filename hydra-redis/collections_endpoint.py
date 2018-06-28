@@ -16,13 +16,23 @@ class CollectionEndpoints:
         response = urllib.request.urlopen(new_url)
         return json.loads(response.read().decode('utf-8'))
 
+    def faceted_key(self, fs, key, value):
+        return ("{}".format(fs + ":" + key + ":" + value))
+
+    def faceted_indexing(self, key, redis_connection, member):
+        for keys in member:
+            redis_connection.sadd(
+                self.faceted_key(
+                    "fs", keys, member[keys]), key)
+
     def collectionobjects(
             self,
             endpoint_collection_node,
             endpoint_list,
             new_url,
             api_doc,
-            url):
+            url,
+            redis_connection):
         """Creating nodes for all objects stored in collection."""
         print("accesing the collection object like events or drones")
         if endpoint_list:
@@ -46,7 +56,7 @@ class CollectionEndpoints:
                 member_id = match_obj.group(3)
                 print("member alias and url+id",
                       member_alias.capitalize(),
-                      base_url+member_id)
+                      base_url + member_id)
                 new_url1 = new_url + "/" + member_id
                 new_file1 = self.fetch_data(new_url1)
                 # object data retrieving from the server
@@ -75,7 +85,7 @@ class CollectionEndpoints:
                                     support_property.title].replace(" ", ""))
                         else:
                             no_endpoint_property = new_file1[
-                                                       support_property.title]
+                                support_property.title]
                     else:
                         member[support_property.title] = "null"
 
@@ -83,25 +93,25 @@ class CollectionEndpoints:
                 node_properties["@type"] = str(endpoint["@type"])
                 member[endpoint["@type"]] = str(endpoint["@id"])
                 node_properties["property_value"] = str(member)
+                redis_connection.set((endpoint["@id"]), (member))
+#                print(redis_connection.get(endpoint["@id"]))
+                self.faceted_indexing(
+                    endpoint["@id"], redis_connection, member)
                 node_properties["properties"] = str(supported_property_list)
                 collection_object_node = clas.addNode(
-                    str("objects"+str(endpoint["@type"])),
+                    str("objects" + str(endpoint["@type"])),
                     str(member_alias.capitalize()),
                     node_properties)
                 # add object as a node in redis
                 clas.addEdge(endpoint_collection_node,
-                    "has_" + str(endpoint["@type"]),
-                    collection_object_node)
+                             "has_" + str(endpoint["@type"]),
+                             collection_object_node)
 
                 # set an edge between the collection and its object
                 print(
                     "property of endpoint which can be class but not endpoint",
                     no_endpoint_list
                 )
-                clas.property_value(
-                    collection_object_node,
-                    member,
-                    member_alias.capitalize())
                 if endpoint_property_list:
                     for endpoint_property in endpoint_property_list:
                         for nodes in self.redis_graph.nodes.values():
@@ -124,7 +134,8 @@ class CollectionEndpoints:
             self,
             endpoint,
             api_doc,
-            url):
+            url,
+            redis_connection):
         """Load data or members from collection endpoint"""
         print(
             "check url for endpoint",
@@ -147,7 +158,8 @@ class CollectionEndpoints:
             new_file["members"],
             new_url,
             api_doc,
-            url
+            url,
+            redis_connection
         )
         self.redis_graph.commit()
 #        for node in self.redis_graph.nodes.values():

@@ -34,19 +34,6 @@ class ClassEndpoints:
 
         return str(endpoint_method)
 
-    def property_value(self, src_node, member, id_):
-        id_ = str("objects" + id_)
-        node_properties = {}
-        for members in member:
-            node_properties[members] = str(member[members])
-        node = Node(
-            label="properties",
-            alias=str(id_),
-            properties=node_properties)
-        self.redis_graph.add_node(node)
-        edge = Edge(src_node, "hasproperty", node)
-        self.redis_graph.add_edge(edge)
-
     def objects_property(
             self,
             objects_node,
@@ -75,7 +62,7 @@ class ClassEndpoints:
             # key for the node of the object
             node_properties["parent_id"] = str(objects_node.properties["@id"])
             object_node = self.addNode(
-                str("object"+str(objects_node.properties["@type"])),
+                str("object" + str(objects_node.properties["@type"])),
                 node_alias,
                 node_properties)
             self.addEdge(objects_node, "has" + str(obj), object_node)
@@ -84,17 +71,27 @@ class ClassEndpoints:
                 self.objects_property(
                     object_node, endpoint_prop, api_doc)
 
+    def faceted_key(self, key, value):
+        return ("{}".format("fs:" + key + ":" + value))
+
+    def faceted_indexing(self,
+                         key,
+                         redis_connection,
+                         member):
+        for keys in member:
+            redis_connection.sadd(self.faceted_key(keys, member[keys]), key)
+
     def load_from_server(
             self,
             endpoint,
             api_doc,
-            base_url):
+            base_url,
+            redis_connection):
         """Loads data from class endpoints like its properties values"""
         print("check endpoint url....loading data")
         member = {}
         endpoint_property = []
-        new_url = base_url + \
-            endpoint
+        new_url = base_url + "/" + endpoint
         # url for the classes endpoint
         print(new_url)
         response = urllib.request.urlopen(new_url)
@@ -119,8 +116,9 @@ class ClassEndpoints:
         for node in self.redis_graph.nodes.values():
             if node.alias == endpoint:
                 node.properties["property_value"] = str(member)
+                redis_connection.set((endpoint), member)
+                self.faceted_indexing(endpoint, redis_connection, member)
                 # update the properties of the node
-                self.redis_graph.commit()
                 class_object_node = node
                 print(class_object_node)
         # set edge between the entrypoint and the class endpoint/object
@@ -130,6 +128,7 @@ class ClassEndpoints:
                 endpoint_property,
                 no_endpoint_property,
                 api_doc)
+        self.redis_graph.commit()
 
     def endpointclasses(
             self,
