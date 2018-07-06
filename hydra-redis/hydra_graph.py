@@ -24,28 +24,23 @@ def get_apistructure(entrypoint_node, api_doc):
     collection_endpoints = {}
     global class_endpoints
     class_endpoints = {}
-    collection = 0
-    classes = 0
     print("split entrypoint into 2 types of endpoints collection and classes")
     for support_property in api_doc.entrypoint.entrypoint.supportedProperty:
         if isinstance(
                 support_property,
                 hydrus.hydraspec.doc_writer.EntryPointClass):
             class_endpoints[support_property.name] = support_property.id_
-            collection = 1
+
         if isinstance(
                 support_property,
                 hydrus.hydraspec.doc_writer.EntryPointCollection):
             collection_endpoints[support_property.name] = support_property.id_
-            classes = 1
 
-#    print("class_endpoints", class_endpoints)
-#    print("collection_endpoints", collection_endpoints)
-    if classes == 1:
+    if len(class_endpoints.keys())>0:
         clas = ClassEndpoints(redis_graph, class_endpoints)
         clas.endpointclasses(entrypoint_node, api_doc, url)
 
-    if collection == 1:
+    if len(collection_endpoints.keys())>0:
         coll = CollectionEndpoints(redis_graph, class_endpoints)
         coll.endpointCollection(
             collection_endpoints,
