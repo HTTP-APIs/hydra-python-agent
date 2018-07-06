@@ -12,7 +12,10 @@ class CollectionEndpoints:
         self.class_endpoints = class_endpoints
 
     def fetch_data(self, new_url):
-        """Fetching data from the server"""
+        """Fetching data from the server
+        :param new_url: url for fetching the data.
+        :return: loaded data.
+        """
         response = urllib.request.urlopen(new_url)
         return json.loads(response.read().decode('utf-8'))
 
@@ -33,7 +36,14 @@ class CollectionEndpoints:
             api_doc,
             url,
             redis_connection):
-        """Creating nodes for all objects stored in collection."""
+        """Creating nodes for all objects stored in collection.
+        :param endpoint_collection_node: parent/collection endpoint node.
+        :param endpoint_list: Members/objects of any collection.
+        :param new_url: parent url for members/objects
+        :param api_doc: Apidocumentation for particular url.
+        :param url: Base url given by user.
+        :param redis_connection: connection of Redis memory.
+        """
         print("accesing the collection object like events or drones")
         if endpoint_list:
             clas = ClassEndpoints(self.redis_graph, self.class_endpoints)
@@ -44,6 +54,7 @@ class CollectionEndpoints:
                 member = {}
                 endpoint_property_list = []
                 supported_property_list = []
+                no_endpoint_property = {}
                 match_obj = re.match(
                     r'/(.*)/(.*)/(.*)?', endpoint["@id"], re.M | re.I)
                 base_url = "/{0}/{1}/".format(match_obj.group(1),
@@ -54,19 +65,20 @@ class CollectionEndpoints:
                 member_alias = entrypoint_member
                 # key for the object node is memeber_alias
                 member_id = match_obj.group(3)
-                print("member alias and url+id",
-                      member_alias.capitalize(),
-                      base_url + member_id)
-                new_url1 = new_url + "/" + member_id
-                new_file1 = self.fetch_data(new_url1)
+                member_url = new_url + "/" + member_id
                 # object data retrieving from the server
+                new_file = self.fetch_data(member_url)
                 for support_operation in api_doc.parsed_classes[
                     endpoint["@type"]
                 ]["class"
                   ].supportedOperation:
                     endpoint_method.append(support_operation.method)
-                node_properties["operations"] = str(endpoint_method)
                 # all the operations for the object is stored in method
+                node_properties["operations"] = str(endpoint_method)
+                # endpoint_property_list store all properties which is class/object and also an endpoint.
+                # supported_property_list store all the properties.
+                # no_endpoint_list store all properties which is class/object
+                # but not endpoint.
                 for support_property in api_doc.parsed_classes[
                     endpoint["@type"]
                 ]["class"
@@ -78,13 +90,17 @@ class CollectionEndpoints:
                     elif support_property.title in api_doc.parsed_classes:
                         no_endpoint_list.append(support_property.title)
 
-                    if support_property.title in new_file1:
-                        if isinstance(new_file1[support_property.title], str):
+                    # members contain all the property with value.
+                    # it contains null value for the property which not have value in server.
+                    # no_endpoint_properrty store value for no_endpoint_list.
+                    if support_property.title in new_file:
+                        if isinstance(new_file[support_property.title], str):
                             member[support_property.title] = str(
-                                new_file1[
+                                new_file[
                                     support_property.title].replace(" ", ""))
                         else:
-                            no_endpoint_property = new_file1[
+                            no_endpoint_property[
+                                support_property.title] = new_file[
                                 support_property.title]
                     else:
                         member[support_property.title] = "null"
@@ -93,25 +109,21 @@ class CollectionEndpoints:
                 node_properties["@type"] = str(endpoint["@type"])
                 member[endpoint["@type"]] = str(endpoint["@id"])
                 node_properties["property_value"] = str(member)
+                member["type"] = str(endpoint["@type"])
                 redis_connection.set((endpoint["@id"]), (member))
-#                print(redis_connection.get(endpoint["@id"]))
                 self.faceted_indexing(
                     endpoint["@id"], redis_connection, member)
                 node_properties["properties"] = str(supported_property_list)
+                # add object as a node in redis
                 collection_object_node = clas.addNode(
                     str("objects" + str(endpoint["@type"])),
                     str(member_alias.capitalize()),
                     node_properties)
-                # add object as a node in redis
+                # set an edge between the collection and its object
                 clas.addEdge(endpoint_collection_node,
                              "has_" + str(endpoint["@type"]),
                              collection_object_node)
 
-                # set an edge between the collection and its object
-                print(
-                    "property of endpoint which can be class but not endpoint",
-                    no_endpoint_list
-                )
                 if endpoint_property_list:
                     for endpoint_property in endpoint_property_list:
                         for nodes in self.redis_graph.nodes.values():
@@ -126,7 +138,7 @@ class CollectionEndpoints:
                         no_endpoint_list,
                         no_endpoint_property,
                         api_doc)
-#            self.redis_graph.commit()
+
         else:
             print("NO MEMBERS")
 
@@ -136,7 +148,12 @@ class CollectionEndpoints:
             api_doc,
             url,
             redis_connection):
-        """Load data or members from collection endpoint"""
+        """Load data or members from collection endpoint
+        :param endpoint: Given endpoint for load data from server.
+        :param api_doc: Apidocumentation for particular url.
+        :param url: Base url given by user.
+        :param redis_connection: connection to Redis memory.
+        """
         print(
             "check url for endpoint",
             url + "/" +
@@ -149,9 +166,7 @@ class CollectionEndpoints:
             if node.alias == endpoint:
                 node.properties["members"] = str(new_file["members"])
                 # update the properties of node by its members
-#                self.redis_graph.commit()
                 endpoint_collection_node = node
-#                print(endpoint_collection_node)
 
         self.collectionobjects(
             endpoint_collection_node,

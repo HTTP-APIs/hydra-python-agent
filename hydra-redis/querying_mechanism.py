@@ -20,6 +20,8 @@ class HandleData:
         """
         Load the data for the given url and return it.
         Also handle with the HTTPError, it prints the error
+        :param url: url for access data from the server.
+        :return: loaded data
         """
         try:
             response = urllib.request.urlopen(url)
@@ -36,10 +38,14 @@ class HandleData:
         """
         Make the given data readable, because now it is in binary string form.
         Count is using for avoid stuffs like query internal execution time.
+        :param get_data: data get from the Redis memory.
         """
         count = 0
+        all_property_lists = []
         for objects in get_data:
             count += 1
+            # Show data only for odd value of count.
+            # because for even value it contains stuffs like time and etc.
             if count % 2 != 0:
                 for obj in objects:
                     string = obj.decode('utf-8')
@@ -47,7 +53,10 @@ class HandleData:
                     property_list = list(map_string)
                     check = property_list.pop()
                     property_list.append(check.replace("\x00", ""))
-                    print(property_list)
+                    if property_list[0] != "NULL":
+                        #                        print(property_list)
+                        all_property_lists.append(property_list)
+        return all_property_lists
 
 
 class RedisProxy:
@@ -76,6 +85,8 @@ class EndpointQuery:
     def get_allEndpoints(self, query):
         """
         It will return both type(class and collection) of endpoints.
+        :param query: query gets from the user, Ex: endpoints
+        :returns: data get from the Redis memory.
         """
         get_data = self.connection.execute_command(
             'GRAPH.QUERY',
@@ -91,6 +102,8 @@ class EndpointQuery:
     def get_classEndpoints(self, query):
         """
         It will return all class Endpoints.
+        :param query: query get from user, Ex: classEndpoint
+        :return: get data from the Redis memory.
         """
         get_data = self.connection.execute_command(
             'GRAPH.QUERY', 'apidoc', "MATCH (p:classes) RETURN p")
@@ -102,6 +115,8 @@ class EndpointQuery:
     def get_collectionEndpoints(self, query):
         """
         It will returns all collection Endpoints.
+        :param query: query get from the user, Ex: collectionEndpoint
+        :return: get data from the Redis memory.
         """
         get_data = self.connection.execute_command(
             'GRAPH.QUERY', 'apidoc', "MATCH (p:collection) RETURN p")
@@ -124,8 +139,8 @@ class CollectionmembersQuery:
         self.handle_data = HandleData()
         self.connection = self.redis_connection.get_connection()
         self._data = self.handle_data
-        self.collect = CollectionEndpoints(graph.redis_graph,
-                                           graph.class_endpoints)
+        self.collection = CollectionEndpoints(graph.redis_graph,
+                                              graph.class_endpoints)
 
         self.api_doc = api_doc
         self.url = url
@@ -133,25 +148,29 @@ class CollectionmembersQuery:
     def data_from_server(self, endpoint):
         """
         Load data from the server for first time.
+        :param endpoint: endpoint for getting data from the server.
+        :return: get data from the Redis memory.
         """
-        self.collect.load_from_server(endpoint,
-                                      self.api_doc,
-                                      self.url,
-                                      self.connection)
+        self.collection.load_from_server(endpoint,
+                                         self.api_doc,
+                                         self.url,
+                                         self.connection)
 
         get_data = self.connection.execute_command(
             'GRAPH.QUERY',
             'apidoc',
             'MATCH(p:collection) WHERE(p.type="{}") RETURN p.members'.format(
                 endpoint))
-        return get_data
+        print(endpoint, " members")
+        return self._data.show_data(get_data)
 
     def get_members(self, query):
         """
         Gets Data from the Redis.
+        :param query: query get from the user, Ex: DroneCollection members
+        :return: get data from the Redis memory.
         """
         endpoint = query.replace(" members", "")
-        print(check_list)
         if endpoint in check_list:
             get_data = self.connection.execute_command(
                 'GRAPH.QUERY',
@@ -160,14 +179,13 @@ class CollectionmembersQuery:
                    WHERE(p.type='{}')
                    RETURN p.members""".format(
                     endpoint))
+            print(endpoint, " members")
+            return self._data.show_data(get_data)
 
         else:
             check_list.append(endpoint)
             print(check_list)
-            get_data = self.data_from_server(endpoint)
-
-        print(endpoint, " members")
-        return self._data.show_data(get_data)
+            return self.data_from_server(endpoint)
 
 
 class PropertiesQuery:
@@ -185,6 +203,8 @@ class PropertiesQuery:
     def get_classes_properties(self, query):
         """
         Show the given type of property of given Class endpoint.
+        :param query: get query from the user, Ex: classLocation properties
+        :return: get data from the Redis memory.
         """
         query = query.replace("class", "")
         endpoint, query = query.split(" ")
@@ -200,6 +220,8 @@ class PropertiesQuery:
     def get_collection_properties(self, query):
         """
         Show the given type of property of given collection endpoint.
+        :param query: get query from the user, Ex: DroneCollection properties.
+        :return: get data from the Redis memory.
         """
         endpoint, query = query.split(" ")
 
@@ -216,6 +238,8 @@ class PropertiesQuery:
     def get_members_properties(self, query):
         """
         Show the given type of property of given member.
+        :param query: gete query from the user, Ex: objectsDrone properties
+        :return: get data from the Redis memory.
         """
         endpoint, query = query.split(" ")
         get_data = self.connection.execute_command(
@@ -231,12 +255,13 @@ class PropertiesQuery:
     def get_object_property(self, query):
         """
         Show the given type of property of given object.
+        :param query: get query from the user,Ex:object</api/DroneCollection/2
+        :return: get data from the Redis memory.
         """
         endpoint, query = query.split(" ")
         endpoint = endpoint.replace("object", "")
         index = endpoint.find("Collection")
         id_ = "object" + endpoint[5:index]
-        print(id_, endpoint)
         get_data = self.connection.execute_command(
             'GRAPH.QUERY',
             'apidoc',
@@ -269,6 +294,8 @@ class ClassPropertiesValue:
     def data_from_server(self, endpoint):
         """
         Load data from the server for once.
+        :param endpoint: endpoint for getting data from the server.
+        :return: get data from the Redis memory.
         """
         self.clas.load_from_server(endpoint,
                                    self.api_doc,
@@ -289,6 +316,8 @@ class ClassPropertiesValue:
         Load data in Redis if data is not in it with help of checklist.
         Checklist have the track on endpoints.
         And access the properties values and show them.
+        :param query: get query from the user, Ex:classLocation property_value
+        :return: get data from the Redis memory.
         """
         query = query.replace("class", "")
         endpoint = query.replace(" property_value", "")
@@ -314,8 +343,8 @@ class CompareProperties:
     """
     CompareProperties is used for extracting endpoints with help of properties
     Like input: name Drone1 and model xyz
-    then output: /api/DroneCollection/2
-    with follows objects_property_comparison_list()
+    Then output: /api/DroneCollection/2
+    With follows objects_property_comparison_list()
     """
 
     def __init__(self):
@@ -335,10 +364,12 @@ class CompareProperties:
         It takes the argument as a string that can contain many keys and value
         And make a list of all keys and values and identify operator(if there)
         And execute sinter or sunion commands of Redis over faceted keys.
+        :param query: get query from the user, Ex: name Drone1
+        :return: get data from the Redis memory.
         """
         union = 0
         faceted_list = []
-        while(1):
+        while True:
             if query.count(" ") > 1:
                 key, value, query = query.split(" ", 2)
                 faceted_list.append(self.faceted_key(key, value))
@@ -355,24 +386,37 @@ class CompareProperties:
                 break
         if union == 1:
             get_data = self.connection.sunion(*faceted_list)
-            print(get_data)
+
+            return self.show_data(get_data)
         else:
             get_data = self.connection.sinter(*faceted_list)
-            print(get_data)
+
+            return self.show_data(get_data)
+
+    def show_data(self, get_data):
+        """It returns the data in readable format."""
+        property_list = []
+        for string in get_data:
+            string1 = string.decode('utf-8')
+            property_list.append(string1)
+#        print("list   ",property_list)
+        return property_list
 
 
 class QueryFacades:
     """
     It is used for call the above defined functions based on given query.
+    Using test as a bool which identify that function is using for tests.
     """
 
-    def __init__(self, api_doc, url):
+    def __init__(self, api_doc, url, test):
 
         self.endpoint_query = EndpointQuery()
         self.api_doc = api_doc
         self.url = url
         self.properties = PropertiesQuery()
         self.compare = CompareProperties()
+        self.test = test
 
     def initialize(self):
         """
@@ -388,60 +432,87 @@ class QueryFacades:
         """
         query = query.replace("show ", "")
         if query == "endpoints":
-            self.endpoint_query.get_allEndpoints(query)
+            data = self.endpoint_query.get_allEndpoints(query)
+            return data
         elif query == "classEndpoints":
-            self.endpoint_query.get_classEndpoints(query)
+            data = self.endpoint_query.get_classEndpoints(query)
+            return data
         elif query == "collectionEndpoints":
-            self.endpoint_query.get_collectionEndpoints(query)
+            data = self.endpoint_query.get_collectionEndpoints(query)
+            return data
         elif "members" in query:
             self.members = CollectionmembersQuery(self.api_doc, self.url)
-            self.members.get_members(query)
+            if self.test:
+                data = self.members.data_from_server(
+                    query.replace(" members", ""))
+                return data
+            else:
+                data = self.members.get_members(query)
+                return data
         elif "objects" in query:
-            self.properties.get_members_properties(query)
+            data = self.properties.get_members_properties(query)
+            return data
         elif "object" in query:
-            self.properties.get_object_property(query)
+            data = self.properties.get_object_property(query)
+            return data
         elif "Collection" in query:
-            self.properties.get_collection_properties(query)
+            data = self.properties.get_collection_properties(query)
+            return data
         elif "class" in query and "property_value" in query:
             self.class_property = ClassPropertiesValue(self.api_doc, self.url)
-            self.class_property.get_property_value(query)
+            data = self.class_property.get_property_value(query)
+            return data
         elif "class" in query:
-            self.properties.get_classes_properties(query)
+            data = self.properties.get_classes_properties(query)
+            return data
         else:
-            self.compare.object_property_comparison_list(query)
+            data = self.compare.object_property_comparison_list(query)
+            return data
+
+
+def query(apidoc, url):
+    """
+    It uses only for query purpose.
+    Querying still user wants or still user enters the exit.
+    :param apidoc: Apidocumentation for the given url.
+    :param url: url given by user.
+    """
+    api_doc = doc_maker.create_doc(apidoc)
+    facades = QueryFacades(api_doc, url, False)
+    facades.initialize()
+    global check_list
+    check_list = []
+    while True:
+        print("press exit to quit")
+        query = input(">>>")
+        if query == "exit":
+            break
+        elif query == "help":
+            help()
+        else:
+            print(facades.user_query(query))
 
 
 def main():
     """
     Take URL as an input and make graph using initilize function.
-    Querying still user wants or still user enters the exit.
+    :return: call query function for more query.
     """
     url = input("url>>>")
     handle_data = HandleData()
     apidoc = handle_data.load_data(url + "/vocab")
-    while (1):
+    while True:
         if apidoc == "error":
             print("enter right url")
             url = input("url>>>")
             apidoc = handle_data.load_data(url + "/vocab")
         else:
             break
-
-    api_doc = doc_maker.create_doc(apidoc)
-    facades = QueryFacades(api_doc, url)
-    facades.initialize()
-    global check_list
-    check_list = []
-    while(1):
-        print("press exit to quit")
-        query = input(">>>")
-        if query == "exit":
-            break
-        else:
-            facades.user_query(query)
+    return query(apidoc, url)
 
 
-if __name__ == "__main__":
+def help():
+    """It prints that how user can query."""
     print("querying format")
     print("for endpoint:- show endpoint")
     print("for class_endpoint:- show classEndpoint")
@@ -450,11 +521,14 @@ if __name__ == "__main__":
           "show <collection_endpoint> members")
     print("for properties of any member:-",
           "show object<id_of_member> properties ")
-    print("for properties of objects:- show objects<endpoint> properties")
+    print("for properties of objects:-show objects<endpoint_type> properties")
     print("for collection properties:-",
           "show <collection_endpoint> properties")
     print("for classes properties:- show class<class_endpoint> properties")
     print("for compare properties:-show <key> <value> and/or <key1> <value1>")
+
+
+if __name__ == "__main__":
     main()
 #    query = input()
 #    query = query.replace("show ","")

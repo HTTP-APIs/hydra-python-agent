@@ -10,7 +10,10 @@ from collections_endpoint import CollectionEndpoints
 
 
 def final_file(url):
-    """ Open the given url and read and load the Json data."""
+    """Open the given url and read and load the Json data.
+    :param url: given url to access the data from the server.
+    :return: data loaded from the server.
+    """
     response = urllib.request.urlopen(url)
     return json.loads(response.read().decode('utf-8'))
 
