@@ -3,42 +3,50 @@ import urllib.request
 import json
 from hydrus.hydraspec import doc_maker
 from os import sys, path
-
+#import sys
+#sys.path[0] = "/home/sandeep/gsoc_work/python-hydra-agent/hydra-redis"
+#import querying_mechanism
+#print(sys.path)
+#import test
+#import hydra_redis
 PARENT_DIR = path.dirname(path.dirname(path.abspath(__file__)))
 sys.path.append(PARENT_DIR)
 import querying_mechanism
 
 
-class Tests:
+class TestQueryingMechanism(unittest.TestCase):
 
-    def endpointTest(self):
-        """Test for all the endpoints class + collection endpoints"""
-        query = "show endpoints"
-        data = query_facades.user_query(query)
-        if len(data) == 11:
-            return True
-        else:
-            return False
+    def setUp(self):
+        print("testing start:")
 
-    def classendpointTest(self):
+    def test_1_classendpoint(self):
         """Test for class endpoint"""
+        check_data = [['p.id', 'p.operations', 'p.properties', 'p.type'],
+                      ['vocab:EntryPoint/Location', 
+                       "['POST'", "'PUT'", "'GET']", 
+                       "['Location']", 'Location']]
         query = "show classEndpoints"
         data = query_facades.user_query(query)
-        if len(data) == 2:
-            return True
-        else:
-            return False
+        self.assertEqual(data,check_data)
 
-    def collectionendpointTest(self):
+    def test_2_collectionendpoint(self):
         """Test for collection endpoint"""
+        check_data = ["ControllerLogCollection",
+                      "DroneLogCollection",
+                      "AnomalyCollection",
+                      "DroneCollection",
+                      "CommandCollection",
+                      "HttpApiLogCollection",
+                      "DatastreamCollection",
+                      "MessageCollection"]
         query = "show collectionEndpoints"
         data = query_facades.user_query(query)
-        if len(data) == 9:
-            return True
-        else:
-            return False
+        for check in check_data:
+            if check not in str(data):
+                self.assertTrue(False)
+        self.assertTrue(True)
 
-    def CommandCollectionmemberTest(self):
+    def test_3_CommandCollectionmember(self):
         """
         Test for all Commands in CommandCollection.
         Data is already stored in check_data from the static data url.
@@ -47,12 +55,9 @@ class Tests:
         check_data = ['[]']
         query = "show CommandCollection members"
         data = query_facades.user_query(query)
-        if data[1] == check_data:
-            return True
-        else:
-            return False
+        self.assertEqual(data[1],check_data)
 
-    def ControllerLogCollectionmemberTest(self):
+    def test_4_ControllerLogCollectionmember(self):
         """
         Test for all controller logs for ControllerLogCollection.
         Whole object of ControllerLogCollection is stored in check data.
@@ -76,11 +81,12 @@ class Tests:
             check_data[0]) in data1 and str(
             check_data[1]) in data1 and str(
                 check_data[2]) in data1:
-            return True
+            self.assertTrue(True)
         else:
-            return False
+            self.assertTrue(False)
+        
 
-    def DatastreamCollectionmemberTest(self):
+    def test_5_DatastreamCollectionmember(self):
         """Test for all datastream with Drone ID 2"""
         check_data = ['/api/DatastreamCollection/19']
         query = "show DatastreamCollection members"
@@ -88,32 +94,7 @@ class Tests:
         # Here are find the datastream only for those which have DroneID 2.
         query = "show DroneID 2 and type Datastream"
         data = query_facades.user_query(query)
-        if data == check_data:
-            return True
-        else:
-            return False
-
-
-class TestQueryingMechanism(unittest.TestCase):
-    query_test = Tests()
-
-    def test_1_endpoint(self):
-        self.assertTrue(self.query_test.endpointTest())
-
-    def test_2_classendpoint(self):
-        self.assertTrue(self.query_test.classendpointTest())
-
-    def test_3_collectionendpoint(self):
-        self.assertTrue(self.query_test.collectionendpointTest())
-
-    def test_4_CommandCollectionmember(self):
-        self.assertTrue(self.query_test.CommandCollectionmemberTest())
-
-    def test_5_ControllerLogCollectionmember(self):
-        self.assertTrue(self.query_test.ControllerLogCollectionmemberTest())
-
-    def test_6_DatastreamCollectionmember(self):
-        self.assertTrue(self.query_test.DatastreamCollectionmemberTest())
+        self.assertEqual(data,check_data)
 
 
 if __name__ == "__main__":

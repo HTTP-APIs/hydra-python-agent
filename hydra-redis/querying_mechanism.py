@@ -1,11 +1,12 @@
 import redis
-import hydra_graph as graph
+from hydra_graph import InitialGraph
 import urllib.request
 import json
 from hydrus.hydraspec import doc_maker
 from urllib.error import URLError, HTTPError
 from collections_endpoint import CollectionEndpoints
 from classes_objects import ClassEndpoints
+from redis_proxy import RedisProxy
 
 
 class HandleData:
@@ -46,6 +47,11 @@ class HandleData:
             count += 1
             # Show data only for odd value of count.
             # because for even value it contains stuffs like time and etc.
+            # ex: Redis provide data like if we query class endpoint
+            # output like: 
+            # [[endpoints in byte object form],[query execution time:0.5ms]]
+            # So with the help of count, byte object convert to string
+            # and also show only useful strings not the query execution time.
             if count % 2 != 0:
                 for obj in objects:
                     string = obj.decode('utf-8')
@@ -58,17 +64,6 @@ class HandleData:
                         all_property_lists.append(property_list)
         return all_property_lists
 
-
-class RedisProxy:
-    """
-    RedisProxy is used for make a connection to the Redis.
-    """
-
-    def __init__(self):
-        self.connection = redis.StrictRedis(host='localhost', port=6379, db=0)
-
-    def get_connection(self):
-        return self.connection
 
 
 class EndpointQuery:
@@ -134,7 +129,7 @@ class CollectionmembersQuery:
     Check_list is using for track which collection endpoint data is in Redis.
     """
 
-    def __init__(self, api_doc, url):
+    def __init__(self, api_doc, url,graph):
         self.redis_connection = RedisProxy()
         self.handle_data = HandleData()
         self.connection = self.redis_connection.get_connection()
@@ -280,7 +275,7 @@ class ClassPropertiesValue:
     And once values get from server and then it stored in Redis.
     """
 
-    def __init__(self, api_doc, url):
+    def __init__(self, api_doc, url,graph):
         self.redis_connection = RedisProxy()
         self.handle_data = HandleData()
         self.connection = self.redis_connection.get_connection()
@@ -424,7 +419,8 @@ class QueryFacades:
         """
         print("just initialize")
 
-        graph.main(self.url, self.api_doc)
+        self.graph = InitialGraph()
+        self.graph.main(self.url, self.api_doc)
 
     def user_query(self, query):
         """
@@ -441,7 +437,9 @@ class QueryFacades:
             data = self.endpoint_query.get_collectionEndpoints(query)
             return data
         elif "members" in query:
-            self.members = CollectionmembersQuery(self.api_doc, self.url)
+            self.members = CollectionmembersQuery(self.api_doc,
+                                                  self.url,
+                                                  self.graph)
             if self.test:
                 data = self.members.data_from_server(
                     query.replace(" members", ""))
@@ -459,7 +457,9 @@ class QueryFacades:
             data = self.properties.get_collection_properties(query)
             return data
         elif "class" in query and "property_value" in query:
-            self.class_property = ClassPropertiesValue(self.api_doc, self.url)
+            self.class_property = ClassPropertiesValue(self.api_doc,
+                                                       self.url,
+                                                       self.graph)
             data = self.class_property.get_property_value(query)
             return data
         elif "class" in query:
