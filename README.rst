@@ -21,7 +21,9 @@ Installation
 To install this library, from the projet directory, type::
 
     pip install .
+
 or
+
     python3 setup.py install
 
 NB: developers might want to add the ``-e`` option to the command line above,
@@ -105,6 +107,7 @@ For hydra_redis
 For running the client you should run querying_mechanism
 
     cd hydra_redis
+
     python3 querying_mechanism.py
 
 and provide a valid url and then you can query in querying format.
@@ -147,6 +150,7 @@ For querying, url should be provided first:
 you can query in various formats:
 
 .. code:: python
+
     print("for endpoint:- show endpoint")
     print("for class_endpoint:- show classEndpoint")
     print("for collection_endpoint:- show collectionEndpoint")
@@ -164,6 +168,7 @@ you can query in various formats:
 Query can be done like this:
 
 .. code:: python
+
     check_data = [['p.id', 'p.operations', 'p.properties', 'p.type'],
                       ['vocab:EntryPoint/Location', 
                        "['POST'", "'PUT'", "'GET']", 
