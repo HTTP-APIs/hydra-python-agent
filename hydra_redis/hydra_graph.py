@@ -1,4 +1,4 @@
-import redis
+ import redis
 from redisgraph import Graph, Node
 import urllib.request
 import json
