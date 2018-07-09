@@ -1,6 +1,7 @@
 import unittest
 import urllib.request
 import json
+import redis
 from hydrus.hydraspec import doc_maker
 from os import sys, path
 from hydra_redis import querying_mechanism
@@ -8,7 +9,14 @@ from hydra_redis import querying_mechanism
 class TestQueryingMechanism(unittest.TestCase):
 
     def setUp(self):
-        print("testing start:")
+        url = "https://storage.googleapis.com/api3/api"
+        vocab_url = url + "/" + "vocab"
+        response = urllib.request.urlopen(vocab_url)
+        apidoc = json.loads(response.read().decode('utf-8'))
+        api_doc = doc_maker.create_doc(apidoc)
+        self.query_facades = querying_mechanism.QueryFacades(api_doc, url, True)
+        self.query_facades.initialize()
+        self.test_database = redis.StrictRedis(host='localhost', port=6379, db=5)
 
     def test_1_classendpoint(self):
         """Test for class endpoint"""
@@ -17,7 +25,7 @@ class TestQueryingMechanism(unittest.TestCase):
                        "['POST'", "'PUT'", "'GET']", 
                        "['Location']", 'Location']]
         query = "show classEndpoints"
-        data = query_facades.user_query(query)
+        data = self.query_facades.user_query(query)
         self.assertEqual(data,check_data)
 
     def test_2_collectionendpoint(self):
@@ -31,7 +39,7 @@ class TestQueryingMechanism(unittest.TestCase):
                       "DatastreamCollection",
                       "MessageCollection"]
         query = "show collectionEndpoints"
-        data = query_facades.user_query(query)
+        data = self.query_facades.user_query(query)
         for check in check_data:
             if check not in str(data):
                 self.assertTrue(False)
@@ -45,7 +53,7 @@ class TestQueryingMechanism(unittest.TestCase):
         """
         check_data = ['[]']
         query = "show CommandCollection members"
-        data = query_facades.user_query(query)
+        data = self.query_facades.user_query(query)
         self.assertEqual(data[1],check_data)
 
     def test_4_ControllerLogCollectionmember(self):
@@ -61,7 +69,7 @@ class TestQueryingMechanism(unittest.TestCase):
                       {'@id': '/api/ControllerLogCollection/374',
                        '@type': 'ControllerLog'}]
         query = "show ControllerLogCollection members"
-        data = query_facades.user_query(query)
+        data = self.query_facades.user_query(query)
         # Make data searchable and comaprable.
         data1 = str(data[1]).replace('"', '')
         # data retrive from the memory can be distributed:
@@ -81,19 +89,14 @@ class TestQueryingMechanism(unittest.TestCase):
         """Test for all datastream with Drone ID 2"""
         check_data = ['/api/DatastreamCollection/19']
         query = "show DatastreamCollection members"
-        data = query_facades.user_query(query)
+        data = self.query_facades.user_query(query)
         # Here are find the datastream only for those which have DroneID 2.
         query = "show DroneID 2 and type Datastream"
-        data = query_facades.user_query(query)
+        data = self.query_facades.user_query(query)
         self.assertEqual(data,check_data)
 
+    def tearDown(self):
+        self.test_database.flushdb()
 
 if __name__ == "__main__":
-    url = "https://storage.googleapis.com/api3/api"
-    vocab_url = url + "/" + "vocab"
-    response = urllib.request.urlopen(vocab_url)
-    apidoc = json.loads(response.read().decode('utf-8'))
-    api_doc = doc_maker.create_doc(apidoc)
-    query_facades = querying_mechanism.QueryFacades(api_doc, url, True)
-    query_facades.initialize()
     unittest.main()
