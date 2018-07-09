@@ -90,7 +90,7 @@ class InitialGraph:
 
 if __name__ == "__main__":
     url = "http://35.224.198.158:8080/api"
-    apidoc = final_file(url + "/vocab")
-    api_doc = doc_maker.create_doc(apidoc)
     initial_graph = InitialGraph()
+    apidoc = initial_graph.final_file(url + "/vocab")
+    api_doc = doc_maker.create_doc(apidoc)
     initial_graph.main(url, api_doc)
