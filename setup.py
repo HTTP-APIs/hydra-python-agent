@@ -1,12 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-Setup script for the Python implementation of LD Patch
-"""
+"""Setup script for Python Hydra Agent."""
 
 from setuptools import setup, find_packages
-
-#from ast import literal_eval
 
 try:  # for pip >= 10
     from pip._internal.req import parse_requirements
@@ -19,22 +14,17 @@ except ImportError:  # for pip <= 9.0.3
 install_requires = parse_requirements('requirements.txt', session=PipSession())
 dependencies = [str(package.req) for package in install_requires]
 
-
-setup(name = 'python-hydra-agent',
+setup(name='python-hydra-agent',
       include_package_data=True,
-      version = '0.0.1',
-      description = 'A Hydra implementation for Python',
-      author='W3C Hydra Contributors',
+      version='0.0.1',
+      description='A Hydra agent using Python and Redis',
+      author='W3C HYDRA development group',
       author_email='public-hydra@w3.org',
       url='https://github.com/HTTP-APIs/python-hydra-agent',
       python_requires='>=3',
       install_requires=dependencies,
       packages=find_packages(
-          exclude=['hydra','examples','test*','python_hydra_agent.egg-info']),
-      package_dir = {'hydra_redis':
-                     'hydra_redis'},
-
-
-      license='LGPL v3',
-
-     )
+          exclude=['hydra','examples','test*','python_whihydra_agent.egg-info']),
+      package_dir={'hydra_redis':
+                   'hydra_redis'},
+      )
