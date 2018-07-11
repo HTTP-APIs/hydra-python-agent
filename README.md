@@ -1,20 +1,20 @@
 # python-hydra-agent
 
-python-hydra-agent is a smart python hydra client which is working with [hydrus](https://github.com/HTTP-APIs/hydrus).
+The python-hydra-agent is a smart python hydra client which is working with [hydrus](https://github.com/HTTP-APIs/hydrus).
 
 It caches the server data from hydra server for fast data querying.
 
 It uses Redis to cache the data at the end of the client.
 
-So, Data load from the server and store in Redis memory as a graph using redisgraph.
+So, Data is loaded from the server and store in Redis memory as a graph using redisgraph.
 
 With the help of Redis, clients become faster and easier to query the data.
 
 ## Installation
 
-**NOTE:** The client is using python3.
+**NOTE:** You'll need to use python3.
 
-To install the client, you have to run the following commands:
+To install or setup the client environment, you have to run:
 
      python3 setup.py install
 
@@ -24,7 +24,7 @@ To install only requirements:
    
     pip3 install -r requirements.txt
 
-For install Redis and start Redis server::
+To install Redis and start Redis server:
 
     cd hydra_redis
     ./redis_setup.sh
@@ -33,7 +33,7 @@ For install Redis and start Redis server::
 
 ### Demo
 
-To run the demo of python-hydra-agent, you have to follow the instructions:
+To run the demo for python-hydra-agent, you have to follow the instructions:
 
 * Clone the repo:
 
@@ -44,13 +44,13 @@ To run the demo of python-hydra-agent, you have to follow the instructions:
         cd python-hydra-agent
         git checkout -b develop origin/develop
 
-* Now for install the requirements and setup the environment:
+* Now to install the requirements or setup the environment:
 
-    you should follow the instruction of [installation](#installation).
+    you should follow the instructions of [installation](#installation).
 
-After setup environment and run the Redis server. You can query or run the client. 
+After setup the environment and run the Redis server. You can query or run the client. 
 
-* For run the client you should run querying_mechanism.py like:
+* To run the client you should run querying_mechanism.py like:
 
         cd hydra_redis
         python3 querying_mechanism.py
@@ -58,12 +58,12 @@ After setup environment and run the Redis server. You can query or run the clien
 
     and provide a valid URL and then you can query in querying format.
 
-        `>>>url` #here url should be valid link for testing you can use https://storage.googleapis.com/api3/api
+        `>>>url` #here url should be a valid link, for testing you can use https://storage.googleapis.com/api3/api
         `>>>help` # it will provide the querying format
 
 #### Code simplification
 
-To create graph in Redis memory use(hydra_graph.py) :
+To create the graph in Redis memory, use(hydra_graph.py) :
 ```
     import redis
     from redisgraph import Graph, Node, Edge
@@ -71,7 +71,7 @@ To create graph in Redis memory use(hydra_graph.py) :
     self.redis_graph = Graph("apidoc", redis_con)
 ```
 
-For querying, url should be provided first:
+For querying, URL should be provided first:
 
 ```
     url = input("url>>>")
@@ -79,7 +79,7 @@ For querying, url should be provided first:
     return query(apidoc, url) # apidoc is vocab file provided by url.
 ```
 
-Query input be like:
+The client takes the query as input, like:
 
 ```
     while True:
@@ -93,7 +93,7 @@ Query input be like:
             print(facades.user_query(query))# query can be done with facades class
 ```
 
-you can query in various querying formats:
+you can query as following querying formats:
 
 ```
     print("for endpoint:- show endpoint")
@@ -127,6 +127,6 @@ References
 ----------
 
 [Hydra-Enabled smart client](http://www.hydra-cg.com/)
-[Hydra core vocabulary](http://www.hydra-cg.com/spec/latest/core/)
 
+[Hydra core vocabulary](http://www.hydra-cg.com/spec/latest/core/)
 
