@@ -1,4 +1,3 @@
-import redis
 import random
 import string
 from hydra_redis.hydra_graph import InitialGraph
@@ -50,7 +49,7 @@ class HandleData:
             # Show data only for odd value of count.
             # because for even value it contains stuffs like time and etc.
             # ex: Redis provide data like if we query class endpoint
-            # output like: 
+            # output like:
             # [[endpoints in byte object form],[query execution time:0.5ms]]
             # So with the help of count, byte object convert to string
             # and also show only useful strings not the query execution time.
@@ -65,7 +64,6 @@ class HandleData:
                         #                        print(property_list)
                         all_property_lists.append(property_list)
         return all_property_lists
-
 
 
 class EndpointQuery:
@@ -131,7 +129,7 @@ class CollectionmembersQuery:
     Check_list is using for track which collection endpoint data is in Redis.
     """
 
-    def __init__(self, api_doc, url,graph):
+    def __init__(self, api_doc, url, graph):
         self.redis_connection = RedisProxy()
         self.handle_data = HandleData()
         self.connection = self.redis_connection.get_connection()
@@ -277,7 +275,7 @@ class ClassPropertiesValue:
     And once values get from server and then it stored in Redis.
     """
 
-    def __init__(self, api_doc, url,graph):
+    def __init__(self, api_doc, url, graph):
         self.redis_connection = RedisProxy()
         self.handle_data = HandleData()
         self.connection = self.redis_connection.get_connection()
@@ -356,42 +354,67 @@ class CompareProperties:
         """
         return ("{}".format("fs:" + key + ":" + value))
 
-    def convert_byte_string(self,value_set):
+    def convert_byte_string(self, value_set):
+        """
+        It converts byte strings to strings.
+        """
         new_value_set = set()
         for obj in value_set:
             string = obj.decode('utf-8')
             new_value_set.add(string)
         return new_value_set
 
-    def and_or_query(self,query_list):
+    def and_or_query(self, query_list):
+        """
+        It is a recursive function.
+        It takes the arguement as list(query_list)
+        which contains the faceted indexes and operation and brackets also.
+        List Ex:['fs:model:xyz', 'and', '(', 'fs:name:Drone1', 'or',
+                'fs:name:Drone2', ')']
+                for query "model xyz and (name Drone1 or name Drone2)"
+        :param query_list: get a list of faceted indexes and operations
+        :param return: get data from the Redis memory for specific query.
+        """
+        # check if there is both "and" and "or" with help of bracket.
         if ")" not in query_list:
+            # if only one operation "and" or "or".
             if "or" in query_list:
-                while query_list.count("or")>0:
+                while query_list.count("or") > 0:
                     query_list.remove("or")
                 get_data = self.connection.sunion(*query_list)
                 return (get_data)
             else:
-                while query_list.count("and")>0:
+                while query_list.count("and") > 0:
                     query_list.remove("and")
                 get_data = self.connection.sinter(*query_list)
                 return (get_data)
         else:
+            # if both the operators are present in query
             for query_element in query_list:
                 if query_element == ")":
+                    # find index for closed bracket
                     close_index = query_list.index(query_element)
                     break
-            for i in range(close_index,-1,-1):
-                if query_list[i]=="(":
+            for i in range(close_index, -1, -1):
+                if query_list[i] == "(":
+                    # find index for open bracket
                     open_index = i
                     break
-            get_value = self.and_or_query(query_list[open_index+1:close_index])
+            get_value = self.and_or_query(
+                query_list[open_index + 1:close_index])
             get_value = self.convert_byte_string(get_value)
-            
-            faceted_key = "fs:" + ''.join(random.choice(string.ascii_letters + string.digits) for letter in range(8))
+
+            # design random faceted key for store result of partial query.
+            faceted_key = "fs:" + \
+                ''.join(random.choice(string.ascii_letters + string.digits) for letter in range(8))
+            # add data in random faceted key.
             for obj in get_value:
-                self.connection.sadd(faceted_key,obj)
-            query_list.insert(open_index,faceted_key)
-            query_list = query_list[0:open_index+1] + query_list[close_index+2:len(query_list)]
+                self.connection.sadd(faceted_key, obj)
+            # add new executed partial query value with key in query list.
+            query_list.insert(open_index, faceted_key)
+            # generate new query after remove executed partial query
+            query_list = query_list[0:open_index + 1] + \
+                query_list[close_index + 2:len(query_list)]
             return self.and_or_query(query_list)
 
     def object_property_comparison_list(self, query):
@@ -402,7 +425,7 @@ class CompareProperties:
         :param query: get query from the user, Ex: name Drone1
         :return: get data from the Redis memory.
         """
-        union = 0
+
         faceted_list = []
         query_list = []
         while True:
@@ -410,25 +433,33 @@ class CompareProperties:
                 key, value, query = query.split(" ", 2)
                 while "(" in key:
                     query_list.append("(")
-                    key = key.replace("(","",1)
-                
+                    key = key.replace("(", "", 1)
+
                 faceted_list.append(self.faceted_key(key, value))
-                query_list.append(self.faceted_key(key.replace("(",""), value.replace(")","")))
+                query_list.append(
+                    self.faceted_key(
+                        key.replace(
+                            "(", ""), value.replace(
+                            ")", "")))
                 while ")" in value:
                     query_list.append(")")
-                    value = value.replace(")","",1)
+                    value = value.replace(")", "", 1)
             else:
                 key, value = query.split(" ")
                 query = ""
                 while "(" in key:
                     query_list.append("(")
-                    key = key.replace("(","",1)
-                
+                    key = key.replace("(", "", 1)
+
                 faceted_list.append(self.faceted_key(key, value))
-                query_list.append(self.faceted_key(key.replace("(",""), value.replace(")","")))
+                query_list.append(
+                    self.faceted_key(
+                        key.replace(
+                            "(", ""), value.replace(
+                            ")", "")))
                 while ")" in value:
                     query_list.append(")")
-                    value = value.replace(")","",1)
+                    value = value.replace(")", "", 1)
             if len(query) > 0:
                 operation, query = query.split(" ", 1)
                 query_list.append(operation)
@@ -438,7 +469,6 @@ class CompareProperties:
 
         get_data = self.and_or_query(query_list)
         return self.show_data(get_data)
-
 
     def show_data(self, get_data):
         """It returns the data in readable format."""
