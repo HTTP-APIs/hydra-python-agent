@@ -1,4 +1,6 @@
 import redis
+import random
+import string
 from hydra_redis.hydra_graph import InitialGraph
 import urllib.request
 import json
@@ -354,6 +356,44 @@ class CompareProperties:
         """
         return ("{}".format("fs:" + key + ":" + value))
 
+    def convert_byte_string(self,value_set):
+        new_value_set = set()
+        for obj in value_set:
+            string = obj.decode('utf-8')
+            new_value_set.add(string)
+        return new_value_set
+
+    def and_or_query(self,query_list):
+        if ")" not in query_list:
+            if "or" in query_list:
+                while query_list.count("or")>0:
+                    query_list.remove("or")
+                get_data = self.connection.sunion(*query_list)
+                return (get_data)
+            else:
+                while query_list.count("and")>0:
+                    query_list.remove("and")
+                get_data = self.connection.sinter(*query_list)
+                return (get_data)
+        else:
+            for query_element in query_list:
+                if query_element == ")":
+                    close_index = query_list.index(query_element)
+                    break
+            for i in range(close_index,-1,-1):
+                if query_list[i]=="(":
+                    open_index = i
+                    break
+            get_value = self.and_or_query(query_list[open_index+1:close_index])
+            get_value = self.convert_byte_string(get_value)
+            
+            faceted_key = "fs:" + ''.join(random.choice(string.ascii_letters + string.digits) for letter in range(8))
+            for obj in get_value:
+                self.connection.sadd(faceted_key,obj)
+            query_list.insert(open_index,faceted_key)
+            query_list = query_list[0:open_index+1] + query_list[close_index+2:len(query_list)]
+            return self.and_or_query(query_list)
+
     def object_property_comparison_list(self, query):
         """
         It takes the argument as a string that can contain many keys and value
@@ -364,29 +404,41 @@ class CompareProperties:
         """
         union = 0
         faceted_list = []
+        query_list = []
         while True:
             if query.count(" ") > 1:
                 key, value, query = query.split(" ", 2)
+                while "(" in key:
+                    query_list.append("(")
+                    key = key.replace("(","",1)
+                
                 faceted_list.append(self.faceted_key(key, value))
+                query_list.append(self.faceted_key(key.replace("(",""), value.replace(")","")))
+                while ")" in value:
+                    query_list.append(")")
+                    value = value.replace(")","",1)
             else:
                 key, value = query.split(" ")
                 query = ""
+                while "(" in key:
+                    query_list.append("(")
+                    key = key.replace("(","",1)
+                
                 faceted_list.append(self.faceted_key(key, value))
+                query_list.append(self.faceted_key(key.replace("(",""), value.replace(")","")))
+                while ")" in value:
+                    query_list.append(")")
+                    value = value.replace(")","",1)
             if len(query) > 0:
                 operation, query = query.split(" ", 1)
-                if operation == "or":
-                    union = 1
+                query_list.append(operation)
 
             else:
                 break
-        if union == 1:
-            get_data = self.connection.sunion(*faceted_list)
 
-            return self.show_data(get_data)
-        else:
-            get_data = self.connection.sinter(*faceted_list)
+        get_data = self.and_or_query(query_list)
+        return self.show_data(get_data)
 
-            return self.show_data(get_data)
 
     def show_data(self, get_data):
         """It returns the data in readable format."""
