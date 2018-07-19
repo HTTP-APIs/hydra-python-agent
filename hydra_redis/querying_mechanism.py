@@ -608,6 +608,9 @@ def help():
           "show <collection_endpoint> properties")
     print("for classes properties:- show class<class_endpoint> properties")
     print("for compare properties:-show <key> <value> and/or <key1> <value1>")
+    print("for using both opeartions(and,or) you should use brackets like:-",
+          "show model xyz and (name Drone1 or name Drone2)",
+          "or, show <key> <value> and (<key> <value> or <key> <value>)")
 
 
 if __name__ == "__main__":
