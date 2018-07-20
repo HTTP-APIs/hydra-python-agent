@@ -14,19 +14,19 @@ With the help of Redis, clients become faster and easier to query the data.
 
 **NOTE:** You'll need to use python3.
 
-To install or setup the client environment, you have to run:
-
-     python3 setup.py install
-
-or,
-
 To install only requirements:
    
     pip3 install -r requirements.txt
 
-To install Redis and start Redis server:
+or,
 
-    cd hydra_redis
+To install or setup the client environment, you have to run:
+
+     python3 setup.py install
+
+
+To install Redis and start Redis server(also if Redis has installed):
+
     ./redis_setup.sh
 
 ## Quickstart
@@ -96,19 +96,21 @@ The client takes the query as input, like:
 you can query as following querying formats:
 
 ```
-    print("for endpoint:- show endpoint")
-    print("for class_endpoint:- show classEndpoint")
-    print("for collection_endpoint:- show collectionEndpoint")
-    print("for members of collection_endpoint:-",
+    print("querying format")
+    print("Get all endpoints:- show endpoints")
+    print("Get all class_endpoints:- show classEndpoints")
+    print("Get all collection_endpoints:- show collectionEndpoints")
+    print("Get all members of collection_endpoint:-",
           "show <collection_endpoint> members")
-    print("for properties of any member:-",
+    print("Get all properties of objects:-",
+          "show objects<endpoint_type> properties")
+    print("Get all properties of any member:-",
           "show object<id_of_member> properties ")
-    print("for properties of objects:-show objects<endpoint_type> properties")
-    print("for collection properties:-",
-          "show <collection_endpoint> properties")
-    print("for classes properties:- show class<class_endpoint> properties")
-    print("for compare properties:-show <key> <value> and/or <key1> <value1>")
-    print("for using both opeartions(and,or) you should use brackets like:-",
+    print("Get all classes properties:-show class<class_endpoint> properties")
+    print("Get data with compare properties:-",
+          "show <key> <value> and/or <key1> <value1>")
+    print("Get data by using both opeartions(and,or)",
+          " you should use brackets like:-",
           "show model xyz and (name Drone1 or name Drone2)",
           "or, show <key> <value> and (<key> <value> or <key> <value>)")
 

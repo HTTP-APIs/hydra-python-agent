@@ -596,19 +596,20 @@ def main():
 def help():
     """It prints that how user can query."""
     print("querying format")
-    print("for endpoint:- show endpoint")
-    print("for class_endpoint:- show classEndpoint")
-    print("for collection_endpoint:- show collectionEndpoint")
-    print("for members of collection_endpoint:-",
+    print("Get all endpoints:- show endpoints")
+    print("Get all class_endpoints:- show classEndpoints")
+    print("Get all collection_endpoints:- show collectionEndpoints")
+    print("Get all members of collection_endpoint:-",
           "show <collection_endpoint> members")
-    print("for properties of any member:-",
+    print("Get all properties of objects:-",
+          "show objects<endpoint_type> properties")
+    print("Get all properties of any member:-",
           "show object<id_of_member> properties ")
-    print("for properties of objects:-show objects<endpoint_type> properties")
-    print("for collection properties:-",
-          "show <collection_endpoint> properties")
-    print("for classes properties:- show class<class_endpoint> properties")
-    print("for compare properties:-show <key> <value> and/or <key1> <value1>")
-    print("for using both opeartions(and,or) you should use brackets like:-",
+    print("Get all classes properties:-show class<class_endpoint> properties")
+    print("Get data with compare properties:-",
+          "show <key> <value> and/or <key1> <value1>")
+    print("Get data by using both opeartions(and,or)",
+          " you should use brackets like:-",
           "show model xyz and (name Drone1 or name Drone2)",
           "or, show <key> <value> and (<key> <value> or <key> <value>)")
 
