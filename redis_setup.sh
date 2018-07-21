@@ -19,13 +19,13 @@ sudo apt-get update
 sudo apt-get install docker-ce
 
 else
-    echo "yesss exist"
+    echo "Docker is already installed"
 fi
 
 # after getting the docker-ce
 if [ -z "$(docker images -q redislabs/redisgraph:latest)" ]
 then
-    echo "yes exist"
+    echo "Docker already have a redislabs/redisgraph image"
 
 else 
     git clone https://github.com/swilly22/redis-graph.git
