@@ -33,6 +33,9 @@ class HandleData:
         except URLError as e:
             print('Reason: ', e.reason)
             return ("error")
+        except ValueError as e:
+            print("value error:",e)
+            return ("error")
         else:
             return json.loads(response.read().decode('utf-8'))
 
@@ -547,9 +550,11 @@ class QueryFacades:
         elif "class" in query:
             data = self.properties.get_classes_properties(query)
             return data
-        else:
+        elif " and " in query or " or " in query:
             data = self.compare.object_property_comparison_list(query)
             return data
+        else:
+            print("Incorrect query: Use 'help' to know about querying format")
 
 
 def query(apidoc, url):
@@ -581,12 +586,18 @@ def main():
     :return: call query function for more query.
     """
     url = input("url>>>")
+    if url == "exit":
+        print ("exit...")
+        return 0
     handle_data = HandleData()
     apidoc = handle_data.load_data(url + "/vocab")
     while True:
         if apidoc == "error":
             print("enter right url")
             url = input("url>>>")
+            if url == "exit":
+                print("exit...")
+                return 0
             apidoc = handle_data.load_data(url + "/vocab")
         else:
             break
