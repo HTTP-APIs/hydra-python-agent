@@ -66,16 +66,17 @@ class InitialGraph:
         return self.get_apistructure(entrypoint_node, api_doc)
 
 
-    def main(self,new_url,api_doc):
+    def main(self,new_url,api_doc,check_commit):
         redis_con = redis.Redis(host='localhost', port=6379)
         self.url = new_url
         self.redis_graph = Graph("apidoc", redis_con)
         print("loading... of graph")
         self.get_endpoints(api_doc, redis_con)
-        print("commiting")
-        self.redis_graph.commit()
-        # creating whole the graph in redis
-        print("done!!!!")
+        if check_commit:
+            print("commiting")
+            self.redis_graph.commit()
+            # creating whole the graph in redis
+            print("done!!!!")
         # uncomment below 2 lines for getting nodes for whole graph
     #    for node in redis_graph.nodes.values():
     #        print("\n",node.alias)
@@ -93,4 +94,4 @@ if __name__ == "__main__":
     initial_graph = InitialGraph()
     apidoc = initial_graph.final_file(url + "/vocab")
     api_doc = doc_maker.create_doc(apidoc)
-    initial_graph.main(url, api_doc)
+    initial_graph.main(url, api_doc,True)

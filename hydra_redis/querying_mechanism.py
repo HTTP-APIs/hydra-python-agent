@@ -498,14 +498,14 @@ class QueryFacades:
         self.compare = CompareProperties()
         self.test = test
 
-    def initialize(self):
+    def initialize(self,check_commit):
         """
         Initialize is used to initialize the graph for given url.
         """
         print("just initialize")
 
         self.graph = InitialGraph()
-        self.graph.main(self.url, self.api_doc)
+        self.graph.main(self.url, self.api_doc,check_commit)
 
     def user_query(self, query):
         """
@@ -564,9 +564,19 @@ def query(apidoc, url):
     :param apidoc: Apidocumentation for the given url.
     :param url: url given by user.
     """
+    redis_connection = RedisProxy()
+    connection = redis_connection.get_connection()
     api_doc = doc_maker.create_doc(apidoc)
     facades = QueryFacades(api_doc, url, False)
-    facades.initialize()
+    check_url = str.encode(url)
+    if (str.encode("fs:url") in connection.keys() and 
+            check_url in connection.smembers("fs:url")):
+        print("url already exist in Redis")
+        facades.initialize(False)
+    else:
+        facades.initialize(True)
+        connection.sadd("fs:url",url)
+
     global check_list
     check_list = []
     while True:
