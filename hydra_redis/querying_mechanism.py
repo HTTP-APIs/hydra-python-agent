@@ -129,7 +129,8 @@ class CollectionmembersQuery:
     CollectionmembersQuery is used for get members of any collectionendpoint.
     Once it get the data from the server and store it in Redis.
     And after that it can query from Redis memory.
-    Check_list is using for track which collection endpoint data is in Redis.
+    "fs:endpoints" is using as a faceted index,
+    for track which collection endpoint's data is stored in Redis.
     """
 
     def __init__(self, api_doc, url, graph):
@@ -169,7 +170,8 @@ class CollectionmembersQuery:
         :return: get data from the Redis memory.
         """
         endpoint = query.replace(" members", "")
-        if endpoint in check_list:
+        if (str.encode("fs:endpoints") in self.connection.keys() and
+            str.encode(endpoint) in self.connection.smembers("fs:endpoints")): 
             get_data = self.connection.execute_command(
                 'GRAPH.QUERY',
                 'apidoc',
@@ -181,8 +183,8 @@ class CollectionmembersQuery:
             return self._data.show_data(get_data)
 
         else:
-            check_list.append(endpoint)
-            print(check_list)
+            self.connection.sadd("fs:endpoints",endpoint)
+            print(self.connection.smembers("fs:endpoints"))
             return self.data_from_server(endpoint)
 
 
@@ -319,8 +321,8 @@ class ClassPropertiesValue:
         """
         query = query.replace("class", "")
         endpoint = query.replace(" property_value", "")
-        print(check_list)
-        if endpoint in check_list:
+        if (str.encode("fs:endpoints") in self.connection.keys() and
+            str.encode(endpoint) in self.connection.smembers("fs:endpoints")):
             get_data = self.connection.execute_command(
                 'GRAPH.QUERY',
                 'apidoc',
@@ -329,8 +331,8 @@ class ClassPropertiesValue:
                    RETURN p.property_value""".format(
                     endpoint))
         else:
-            check_list.append(endpoint)
-            print(check_list)
+            self.connection.sadd("fs:endpoints",endpoint)
+            print(self.connection.smembers("fs:endpoints"))
             get_data = self.data_from_server(endpoint)
 
         print(endpoint, "property_value")
@@ -577,8 +579,6 @@ def query(apidoc, url):
         facades.initialize(True)
         connection.sadd("fs:url",url)
 
-    global check_list
-    check_list = []
     while True:
         print("press exit to quit")
         query = input(">>>")
