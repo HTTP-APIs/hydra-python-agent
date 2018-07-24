@@ -1,5 +1,5 @@
 
-#It will remove all the previous docker engine
+#It will check, if docker is not installed then install it.
 docker -v
 if [ echo "$?" = "127" ]
 then
@@ -22,7 +22,7 @@ else
     echo "Docker is already installed"
 fi
 
-# after getting the docker-ce
+# after getting the docker-ce, check if `redislabs/redisgraph` docker image is not installed then install ii. 
 if [ -z "$(docker images -q redislabs/redisgraph:latest)" ]
 then
     echo "Docker already have a redislabs/redisgraph image"
