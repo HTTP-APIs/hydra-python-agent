@@ -4,5 +4,5 @@ uritemplate
 httplib2
 redis
 redisgraph
-hydrus
+-e git+https://github.com/HTTP-APIs/hydrus.git#egg=hydrus
 graphviz
