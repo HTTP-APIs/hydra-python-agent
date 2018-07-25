@@ -9,6 +9,9 @@ services:
         build: .
         depends_on:
             - db
+        environment:
+            - REDIS_HOST=db
+            - REDIS_PORT=6379
 
     db:
         image: redislabs/redisgraph
