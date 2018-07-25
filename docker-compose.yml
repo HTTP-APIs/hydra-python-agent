@@ -1,0 +1,17 @@
+version: "2"
+
+services:
+
+    client:
+        stdin_open: true
+        tty: true
+        restart: always
+        build: .
+        depends_on:
+            - db
+
+    db:
+        image: redislabs/redisgraph
+        ports:
+            - "6379:6379"   
+

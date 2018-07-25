@@ -33,4 +33,4 @@ else
     sudo make docker
 fi
 # command for run the server 
-sudo docker run -p 6379:6379 redislabs/redisgraph
+#sudo docker run -p 6379:6379 redislabs/redisgraph # uncomment this line if you want to run server without using dockerflie.
