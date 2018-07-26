@@ -1,0 +1,19 @@
+version: "2"
+
+services:
+
+    client:
+        stdin_open: true
+        tty: true
+        restart: always
+        build: ./
+        depends_on:
+            - db
+        links:
+            - "db:redis_db"
+        environment:
+            - REDIS_HOST=redis_db
+    db:
+        image: redislabs/redisgraph
+        ports:
+            - "6379:6379"
