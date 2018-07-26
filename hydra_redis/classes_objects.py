@@ -161,11 +161,6 @@ class ClassEndpoints:
                 endpoint_property,
                 no_endpoint_property,
                 api_doc)
-        # delete all the old data that has saved in Redis using redis_graph.
-        # It will remove duplicate data from Redis.
-        for key in redis_connection.keys():
-            if "fs:" not in key.decode("utf8"):
-                redis_connection.delete(key)
         # save the new data.
         self.redis_graph.commit()
 

@@ -176,11 +176,6 @@ class CollectionEndpoints:
             url,
             redis_connection
         )
-        # delete all the old data that has saved in Redis using redis_graph.
-        # It will remove duplicate data from Redis.
-        for key in redis_connection.keys():
-            if "fs:" not in key.decode("utf8"):
-                redis_connection.delete(key)
         # save the new data.
         self.redis_graph.commit()
 #        for node in self.redis_graph.nodes.values():
