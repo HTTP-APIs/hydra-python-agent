@@ -48,7 +48,7 @@ class HandleData:
             # Show data only for odd value of count.
             # because for even value it contains stuffs like time and etc.
             # ex: Redis provide data like if we query class endpoint
-            # output like: 
+            # output like:
             # [[endpoints in byte object form],[query execution time:0.5ms]]
             # So with the help of count, byte object convert to string
             # and also show only useful strings not the query execution time.
