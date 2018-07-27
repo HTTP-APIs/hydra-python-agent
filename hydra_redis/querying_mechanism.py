@@ -1,4 +1,5 @@
-import redis
+import random
+import string
 from hydra_redis.hydra_graph import InitialGraph
 import urllib.request
 import json
@@ -32,6 +33,9 @@ class HandleData:
         except URLError as e:
             print('Reason: ', e.reason)
             return ("error")
+        except ValueError as e:
+            print("value error:",e)
+            return ("error")
         else:
             return json.loads(response.read().decode('utf-8'))
 
@@ -63,7 +67,6 @@ class HandleData:
                         #                        print(property_list)
                         all_property_lists.append(property_list)
         return all_property_lists
-
 
 
 class EndpointQuery:
@@ -126,10 +129,11 @@ class CollectionmembersQuery:
     CollectionmembersQuery is used for get members of any collectionendpoint.
     Once it get the data from the server and store it in Redis.
     And after that it can query from Redis memory.
-    Check_list is using for track which collection endpoint data is in Redis.
+    "fs:endpoints" is using as a faceted index,
+    for track which collection endpoint's data is stored in Redis.
     """
 
-    def __init__(self, api_doc, url,graph):
+    def __init__(self, api_doc, url, graph):
         self.redis_connection = RedisProxy()
         self.handle_data = HandleData()
         self.connection = self.redis_connection.get_connection()
@@ -166,7 +170,8 @@ class CollectionmembersQuery:
         :return: get data from the Redis memory.
         """
         endpoint = query.replace(" members", "")
-        if endpoint in check_list:
+        if (str.encode("fs:endpoints") in self.connection.keys() and
+            str.encode(endpoint) in self.connection.smembers("fs:endpoints")): 
             get_data = self.connection.execute_command(
                 'GRAPH.QUERY',
                 'apidoc',
@@ -178,8 +183,8 @@ class CollectionmembersQuery:
             return self._data.show_data(get_data)
 
         else:
-            check_list.append(endpoint)
-            print(check_list)
+            self.connection.sadd("fs:endpoints",endpoint)
+            print(self.connection.smembers("fs:endpoints"))
             return self.data_from_server(endpoint)
 
 
@@ -275,7 +280,7 @@ class ClassPropertiesValue:
     And once values get from server and then it stored in Redis.
     """
 
-    def __init__(self, api_doc, url,graph):
+    def __init__(self, api_doc, url, graph):
         self.redis_connection = RedisProxy()
         self.handle_data = HandleData()
         self.connection = self.redis_connection.get_connection()
@@ -316,8 +321,8 @@ class ClassPropertiesValue:
         """
         query = query.replace("class", "")
         endpoint = query.replace(" property_value", "")
-        print(check_list)
-        if endpoint in check_list:
+        if (str.encode("fs:endpoints") in self.connection.keys() and
+            str.encode(endpoint) in self.connection.smembers("fs:endpoints")):
             get_data = self.connection.execute_command(
                 'GRAPH.QUERY',
                 'apidoc',
@@ -326,8 +331,8 @@ class ClassPropertiesValue:
                    RETURN p.property_value""".format(
                     endpoint))
         else:
-            check_list.append(endpoint)
-            print(check_list)
+            self.connection.sadd("fs:endpoints",endpoint)
+            print(self.connection.smembers("fs:endpoints"))
             get_data = self.data_from_server(endpoint)
 
         print(endpoint, "property_value")
@@ -354,6 +359,69 @@ class CompareProperties:
         """
         return ("{}".format("fs:" + key + ":" + value))
 
+    def convert_byte_string(self, value_set):
+        """
+        It converts byte strings to strings.
+        """
+        new_value_set = set()
+        for obj in value_set:
+            string = obj.decode('utf-8')
+            new_value_set.add(string)
+        return new_value_set
+
+    def and_or_query(self, query_list):
+        """
+        It is a recursive function.
+        It takes the arguement as list(query_list)
+        which contains the faceted indexes and operation and brackets also.
+        List Ex:['fs:model:xyz', 'and', '(', 'fs:name:Drone1', 'or',
+                'fs:name:Drone2', ')']
+                for query "model xyz and (name Drone1 or name Drone2)"
+        :param query_list: get a list of faceted indexes and operations
+        :param return: get data from the Redis memory for specific query.
+        """
+        # check if there is both "and" and "or" with help of bracket.
+        if ")" not in query_list:
+            # if only one operation "and" or "or".
+            if "or" in query_list:
+                while query_list.count("or") > 0:
+                    query_list.remove("or")
+                get_data = self.connection.sunion(*query_list)
+                return (get_data)
+            else:
+                while query_list.count("and") > 0:
+                    query_list.remove("and")
+                get_data = self.connection.sinter(*query_list)
+                return (get_data)
+        else:
+            # if both the operators are present in query
+            for query_element in query_list:
+                if query_element == ")":
+                    # find index for closed bracket
+                    close_index = query_list.index(query_element)
+                    break
+            for i in range(close_index, -1, -1):
+                if query_list[i] == "(":
+                    # find index for open bracket
+                    open_index = i
+                    break
+            get_value = self.and_or_query(
+                query_list[open_index + 1:close_index])
+            get_value = self.convert_byte_string(get_value)
+
+            # design random faceted key for store result of partial query.
+            faceted_key = "fs:" + \
+                ''.join(random.choice(string.ascii_letters + string.digits) for letter in range(8))
+            # add data in random faceted key.
+            for obj in get_value:
+                self.connection.sadd(faceted_key, obj)
+            # add new executed partial query value with key in query list.
+            query_list.insert(open_index, faceted_key)
+            # generate new query after remove executed partial query
+            query_list = query_list[0:open_index + 1] + \
+                query_list[close_index + 2:len(query_list)]
+            return self.and_or_query(query_list)
+
     def object_property_comparison_list(self, query):
         """
         It takes the argument as a string that can contain many keys and value
@@ -362,31 +430,50 @@ class CompareProperties:
         :param query: get query from the user, Ex: name Drone1
         :return: get data from the Redis memory.
         """
-        union = 0
+
         faceted_list = []
+        query_list = []
         while True:
             if query.count(" ") > 1:
                 key, value, query = query.split(" ", 2)
+                while "(" in key:
+                    query_list.append("(")
+                    key = key.replace("(", "", 1)
+
                 faceted_list.append(self.faceted_key(key, value))
+                query_list.append(
+                    self.faceted_key(
+                        key.replace(
+                            "(", ""), value.replace(
+                            ")", "")))
+                while ")" in value:
+                    query_list.append(")")
+                    value = value.replace(")", "", 1)
             else:
                 key, value = query.split(" ")
                 query = ""
+                while "(" in key:
+                    query_list.append("(")
+                    key = key.replace("(", "", 1)
+
                 faceted_list.append(self.faceted_key(key, value))
+                query_list.append(
+                    self.faceted_key(
+                        key.replace(
+                            "(", ""), value.replace(
+                            ")", "")))
+                while ")" in value:
+                    query_list.append(")")
+                    value = value.replace(")", "", 1)
             if len(query) > 0:
                 operation, query = query.split(" ", 1)
-                if operation == "or":
-                    union = 1
+                query_list.append(operation)
 
             else:
                 break
-        if union == 1:
-            get_data = self.connection.sunion(*faceted_list)
 
-            return self.show_data(get_data)
-        else:
-            get_data = self.connection.sinter(*faceted_list)
-
-            return self.show_data(get_data)
+        get_data = self.and_or_query(query_list)
+        return self.show_data(get_data)
 
     def show_data(self, get_data):
         """It returns the data in readable format."""
@@ -413,14 +500,14 @@ class QueryFacades:
         self.compare = CompareProperties()
         self.test = test
 
-    def initialize(self):
+    def initialize(self,check_commit):
         """
         Initialize is used to initialize the graph for given url.
         """
         print("just initialize")
 
         self.graph = InitialGraph()
-        self.graph.main(self.url, self.api_doc)
+        self.graph.main(self.url, self.api_doc,check_commit)
 
     def user_query(self, query):
         """
@@ -465,9 +552,11 @@ class QueryFacades:
         elif "class" in query:
             data = self.properties.get_classes_properties(query)
             return data
-        else:
+        elif " and " in query or " or " in query:
             data = self.compare.object_property_comparison_list(query)
             return data
+        else:
+            print("Incorrect query: Use 'help' to know about querying format")
 
 
 def query(apidoc, url):
@@ -477,11 +566,19 @@ def query(apidoc, url):
     :param apidoc: Apidocumentation for the given url.
     :param url: url given by user.
     """
+    redis_connection = RedisProxy()
+    connection = redis_connection.get_connection()
     api_doc = doc_maker.create_doc(apidoc)
     facades = QueryFacades(api_doc, url, False)
-    facades.initialize()
-    global check_list
-    check_list = []
+    check_url = str.encode(url)
+    if (str.encode("fs:url") in connection.keys() and 
+            check_url in connection.smembers("fs:url")):
+        print("url already exist in Redis")
+        facades.initialize(False)
+    else:
+        facades.initialize(True)
+        connection.sadd("fs:url",url)
+
     while True:
         print("press exit to quit")
         query = input(">>>")
@@ -499,12 +596,18 @@ def main():
     :return: call query function for more query.
     """
     url = input("url>>>")
+    if url == "exit":
+        print ("exit...")
+        return 0
     handle_data = HandleData()
     apidoc = handle_data.load_data(url + "/vocab")
     while True:
         if apidoc == "error":
             print("enter right url")
             url = input("url>>>")
+            if url == "exit":
+                print("exit...")
+                return 0
             apidoc = handle_data.load_data(url + "/vocab")
         else:
             break
@@ -514,18 +617,22 @@ def main():
 def help():
     """It prints that how user can query."""
     print("querying format")
-    print("for endpoint:- show endpoint")
-    print("for class_endpoint:- show classEndpoint")
-    print("for collection_endpoint:- show collectionEndpoint")
-    print("for members of collection_endpoint:-",
+    print("Get all endpoints:- show endpoints")
+    print("Get all class_endpoints:- show classEndpoints")
+    print("Get all collection_endpoints:- show collectionEndpoints")
+    print("Get all members of collection_endpoint:-",
           "show <collection_endpoint> members")
-    print("for properties of any member:-",
+    print("Get all properties of objects:-",
+          "show objects<endpoint_type> properties")
+    print("Get all properties of any member:-",
           "show object<id_of_member> properties ")
-    print("for properties of objects:-show objects<endpoint_type> properties")
-    print("for collection properties:-",
-          "show <collection_endpoint> properties")
-    print("for classes properties:- show class<class_endpoint> properties")
-    print("for compare properties:-show <key> <value> and/or <key1> <value1>")
+    print("Get all classes properties:-show class<class_endpoint> properties")
+    print("Get data with compare properties:-",
+          "show <key> <value> and/or <key1> <value1>")
+    print("Get data by using both opeartions(and,or)",
+          " you should use brackets like:-",
+          "show model xyz and (name Drone1 or name Drone2)",
+          "or, show <key> <value> and (<key> <value> or <key> <value>)")
 
 
 if __name__ == "__main__":
