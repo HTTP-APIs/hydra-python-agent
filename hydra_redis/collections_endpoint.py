@@ -176,6 +176,7 @@ class CollectionEndpoints:
             url,
             redis_connection
         )
+        # save the new data.
         self.redis_graph.commit()
 #        for node in self.redis_graph.nodes.values():
 #            print("\n",node.alias)

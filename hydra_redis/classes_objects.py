@@ -161,7 +161,7 @@ class ClassEndpoints:
                 endpoint_property,
                 no_endpoint_property,
                 api_doc)
-        # save the graph changes.
+        # save the new data.
         self.redis_graph.commit()
 
     def endpointclasses(
