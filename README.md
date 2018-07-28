@@ -52,7 +52,7 @@ After setup the environment. You can query or run the client.
 
 * To run both the things Redis server and the client. You can run the command:
     
-    docker-compose run client
+        docker-compose run client
 
 
     and provide a valid URL and then you can query in querying format.
