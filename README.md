@@ -25,7 +25,7 @@ To install or setup the client environment, you have to run:
      python3 setup.py install
 
 
-To install Redis and start Redis server(also if Redis has installed):
+To install Redis and other Redis modules:
 
     ./redis_setup.sh
 
@@ -48,17 +48,16 @@ To run the demo for python-hydra-agent, you have to follow the instructions:
 
     you should follow the instructions of [installation](#installation).
 
-After setup the environment and run the Redis server. You can query or run the client. 
+After setup the environment. You can query or run the client.
 
-* To run the client you should run querying_mechanism.py like:
-
-        cd hydra_redis
-        python3 querying_mechanism.py
+* To run both the things Redis server and the client. You can run the command:
+    
+        docker-compose run client
 
 
     and provide a valid URL and then you can query in querying format.
 
-        `>>>url` #here url should be a valid link, for testing you can use https://storage.googleapis.com/api3/api
+        `>>>url` #here url should be a valid link, for testing you can use http://35.224.198.158:8080/api
         `>>>help` # it will provide the querying format
 
 #### Code simplification
