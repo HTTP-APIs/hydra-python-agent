@@ -509,6 +509,12 @@ class QueryFacades:
         self.graph = InitialGraph()
         self.graph.main(self.url, self.api_doc,check_commit)
 
+    def check_fine_query(self,query):
+        if query.count(" ")>1:
+            return "error"
+        else:
+            return "fine"
+
     def user_query(self, query):
         """
         It calls function based on queries type.
@@ -524,34 +530,64 @@ class QueryFacades:
             data = self.endpoint_query.get_collectionEndpoints(query)
             return data
         elif "members" in query:
-            self.members = CollectionmembersQuery(self.api_doc,
-                                                  self.url,
-                                                  self.graph)
-            if self.test:
-                data = self.members.data_from_server(
-                    query.replace(" members", ""))
-                return data
+            check_query = self.check_fine_query(query)
+            if check_query=="error":
+                print("Error: Incorrect query")
+                return "error"
             else:
-                data = self.members.get_members(query)
-                return data
+                self.members = CollectionmembersQuery(self.api_doc,
+                                                      self.url,
+                                                      self.graph)
+                if self.test:
+                    data = self.members.data_from_server(
+                        query.replace(" members", ""))
+                    return data
+                else:
+                    data = self.members.get_members(query)
+                    return data
         elif "objects" in query:
-            data = self.properties.get_members_properties(query)
-            return data
+            check_query = self.check_fine_query(query)
+            if check_query=="error":
+                print("Error: Incorrect query")
+                return "error"
+            else:
+                data = self.properties.get_members_properties(query)
+                return data
         elif "object" in query:
-            data = self.properties.get_object_property(query)
-            return data
+            check_query = self.check_fine_query(query)
+            if check_query=="error":
+                print("Error: Incorrect query")
+                return "error"
+            else:
+                data = self.properties.get_object_property(query)
+                return data
         elif "Collection" in query:
-            data = self.properties.get_collection_properties(query)
-            return data
+            check_query = self.check_fine_query(query)
+            if check_query=="error":
+                print("Error: Incorrect query")
+                return "error"
+            else:
+                data = self.properties.get_collection_properties(query)
+                return data
         elif "class" in query and "property_value" in query:
-            self.class_property = ClassPropertiesValue(self.api_doc,
-                                                       self.url,
-                                                       self.graph)
-            data = self.class_property.get_property_value(query)
-            return data
+            check_query = self.check_fine_query(query)
+            if check_query=="error":
+                print("Error: Incorrect query")
+                return "error"
+            else:
+                self.class_property = ClassPropertiesValue(self.api_doc,
+                                                           self.url,
+                                                           self.graph)
+                data = self.class_property.get_property_value(query)
+                return data
         elif "class" in query:
-            data = self.properties.get_classes_properties(query)
-            return data
+            check_query = self.check_fine_query(query)
+            if check_query=="error":
+                print("Error: Incorrect query")
+                return "error"
+            else:
+                data = self.properties.get_classes_properties(query)
+                return data
         elif " and " in query or " or " in query:
             data = self.compare.object_property_comparison_list(query)
             return data

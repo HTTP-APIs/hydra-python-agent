@@ -119,8 +119,19 @@ class ClassEndpoints:
         # new_url is url for the classes endpoint
         new_url = base_url + "/" + endpoint
         # retreiving data for the classes endpoint from server
-        response = urllib.request.urlopen(new_url)
-        new_file = json.loads(response.read().decode('utf-8'))
+        try:
+            response = urllib.request.urlopen(url)
+        except HTTPError as e:
+            print('Error code: ', e.code)
+            return ("error")
+        except URLError as e:
+            print('Reason: ', e.reason)
+            return ("error")
+        except ValueError as e:
+            print("value error:",e)
+            return ("error")
+        else:
+            new_file = json.loads(response.read().decode('utf-8'))
         # endpoint_property store all properties which is class/object but not
         # endpoint.
         for support_property in api_doc.parsed_classes[

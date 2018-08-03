@@ -18,8 +18,19 @@ class InitialGraph:
         :param url: given url to access the data from the server.
         :return: data loaded from the server.
         """
-        response = urllib.request.urlopen(url)
-        return json.loads(response.read().decode('utf-8'))
+        try:
+            response = urllib.request.urlopen(url)
+        except HTTPError as e:
+            print('Error code: ', e.code)
+            return ("error")
+        except URLError as e:
+            print('Reason: ', e.reason)
+            return ("error")
+        except ValueError as e:
+            print("value error:",e)
+            return ("error")
+        else:
+            return json.loads(response.read().decode('utf-8'))
 
 
     def get_apistructure(self,entrypoint_node, api_doc):
