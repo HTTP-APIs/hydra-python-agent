@@ -499,6 +499,8 @@ class QueryFacades:
         self.properties = PropertiesQuery()
         self.compare = CompareProperties()
         self.test = test
+        self.redis_connection = RedisProxy()
+        self.connection = self.redis_connection.get_connection()
 
     def initialize(self,check_commit):
         """
@@ -510,7 +512,7 @@ class QueryFacades:
         self.graph.main(self.url, self.api_doc,check_commit)
 
     def check_fine_query(self,query):
-        if query.count(" ")>1:
+        if query.count(" ")!=1:
             return "error"
         else:
             return "fine"
@@ -546,6 +548,9 @@ class QueryFacades:
                     data = self.members.get_members(query)
                     return data
         elif "objects" in query:
+            if query[-1] ==" ":
+                print("Error: incorrect query")
+                return ("error")
             check_query = self.check_fine_query(query)
             if check_query=="error":
                 print("Error: Incorrect query")
@@ -554,6 +559,9 @@ class QueryFacades:
                 data = self.properties.get_members_properties(query)
                 return data
         elif "object" in query:
+            if query[-1] ==" ":
+                print("Error: incorrect query")
+                return ("error")
             check_query = self.check_fine_query(query)
             if check_query=="error":
                 print("Error: Incorrect query")
@@ -562,6 +570,9 @@ class QueryFacades:
                 data = self.properties.get_object_property(query)
                 return data
         elif "Collection" in query:
+            if query[-1] ==" ":
+                print("Error: incorrect query")
+                return ("error")
             check_query = self.check_fine_query(query)
             if check_query=="error":
                 print("Error: Incorrect query")
@@ -581,6 +592,9 @@ class QueryFacades:
                 data = self.class_property.get_property_value(query)
                 return data
         elif "class" in query:
+            if query[-1] ==" ":
+                print("Error: incorrect query")
+                return ("error")
             check_query = self.check_fine_query(query)
             if check_query=="error":
                 print("Error: Incorrect query")
@@ -588,10 +602,26 @@ class QueryFacades:
             else:
                 data = self.properties.get_classes_properties(query)
                 return data
-        elif " and " in query or " or " in query:
-            data = self.compare.object_property_comparison_list(query)
-            return data
         else:
+            if " and " in query or " or " in query:
+                if query[-1] ==" " or query[-3]=="and" or query[-2]=="or":
+                    print("Error: incorrect query")
+                    return ("error")
+                query_len = len(query.split())
+                and_or_count = query.count("and")+query.count("or")
+                if query_len != (and_or_count + 2*(and_or_count+1)):
+                    print("Error: Incorrect query")
+                    return ("error")
+                data = self.compare.object_property_comparison_list(query)
+                return data
+            elif query.count(" ")==1:
+                key,value = query.split(" ")
+                print("query: ", query)
+                search_index = "fs:"+key+":"+value
+                for key in self.connection.keys():
+                    if search_index == key.decode("utf8"):
+                        data = self.connection.smembers(key)
+                        return data 
             print("Incorrect query: Use 'help' to know about querying format")
 
 
