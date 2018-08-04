@@ -34,7 +34,7 @@ class HandleData:
             print('Reason: ', e.reason)
             return ("error")
         except ValueError as e:
-            print("value error:",e)
+            print("value error:", e)
             return ("error")
         else:
             return json.loads(response.read().decode('utf-8'))
@@ -171,7 +171,8 @@ class CollectionmembersQuery:
         """
         endpoint = query.replace(" members", "")
         if (str.encode("fs:endpoints") in self.connection.keys() and
-            str.encode(endpoint) in self.connection.smembers("fs:endpoints")): 
+                str.encode(endpoint) in self.connection.smembers(
+                                                   "fs:endpoints")):
             get_data = self.connection.execute_command(
                 'GRAPH.QUERY',
                 'apidoc',
@@ -183,7 +184,7 @@ class CollectionmembersQuery:
             return self._data.show_data(get_data)
 
         else:
-            self.connection.sadd("fs:endpoints",endpoint)
+            self.connection.sadd("fs:endpoints", endpoint)
             print(self.connection.smembers("fs:endpoints"))
             return self.data_from_server(endpoint)
 
@@ -322,7 +323,8 @@ class ClassPropertiesValue:
         query = query.replace("class", "")
         endpoint = query.replace(" property_value", "")
         if (str.encode("fs:endpoints") in self.connection.keys() and
-            str.encode(endpoint) in self.connection.smembers("fs:endpoints")):
+                str.encode(endpoint) in self.connection.smembers(
+                                                   "fs:endpoints")):
             get_data = self.connection.execute_command(
                 'GRAPH.QUERY',
                 'apidoc',
@@ -331,7 +333,7 @@ class ClassPropertiesValue:
                    RETURN p.property_value""".format(
                     endpoint))
         else:
-            self.connection.sadd("fs:endpoints",endpoint)
+            self.connection.sadd("fs:endpoints", endpoint)
             print(self.connection.smembers("fs:endpoints"))
             get_data = self.data_from_server(endpoint)
 
@@ -411,7 +413,8 @@ class CompareProperties:
 
             # design random faceted key for store result of partial query.
             faceted_key = "fs:" + \
-                ''.join(random.choice(string.ascii_letters + string.digits) for letter in range(8))
+                ''.join(random.choice(string.ascii_letters + string.digits)
+                        for letter in range(8))
             # add data in random faceted key.
             for obj in get_value:
                 self.connection.sadd(faceted_key, obj)
@@ -478,8 +481,8 @@ class CompareProperties:
     def show_data(self, get_data):
         """It returns the data in readable format."""
         property_list = []
-        for string in get_data:
-            string1 = string.decode('utf-8')
+        for string1 in get_data:
+            string1 = string1.decode('utf-8')
             property_list.append(string1)
 #        print("list   ",property_list)
         return property_list
@@ -502,17 +505,17 @@ class QueryFacades:
         self.redis_connection = RedisProxy()
         self.connection = self.redis_connection.get_connection()
 
-    def initialize(self,check_commit):
+    def initialize(self, check_commit):
         """
         Initialize is used to initialize the graph for given url.
         """
         print("just initialize")
 
         self.graph = InitialGraph()
-        self.graph.main(self.url, self.api_doc,check_commit)
+        self.graph.main(self.url, self.api_doc, check_commit)
 
-    def check_fine_query(self,query):
-        if query.count(" ")!=1:
+    def check_fine_query(self, query):
+        if query.count(" ") != 1:
             return "error"
         else:
             return "fine"
@@ -533,7 +536,7 @@ class QueryFacades:
             return data
         elif "members" in query:
             check_query = self.check_fine_query(query)
-            if check_query=="error":
+            if check_query == "error":
                 print("Error: Incorrect query")
                 return "error"
             else:
@@ -548,33 +551,33 @@ class QueryFacades:
                     data = self.members.get_members(query)
                     return data
         elif "objects" in query:
-            if query[-1] ==" ":
+            if query[-1] == " ":
                 print("Error: incorrect query")
                 return ("error")
             check_query = self.check_fine_query(query)
-            if check_query=="error":
+            if check_query == "error":
                 print("Error: Incorrect query")
                 return "error"
             else:
                 data = self.properties.get_members_properties(query)
                 return data
         elif "object" in query:
-            if query[-1] ==" ":
+            if query[-1] == " ":
                 print("Error: incorrect query")
                 return ("error")
             check_query = self.check_fine_query(query)
-            if check_query=="error":
+            if check_query == "error":
                 print("Error: Incorrect query")
                 return "error"
             else:
                 data = self.properties.get_object_property(query)
                 return data
         elif "Collection" in query:
-            if query[-1] ==" ":
+            if query[-1] == " ":
                 print("Error: incorrect query")
                 return ("error")
             check_query = self.check_fine_query(query)
-            if check_query=="error":
+            if check_query == "error":
                 print("Error: Incorrect query")
                 return "error"
             else:
@@ -582,7 +585,7 @@ class QueryFacades:
                 return data
         elif "class" in query and "property_value" in query:
             check_query = self.check_fine_query(query)
-            if check_query=="error":
+            if check_query == "error":
                 print("Error: Incorrect query")
                 return "error"
             else:
@@ -592,11 +595,11 @@ class QueryFacades:
                 data = self.class_property.get_property_value(query)
                 return data
         elif "class" in query:
-            if query[-1] ==" ":
+            if query[-1] == " ":
                 print("Error: incorrect query")
                 return ("error")
             check_query = self.check_fine_query(query)
-            if check_query=="error":
+            if check_query == "error":
                 print("Error: Incorrect query")
                 return "error"
             else:
@@ -604,24 +607,24 @@ class QueryFacades:
                 return data
         else:
             if " and " in query or " or " in query:
-                if query[-1] ==" " or query[-3]=="and" or query[-2]=="or":
+                if query[-1] == " " or query[-3] == "and" or query[-2] == "or":
                     print("Error: incorrect query")
                     return ("error")
                 query_len = len(query.split())
-                and_or_count = query.count("and")+query.count("or")
-                if query_len != (and_or_count + 2*(and_or_count+1)):
+                and_or_count = query.count("and") + query.count("or")
+                if query_len != (and_or_count + 2 * (and_or_count + 1)):
                     print("Error: Incorrect query")
                     return ("error")
                 data = self.compare.object_property_comparison_list(query)
                 return data
-            elif query.count(" ")==1:
-                key,value = query.split(" ")
+            elif query.count(" ") == 1:
+                key, value = query.split(" ")
                 print("query: ", query)
-                search_index = "fs:"+key+":"+value
+                search_index = "fs:" + key + ":" + value
                 for key in self.connection.keys():
                     if search_index == key.decode("utf8"):
                         data = self.connection.smembers(key)
-                        return data 
+                        return data
             print("Incorrect query: Use 'help' to know about querying format")
 
 
@@ -637,13 +640,13 @@ def query(apidoc, url):
     api_doc = doc_maker.create_doc(apidoc)
     facades = QueryFacades(api_doc, url, False)
     check_url = str.encode(url)
-    if (str.encode("fs:url") in connection.keys() and 
+    if (str.encode("fs:url") in connection.keys() and
             check_url in connection.smembers("fs:url")):
         print("url already exist in Redis")
         facades.initialize(False)
     else:
         facades.initialize(True)
-        connection.sadd("fs:url",url)
+        connection.sadd("fs:url", url)
 
     while True:
         print("press exit to quit")
@@ -663,7 +666,7 @@ def main():
     """
     url = input("url>>>")
     if url == "exit":
-        print ("exit...")
+        print("exit...")
         return 0
     handle_data = HandleData()
     apidoc = handle_data.load_data(url + "/vocab")
