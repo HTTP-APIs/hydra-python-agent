@@ -1,14 +1,22 @@
 # python-hydra-agent
 
-The python-hydra-agent is a smart python hydra client which is working with [hydrus](https://github.com/HTTP-APIs/hydrus).
+For a general introduction to Hydra Ecosystem, see [hydraecosystem.org](http://hydraecosystem.org).
 
-It caches the server data from hydra server for fast data querying.
+`python-hydra-agent` is a smart Hydra client implemented in Python which works with [hydrus](https://github.com/HTTP-APIs/hydrus). Reference implementation is [Heracles.ts](https://github.com/HydraCG/Heracles.ts). Smart clients are generic automated clients that establish resilient connected data networks leveraging knowledge graphs.
 
-It uses Redis to cache the data at the end of the client.
+## General characteristics
 
-So, Data is loaded from the server and store in Redis memory as a graph using redisgraph.
+The client is designed to:
+* Cache metadata from the Hydra server it connects to, to allow querying on the client-side;
+* Use Redis as a graph-store leveraging `redisgraph` (see [here](https://oss.redislabs.com/redisgraph/));
+* simply, metadata and data are loaded from the server and stored in Redis;
+* The graph can be queried using OpenCypher.
 
-With the help of Redis, clients become faster and easier to query the data.
+The starting objective is to create a querying layer that is able to reach data in one or more Hydra srever/s. Leveraging Redis, clients can construct their own representation of the data stored in one or more Hydra servers; querying the data as they need it, and respond complex semantic queries. This will allow any client connected to any server to have access to an "aggregated view" of the connected network (the network of all the servers it connects to). 
+
+## Missing bits at the moment
+* For now it is a proof-of-concept, only `GET` functionality
+* Soon to develop, a reliable synchronization mechanism to allow strong consistency between server-side data and client-side representation.
 
 ## Installation
 
