@@ -64,7 +64,7 @@ class HandleData:
                     check = property_list.pop()
                     property_list.append(check.replace("\x00", ""))
                     if property_list[0] != "NULL":
-                        #                        print(property_list)
+#                        print(property_list)
                         all_property_lists.append(property_list)
         return all_property_lists
 
@@ -627,6 +627,17 @@ class QueryFacades:
                         return data
             print("Incorrect query: Use 'help' to know about querying format")
 
+def check_url_exist(check_url,facades):
+    redis_connection = RedisProxy()
+    connection = redis_connection.get_connection()
+    url = check_url.decode("utf8")
+    if (str.encode("fs:url") in connection.keys() and
+        check_url in connection.smembers("fs:url")):
+        print("url already exist in Redis")
+        facades.initialize(False)
+    else:
+        facades.initialize(True)
+        connection.sadd("fs:url", url)
 
 def query(apidoc, url):
     """
@@ -640,13 +651,7 @@ def query(apidoc, url):
     api_doc = doc_maker.create_doc(apidoc)
     facades = QueryFacades(api_doc, url, False)
     check_url = str.encode(url)
-    if (str.encode("fs:url") in connection.keys() and
-            check_url in connection.smembers("fs:url")):
-        print("url already exist in Redis")
-        facades.initialize(False)
-    else:
-        facades.initialize(True)
-        connection.sadd("fs:url", url)
+    check_url_exist(check_url,facades)
 
     while True:
         print("press exit to quit")
