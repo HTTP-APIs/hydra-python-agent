@@ -1,9 +1,12 @@
 import urllib.request
 import json
 import re
+import logging
 from urllib.error import URLError, HTTPError
-from hydra_redis.classes_objects import ClassEndpoints
+from hydra_redis.classes_objects import ClassEndpoints,RequestError
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class CollectionEndpoints:
     """Contains all the collections endpoints and objects"""
@@ -20,14 +23,14 @@ class CollectionEndpoints:
         try:
             response = urllib.request.urlopen(new_url)
         except HTTPError as e:
-            print('Error code: ', e.code)
-            return ("error")
+            logger.info('Error code: ', e.code)
+            return RequestError("error")
         except URLError as e:
-            print('Reason: ', e.reason)
-            return ("error")
+            logger.info('Reason: ', e.reason)
+            return RequestError("error")
         except ValueError as e:
-            print("value error:",e)
-            return ("error")
+            logger.info("value error:",e)
+            return RequestError("error")
         else:
             return json.loads(response.read().decode('utf-8'))
 
@@ -80,8 +83,8 @@ class CollectionEndpoints:
                 member_url = new_url + "/" + member_id
                 # object data retrieving from the server
                 new_file = self.fetch_data(member_url)
-                if new_file =="error":
-                    return "error"
+                if isinstance (new_file, RequestError):
+                    return None
                 for support_operation in api_doc.parsed_classes[
                     endpoint["@type"]
                 ]["class"
@@ -175,8 +178,8 @@ class CollectionEndpoints:
         new_url = url + "/" + endpoint
         # url for every collection endpoint
         new_file = self.fetch_data(new_url)
-        if new_file == "error":
-            return "error"
+        if isinstance (new_file, RequestError):
+            return None
         # retrieving the objects from the collection endpoint
         for node in self.redis_graph.nodes.values():
             if node.alias == endpoint:

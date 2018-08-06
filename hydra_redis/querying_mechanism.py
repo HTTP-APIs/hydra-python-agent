@@ -1,14 +1,17 @@
 import random
 import string
+import logging
 from hydra_redis.hydra_graph import InitialGraph
 import urllib.request
 import json
 from hydrus.hydraspec import doc_maker
 from urllib.error import URLError, HTTPError
 from hydra_redis.collections_endpoint import CollectionEndpoints
-from hydra_redis.classes_objects import ClassEndpoints
+from hydra_redis.classes_objects import ClassEndpoints,RequestError
 from hydra_redis.redis_proxy import RedisProxy
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class HandleData:
     """
@@ -28,14 +31,14 @@ class HandleData:
         try:
             response = urllib.request.urlopen(url)
         except HTTPError as e:
-            print('Error code: ', e.code)
-            return ("error")
+            logger.info('Error code: ', e.code)
+            return RequestError("error")
         except URLError as e:
-            print('Reason: ', e.reason)
-            return ("error")
+            logger.info('Reason: ', e.reason)
+            return RequestError("error")
         except ValueError as e:
-            print("value error:", e)
-            return ("error")
+            logger.info("value error:", e)
+            return RequestError("error")
         else:
             return json.loads(response.read().decode('utf-8'))
 
@@ -516,9 +519,7 @@ class QueryFacades:
 
     def check_fine_query(self, query):
         if query.count(" ") != 1:
-            return "error"
-        else:
-            return "fine"
+            return RequestError("error")
 
     def user_query(self, query):
         """
@@ -536,9 +537,9 @@ class QueryFacades:
             return data
         elif "members" in query:
             check_query = self.check_fine_query(query)
-            if check_query == "error":
-                print("Error: Incorrect query")
-                return "error"
+            if isinstance (check_query, RequestError):
+                logger.info("Error: Incorrect query")
+                return None
             else:
                 self.members = CollectionmembersQuery(self.api_doc,
                                                       self.url,
@@ -552,42 +553,42 @@ class QueryFacades:
                     return data
         elif "objects" in query:
             if query[-1] == " ":
-                print("Error: incorrect query")
-                return ("error")
+                logger.info("Error: incorrect query")
+                return None
             check_query = self.check_fine_query(query)
-            if check_query == "error":
-                print("Error: Incorrect query")
-                return "error"
+            if isinstance (check_query, RequestError):
+                logger.info("Error: Incorrect query")
+                return None
             else:
                 data = self.properties.get_members_properties(query)
                 return data
         elif "object" in query:
             if query[-1] == " ":
-                print("Error: incorrect query")
-                return ("error")
+                logger.info("Error: incorrect query")
+                return None
             check_query = self.check_fine_query(query)
-            if check_query == "error":
-                print("Error: Incorrect query")
-                return "error"
+            if isinstance (check_query, RequestError):
+                logger.info("Error: Incorrect query")
+                return None
             else:
                 data = self.properties.get_object_property(query)
                 return data
         elif "Collection" in query:
             if query[-1] == " ":
-                print("Error: incorrect query")
-                return ("error")
+                logger.info("Error: incorrect query")
+                return None
             check_query = self.check_fine_query(query)
-            if check_query == "error":
-                print("Error: Incorrect query")
-                return "error"
+            if isinstance (check_query, RequestError):
+                logger.info("Error: Incorrect query")
+                return None
             else:
                 data = self.properties.get_collection_properties(query)
                 return data
         elif "class" in query and "property_value" in query:
             check_query = self.check_fine_query(query)
-            if check_query == "error":
-                print("Error: Incorrect query")
-                return "error"
+            if isinstance (check_query, RequestError):
+                logger.info("Error: Incorrect query")
+                return None
             else:
                 self.class_property = ClassPropertiesValue(self.api_doc,
                                                            self.url,
@@ -596,25 +597,25 @@ class QueryFacades:
                 return data
         elif "class" in query:
             if query[-1] == " ":
-                print("Error: incorrect query")
-                return ("error")
+                logger.info("Error: incorrect query")
+                return None
             check_query = self.check_fine_query(query)
-            if check_query == "error":
-                print("Error: Incorrect query")
-                return "error"
+            if isinstance (check_query, RequestError):
+                logger.info("Error: Incorrect query")
+                return None
             else:
                 data = self.properties.get_classes_properties(query)
                 return data
         else:
             if " and " in query or " or " in query:
                 if query[-1] == " " or query[-3] == "and" or query[-2] == "or":
-                    print("Error: incorrect query")
-                    return ("error")
+                    logger.info("Error: incorrect query")
+                    return None
                 query_len = len(query.split())
                 and_or_count = query.count("and") + query.count("or")
                 if query_len != (and_or_count + 2 * (and_or_count + 1)):
-                    print("Error: Incorrect query")
-                    return ("error")
+                    logger.info("Error: Incorrect query")
+                    return None
                 data = self.compare.object_property_comparison_list(query)
                 return data
             elif query.count(" ") == 1:
@@ -625,7 +626,8 @@ class QueryFacades:
                     if search_index == key.decode("utf8"):
                         data = self.connection.smembers(key)
                         return data
-            print("Incorrect query: Use 'help' to know about querying format")
+            logger.info("Incorrect query: Use 'help' to know about querying format")
+            return None
 
 def check_url_exist(check_url,facades):
     redis_connection = RedisProxy()
@@ -676,7 +678,7 @@ def main():
     handle_data = HandleData()
     apidoc = handle_data.load_data(url + "/vocab")
     while True:
-        if apidoc == "error":
+        if isinstance (apidoc, RequestError):
             print("enter right url")
             url = input("url>>>")
             if url == "exit":

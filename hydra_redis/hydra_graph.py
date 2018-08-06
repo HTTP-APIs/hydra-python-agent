@@ -5,32 +5,12 @@ import json
 from hydrus.hydraspec import doc_maker
 import hydrus
 from graphviz import Digraph
-from hydra_redis.classes_objects import ClassEndpoints
+from hydra_redis.classes_objects import ClassEndpoints,RequestError
 from hydra_redis.collections_endpoint import CollectionEndpoints
 from hydra_redis.redis_proxy import RedisProxy
 
 
 class InitialGraph:
-
-
-    def final_file(self,url):
-        """Open the given url and read and load the Json data.
-        :param url: given url to access the data from the server.
-        :return: data loaded from the server.
-        """
-        try:
-            response = urllib.request.urlopen(url)
-        except HTTPError as e:
-            print('Error code: ', e.code)
-            return ("error")
-        except URLError as e:
-            print('Reason: ', e.reason)
-            return ("error")
-        except ValueError as e:
-            print("value error:",e)
-            return ("error")
-        else:
-            return json.loads(response.read().decode('utf-8'))
 
 
     def get_apistructure(self,entrypoint_node, api_doc):
