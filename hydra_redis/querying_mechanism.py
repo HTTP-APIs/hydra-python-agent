@@ -60,15 +60,16 @@ class HandleData:
             # So with the help of count, byte object convert to string
             # and also show only useful strings not the query execution time.
             if count % 2 != 0:
-                for obj in objects:
-                    string = obj.decode('utf-8')
-                    map_string = map(str.strip, string.split(','))
-                    property_list = list(map_string)
-                    check = property_list.pop()
-                    property_list.append(check.replace("\x00", ""))
-                    if property_list[0] != "NULL":
-#                        print(property_list)
-                        all_property_lists.append(property_list)
+                for obj1 in objects:
+                    for obj in obj1:
+                        string = obj.decode('utf-8')
+                        map_string = map(str.strip, string.split(','))
+                        property_list = list(map_string)
+                        check = property_list.pop()
+                        property_list.append(check.replace("\x00", ""))
+                        if property_list[0] != "NULL":
+    #                        print(property_list)
+                            all_property_lists.append(property_list)
         return all_property_lists
 
 
