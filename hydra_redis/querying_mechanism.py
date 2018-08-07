@@ -1,14 +1,17 @@
 import random
 import string
+import logging
 from hydra_redis.hydra_graph import InitialGraph
 import urllib.request
 import json
 from hydrus.hydraspec import doc_maker
 from urllib.error import URLError, HTTPError
 from hydra_redis.collections_endpoint import CollectionEndpoints
-from hydra_redis.classes_objects import ClassEndpoints
+from hydra_redis.classes_objects import ClassEndpoints,RequestError
 from hydra_redis.redis_proxy import RedisProxy
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class HandleData:
     """
@@ -28,14 +31,14 @@ class HandleData:
         try:
             response = urllib.request.urlopen(url)
         except HTTPError as e:
-            print('Error code: ', e.code)
-            return ("error")
+            logger.info('Error code: ', e.code)
+            return RequestError("error")
         except URLError as e:
-            print('Reason: ', e.reason)
-            return ("error")
+            logger.info('Reason: ', e.reason)
+            return RequestError("error")
         except ValueError as e:
-            print("value error:",e)
-            return ("error")
+            logger.info("value error:", e)
+            return RequestError("error")
         else:
             return json.loads(response.read().decode('utf-8'))
 
@@ -57,15 +60,16 @@ class HandleData:
             # So with the help of count, byte object convert to string
             # and also show only useful strings not the query execution time.
             if count % 2 != 0:
-                for obj in objects:
-                    string = obj.decode('utf-8')
-                    map_string = map(str.strip, string.split(','))
-                    property_list = list(map_string)
-                    check = property_list.pop()
-                    property_list.append(check.replace("\x00", ""))
-                    if property_list[0] != "NULL":
-                        #                        print(property_list)
-                        all_property_lists.append(property_list)
+                for obj1 in objects:
+                    for obj in obj1:
+                        string = obj.decode('utf-8')
+                        map_string = map(str.strip, string.split(','))
+                        property_list = list(map_string)
+                        check = property_list.pop()
+                        property_list.append(check.replace("\x00", ""))
+                        if property_list[0] != "NULL":
+    #                        print(property_list)
+                            all_property_lists.append(property_list)
         return all_property_lists
 
 
@@ -171,7 +175,8 @@ class CollectionmembersQuery:
         """
         endpoint = query.replace(" members", "")
         if (str.encode("fs:endpoints") in self.connection.keys() and
-            str.encode(endpoint) in self.connection.smembers("fs:endpoints")): 
+                str.encode(endpoint) in self.connection.smembers(
+                                                   "fs:endpoints")):
             get_data = self.connection.execute_command(
                 'GRAPH.QUERY',
                 'apidoc',
@@ -183,7 +188,7 @@ class CollectionmembersQuery:
             return self._data.show_data(get_data)
 
         else:
-            self.connection.sadd("fs:endpoints",endpoint)
+            self.connection.sadd("fs:endpoints", endpoint)
             print(self.connection.smembers("fs:endpoints"))
             return self.data_from_server(endpoint)
 
@@ -322,7 +327,8 @@ class ClassPropertiesValue:
         query = query.replace("class", "")
         endpoint = query.replace(" property_value", "")
         if (str.encode("fs:endpoints") in self.connection.keys() and
-            str.encode(endpoint) in self.connection.smembers("fs:endpoints")):
+                str.encode(endpoint) in self.connection.smembers(
+                                                   "fs:endpoints")):
             get_data = self.connection.execute_command(
                 'GRAPH.QUERY',
                 'apidoc',
@@ -331,7 +337,7 @@ class ClassPropertiesValue:
                    RETURN p.property_value""".format(
                     endpoint))
         else:
-            self.connection.sadd("fs:endpoints",endpoint)
+            self.connection.sadd("fs:endpoints", endpoint)
             print(self.connection.smembers("fs:endpoints"))
             get_data = self.data_from_server(endpoint)
 
@@ -411,7 +417,8 @@ class CompareProperties:
 
             # design random faceted key for store result of partial query.
             faceted_key = "fs:" + \
-                ''.join(random.choice(string.ascii_letters + string.digits) for letter in range(8))
+                ''.join(random.choice(string.ascii_letters + string.digits)
+                        for letter in range(8))
             # add data in random faceted key.
             for obj in get_value:
                 self.connection.sadd(faceted_key, obj)
@@ -478,8 +485,8 @@ class CompareProperties:
     def show_data(self, get_data):
         """It returns the data in readable format."""
         property_list = []
-        for string in get_data:
-            string1 = string.decode('utf-8')
+        for string1 in get_data:
+            string1 = string1.decode('utf-8')
             property_list.append(string1)
 #        print("list   ",property_list)
         return property_list
@@ -499,15 +506,21 @@ class QueryFacades:
         self.properties = PropertiesQuery()
         self.compare = CompareProperties()
         self.test = test
+        self.redis_connection = RedisProxy()
+        self.connection = self.redis_connection.get_connection()
 
-    def initialize(self,check_commit):
+    def initialize(self, check_commit):
         """
         Initialize is used to initialize the graph for given url.
         """
         print("just initialize")
 
         self.graph = InitialGraph()
-        self.graph.main(self.url, self.api_doc,check_commit)
+        self.graph.main(self.url, self.api_doc, check_commit)
+
+    def check_fine_query(self, query):
+        if query.count(" ") != 1:
+            return RequestError("error")
 
     def user_query(self, query):
         """
@@ -524,40 +537,110 @@ class QueryFacades:
             data = self.endpoint_query.get_collectionEndpoints(query)
             return data
         elif "members" in query:
-            self.members = CollectionmembersQuery(self.api_doc,
-                                                  self.url,
-                                                  self.graph)
-            if self.test:
-                data = self.members.data_from_server(
-                    query.replace(" members", ""))
-                return data
+            check_query = self.check_fine_query(query)
+            if isinstance (check_query, RequestError):
+                logger.info("Error: Incorrect query")
+                return None
             else:
-                data = self.members.get_members(query)
-                return data
+                self.members = CollectionmembersQuery(self.api_doc,
+                                                      self.url,
+                                                      self.graph)
+                if self.test:
+                    data = self.members.data_from_server(
+                        query.replace(" members", ""))
+                    return data
+                else:
+                    data = self.members.get_members(query)
+                    return data
         elif "objects" in query:
-            data = self.properties.get_members_properties(query)
-            return data
+            if query[-1] == " ":
+                logger.info("Error: incorrect query")
+                return None
+            check_query = self.check_fine_query(query)
+            if isinstance (check_query, RequestError):
+                logger.info("Error: Incorrect query")
+                return None
+            else:
+                data = self.properties.get_members_properties(query)
+                return data
         elif "object" in query:
-            data = self.properties.get_object_property(query)
-            return data
+            if query[-1] == " ":
+                logger.info("Error: incorrect query")
+                return None
+            check_query = self.check_fine_query(query)
+            if isinstance (check_query, RequestError):
+                logger.info("Error: Incorrect query")
+                return None
+            else:
+                data = self.properties.get_object_property(query)
+                return data
         elif "Collection" in query:
-            data = self.properties.get_collection_properties(query)
-            return data
+            if query[-1] == " ":
+                logger.info("Error: incorrect query")
+                return None
+            check_query = self.check_fine_query(query)
+            if isinstance (check_query, RequestError):
+                logger.info("Error: Incorrect query")
+                return None
+            else:
+                data = self.properties.get_collection_properties(query)
+                return data
         elif "class" in query and "property_value" in query:
-            self.class_property = ClassPropertiesValue(self.api_doc,
-                                                       self.url,
-                                                       self.graph)
-            data = self.class_property.get_property_value(query)
-            return data
+            check_query = self.check_fine_query(query)
+            if isinstance (check_query, RequestError):
+                logger.info("Error: Incorrect query")
+                return None
+            else:
+                self.class_property = ClassPropertiesValue(self.api_doc,
+                                                           self.url,
+                                                           self.graph)
+                data = self.class_property.get_property_value(query)
+                return data
         elif "class" in query:
-            data = self.properties.get_classes_properties(query)
-            return data
-        elif " and " in query or " or " in query:
-            data = self.compare.object_property_comparison_list(query)
-            return data
+            if query[-1] == " ":
+                logger.info("Error: incorrect query")
+                return None
+            check_query = self.check_fine_query(query)
+            if isinstance (check_query, RequestError):
+                logger.info("Error: Incorrect query")
+                return None
+            else:
+                data = self.properties.get_classes_properties(query)
+                return data
         else:
-            print("Incorrect query: Use 'help' to know about querying format")
+            if " and " in query or " or " in query:
+                if query[-1] == " " or query[-3] == "and" or query[-2] == "or":
+                    logger.info("Error: incorrect query")
+                    return None
+                query_len = len(query.split())
+                and_or_count = query.count("and") + query.count("or")
+                if query_len != (and_or_count + 2 * (and_or_count + 1)):
+                    logger.info("Error: Incorrect query")
+                    return None
+                data = self.compare.object_property_comparison_list(query)
+                return data
+            elif query.count(" ") == 1:
+                key, value = query.split(" ")
+                print("query: ", query)
+                search_index = "fs:" + key + ":" + value
+                for key in self.connection.keys():
+                    if search_index == key.decode("utf8"):
+                        data = self.connection.smembers(key)
+                        return data
+            logger.info("Incorrect query: Use 'help' to know about querying format")
+            return None
 
+def check_url_exist(check_url,facades):
+    redis_connection = RedisProxy()
+    connection = redis_connection.get_connection()
+    url = check_url.decode("utf8")
+    if (str.encode("fs:url") in connection.keys() and
+        check_url in connection.smembers("fs:url")):
+        print("url already exist in Redis")
+        facades.initialize(False)
+    else:
+        facades.initialize(True)
+        connection.sadd("fs:url", url)
 
 def query(apidoc, url):
     """
@@ -571,13 +654,7 @@ def query(apidoc, url):
     api_doc = doc_maker.create_doc(apidoc)
     facades = QueryFacades(api_doc, url, False)
     check_url = str.encode(url)
-    if (str.encode("fs:url") in connection.keys() and 
-            check_url in connection.smembers("fs:url")):
-        print("url already exist in Redis")
-        facades.initialize(False)
-    else:
-        facades.initialize(True)
-        connection.sadd("fs:url",url)
+    check_url_exist(check_url,facades)
 
     while True:
         print("press exit to quit")
@@ -597,12 +674,12 @@ def main():
     """
     url = input("url>>>")
     if url == "exit":
-        print ("exit...")
+        print("exit...")
         return 0
     handle_data = HandleData()
     apidoc = handle_data.load_data(url + "/vocab")
     while True:
-        if apidoc == "error":
+        if isinstance (apidoc, RequestError):
             print("enter right url")
             url = input("url>>>")
             if url == "exit":

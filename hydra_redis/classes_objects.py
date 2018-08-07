@@ -1,7 +1,15 @@
 import urllib.request
 import json
+import logging
 from redisgraph import Node, Edge
+from urllib.error import URLError, HTTPError
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class RequestError(Exception):
+    """A class for client-side exceptions"""
+    pass
 
 class ClassEndpoints:
     """Contains all the classes endpoint and the objects"""
@@ -119,8 +127,19 @@ class ClassEndpoints:
         # new_url is url for the classes endpoint
         new_url = base_url + "/" + endpoint
         # retreiving data for the classes endpoint from server
-        response = urllib.request.urlopen(new_url)
-        new_file = json.loads(response.read().decode('utf-8'))
+        try:
+            response = urllib.request.urlopen(new_url)
+        except HTTPError as e:
+            logger.info('Error code: ', e.code)
+            return None
+        except URLError as e:
+            logger.info('Reason: ', e.reason)
+            return None
+        except ValueError as e:
+            logger.info("value error:", e)
+            return None
+        else:
+            new_file = json.loads(response.read().decode('utf-8'))
         # endpoint_property store all properties which is class/object but not
         # endpoint.
         for support_property in api_doc.parsed_classes[

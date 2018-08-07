@@ -1,8 +1,12 @@
 import urllib.request
 import json
 import re
-from hydra_redis.classes_objects import ClassEndpoints
+import logging
+from urllib.error import URLError, HTTPError
+from hydra_redis.classes_objects import ClassEndpoints,RequestError
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class CollectionEndpoints:
     """Contains all the collections endpoints and objects"""
@@ -16,8 +20,19 @@ class CollectionEndpoints:
         :param new_url: url for fetching the data.
         :return: loaded data.
         """
-        response = urllib.request.urlopen(new_url)
-        return json.loads(response.read().decode('utf-8'))
+        try:
+            response = urllib.request.urlopen(new_url)
+        except HTTPError as e:
+            logger.info('Error code: ', e.code)
+            return RequestError("error")
+        except URLError as e:
+            logger.info('Reason: ', e.reason)
+            return RequestError("error")
+        except ValueError as e:
+            logger.info("value error:",e)
+            return RequestError("error")
+        else:
+            return json.loads(response.read().decode('utf-8'))
 
     def faceted_key(self, fs, key, value):
         return ("{}".format(fs + ":" + key + ":" + value))
@@ -68,6 +83,8 @@ class CollectionEndpoints:
                 member_url = new_url + "/" + member_id
                 # object data retrieving from the server
                 new_file = self.fetch_data(member_url)
+                if isinstance (new_file, RequestError):
+                    return None
                 for support_operation in api_doc.parsed_classes[
                     endpoint["@type"]
                 ]["class"
@@ -161,6 +178,8 @@ class CollectionEndpoints:
         new_url = url + "/" + endpoint
         # url for every collection endpoint
         new_file = self.fetch_data(new_url)
+        if isinstance (new_file, RequestError):
+            return None
         # retrieving the objects from the collection endpoint
         for node in self.redis_graph.nodes.values():
             if node.alias == endpoint:
