@@ -5,21 +5,12 @@ import json
 from hydrus.hydraspec import doc_maker
 import hydrus
 from graphviz import Digraph
-from hydra_redis.classes_objects import ClassEndpoints
+from hydra_redis.classes_objects import ClassEndpoints,RequestError
 from hydra_redis.collections_endpoint import CollectionEndpoints
 from hydra_redis.redis_proxy import RedisProxy
 
 
 class InitialGraph:
-
-
-    def final_file(self,url):
-        """Open the given url and read and load the Json data.
-        :param url: given url to access the data from the server.
-        :return: data loaded from the server.
-        """
-        response = urllib.request.urlopen(url)
-        return json.loads(response.read().decode('utf-8'))
 
 
     def get_apistructure(self,entrypoint_node, api_doc):
@@ -68,17 +59,19 @@ class InitialGraph:
         return self.get_apistructure(entrypoint_node, api_doc)
 
 
-    def main(self,new_url,api_doc):
+
+    def main(self,new_url,api_doc,check_commit):
         redis_connection = RedisProxy()
         redis_con = redis_connection.get_connection()
         self.url = new_url
         self.redis_graph = Graph("apidoc", redis_con)
         print("loading... of graph")
         self.get_endpoints(api_doc, redis_con)
-        print("commiting")
-        self.redis_graph.commit()
-        # creating whole the graph in redis
-        print("done!!!!")
+        if check_commit:
+            print("commiting")
+            self.redis_graph.commit()
+            # creating whole the graph in redis
+            print("done!!!!")
         # uncomment below 2 lines for getting nodes for whole graph
     #    for node in redis_graph.nodes.values():
     #        print("\n",node.alias)

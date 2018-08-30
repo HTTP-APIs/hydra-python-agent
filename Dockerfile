@@ -10,3 +10,6 @@ COPY ./hydra_redis /home/app/hydra_redis
 ENV PYTHONPATH $PYTHONPATH:/home/app/
 
 ENTRYPOINT ["python", "/home/app/hydra_redis/querying_mechanism.py"]
+
+
+
