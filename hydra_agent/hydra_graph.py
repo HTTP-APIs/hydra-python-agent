@@ -5,9 +5,9 @@ import json
 from hydrus.hydraspec import doc_maker
 import hydrus
 from graphviz import Digraph
-from hydra_redis.classes_objects import ClassEndpoints,RequestError
-from hydra_redis.collections_endpoint import CollectionEndpoints
-from hydra_redis.redis_proxy import RedisProxy
+from hydra_agent.classes_objects import ClassEndpoints,RequestError
+from hydra_agent.collections_endpoint import CollectionEndpoints
+from hydra_agent.redis_proxy import RedisProxy
 
 
 class InitialGraph:

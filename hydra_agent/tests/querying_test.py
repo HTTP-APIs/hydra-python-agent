@@ -4,7 +4,7 @@ import json
 import redis
 from hydrus.hydraspec import doc_maker
 from os import sys, path
-from hydra_redis import querying_mechanism
+from hydra_agent import querying_mechanism
 
 class TestQueryingMechanism(unittest.TestCase):
 
