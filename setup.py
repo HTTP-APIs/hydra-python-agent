@@ -25,6 +25,6 @@ setup(name='python-hydra-agent',
       install_requires=dependencies,
       packages=find_packages(
           exclude=['hydra','examples','test*','python_whihydra_agent.egg-info']),
-      package_dir={'hydra_redis':
-                   'hydra_redis'},
+      package_dir={'hydra_agent':
+                   'hydra_agent'},
       )
