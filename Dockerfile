@@ -6,10 +6,10 @@ MAINTAINER Sandeep Chauhan <sandeepsajan0@gmail.com>
 COPY ./requirements.txt /home/requirements.txt
 RUN pip install -r /home/requirements.txt
 
-COPY ./hydra_redis /home/app/hydra_redis
+COPY ./hydra_agent /home/app/hydra_agent
 ENV PYTHONPATH $PYTHONPATH:/home/app/
 
-ENTRYPOINT ["python", "/home/app/hydra_redis/querying_mechanism.py"]
+ENTRYPOINT ["python", "/home/app/hydra_agent/querying_mechanism.py"]
 
 
 
