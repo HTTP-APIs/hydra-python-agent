@@ -1,4 +1,4 @@
-# python-hydra-agent
+# python-hydra-agent [![Build Status](https://travis-ci.com/HTTP-APIs/python-hydra-agent.svg?branch=master)](https://travis-ci.com/HTTP-APIs/python-hydra-agent)
 
 For a general introduction to Hydra Ecosystem, see [hydraecosystem.org](http://hydraecosystem.org).
 
