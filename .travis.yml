@@ -1,0 +1,18 @@
+language: python
+services:
+  - docker
+  
+before_script:
+  - docker run -d -p 6379:6379 -it --rm --name redisgraph redislabs/redisgraph
+
+python:
+  - "3.5"
+  - "3.5-dev"  # 3.5 development branch
+  - "3.6"
+  - "3.6-dev"  # 3.6 development branch
+  - "3.7-dev"
+install:
+  - pip install -e git+https://github.com/HTTP-APIs/hydrus#egg=hydrus
+  - pip install -e .
+  
+script: python -m unittest discover
