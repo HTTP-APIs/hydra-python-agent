@@ -13,6 +13,6 @@ python:
   - "3.7-dev"
 install:
   - pip install -e git+https://github.com/HTTP-APIs/hydrus#egg=hydrus
-  - pip install .
+  - pip install -e .
   
 script: python -m unittest discover
