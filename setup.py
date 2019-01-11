@@ -12,7 +12,9 @@ except ImportError:  # for pip <= 9.0.3
 
 
 install_requires = parse_requirements('requirements.txt', session=PipSession())
-dependencies = [str(package.req) for package in install_requires]
+dependencies = [
+    str(package.req) for package in install_requires].append(
+    "git+https://github.com/HTTP-APIs/hydrus.git")
 
 setup(name='python-hydra-agent',
       include_package_data=True,
@@ -24,7 +26,7 @@ setup(name='python-hydra-agent',
       python_requires='>=3',
       install_requires=dependencies,
       packages=find_packages(
-          exclude=['hydra','examples','test*','python_whihydra_agent.egg-info']),
+          exclude=['hydra', 'examples', 'test*', 'python_whihydra_agent.egg-info']),
       package_dir={'hydra_agent':
                    'hydra_agent'},
       )
