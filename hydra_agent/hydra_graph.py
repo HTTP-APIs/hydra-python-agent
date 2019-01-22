@@ -55,7 +55,7 @@ class InitialGraph:
             alias="Entrypoint",
             properties=entrypoint_properties)
         self.redis_graph.add_node(entrypoint_node)
-        redis_connection.set("EntryPoint", entrypoint_properties)
+        redis_connection.set("EntryPoint", json.dumps(entrypoint_properties))
         return self.get_apistructure(entrypoint_node, api_doc)
 
 
