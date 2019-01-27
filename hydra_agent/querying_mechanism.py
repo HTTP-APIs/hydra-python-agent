@@ -31,13 +31,13 @@ class HandleData:
         try:
             response = urllib.request.urlopen(url)
         except HTTPError as e:
-            logger.info('Error code: ', e.code)
+            logger.info('Error Code: {}'.format(e.code))
             return RequestError("error")
         except URLError as e:
-            logger.info('Reason: ', e.reason)
+            logger.info('Reason: {}'.format(e.reason))
             return RequestError("error")
         except ValueError as e:
-            logger.info("value error:", e)
+            logger.info("Value Error: {}".format(e))
             return RequestError("error")
         else:
             return json.loads(response.read().decode('utf-8'))
