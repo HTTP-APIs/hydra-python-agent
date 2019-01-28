@@ -1,8 +1,0 @@
-rdflib
-rdflib-jsonld
-uritemplate
-httplib2
-redis
-redisgraph
-graphviz
--e git+https://github.com/HTTP-APIs/hydrus.git#egg=hydrus
