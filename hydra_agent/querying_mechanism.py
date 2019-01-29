@@ -1,98 +1,38 @@
 import json
 import random
 import string
-import logging
-import urllib.request
 from utils.help import help
+from utils.encode_result import encode_result
 from redis_proxy import RedisProxy
+from utils.handle_data import HandleData
 from hydra_graph import InitialGraph
-from urllib.error import URLError, HTTPError
 from hydra_python_core.doc_maker import create_doc
 from collections_endpoint import CollectionEndpoints
-from classes_objects import ClassEndpoints, RequestError
-
-#Setting up the logger
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
-class HandleData:
-    """
-    HandleData is used to manipulate data
-
-    No public attributes.
-    """
-
-    def load_data(self, url):
-        """
-        Gets a response from the url provided
-
-        Also handles the HTTPErrors that might arise
-
-        :param url: url for access data from the server.
-        :return: loaded data
-        """
-
-        try:
-            with urllib.request.urlopen(url) as response:
-                return json.loads(response.read().decode('utf-8'))
-        except HTTPError as e:
-            logger.info(f'Error code: {e.code}')
-            return RequestError("error")
-        except URLError as e:
-            logger.info(f'Reason: {e.reason}')
-            return RequestError("error")
-        except ValueError as e:
-            logger.info(f"Value Error: {e}")
-            return RequestError("error")
-
-    def show_data(self, get_data):
-        """
-        Make the given data readable, because now it is in binary string form.
-        Count is using for avoid stuffs like query internal execution time.
-        :param get_data: data get from the Redis memory.
-        """
-        count = 0
-        all_property_lists = []
-        for objects in get_data:
-            count += 1
-            # Show data only for odd value of count.
-            # because for even value it contains stuffs like time and etc.
-            # ex: Redis provide data like if we query class endpoint
-            # output like:
-            # [[endpoints in byte object form],[query execution time:0.5ms]]
-            # So with the help of count, byte object convert to string
-            # and also show only useful strings not the query execution time.
-            if count % 2 != 0:
-                for obj1 in objects:
-                    for obj in obj1:
-                        string = obj.decode('utf-8')
-                        map_string = map(str.strip, string.split(','))
-                        property_list = list(map_string)
-                        check = property_list.pop()
-                        property_list.append(check.replace("\x00", ""))
-                        if property_list[0] != "NULL":
-                            #                        print(property_list)
-                            all_property_lists.append(property_list)
-        return all_property_lists
+from utils.classes_objects import ClassEndpoints, RequestError
 
 
 class EndpointQuery:
     """
     EndpointQuery is used for get the endpoints from the Redis.
+
+    Attributes:
+        connection(RedisProxy) : Redis
+        handle_data()
     """
 
     def __init__(self):
-        self.redis_connection = RedisProxy()
-        self.handle_data = HandleData()
-        self.connection = self.redis_connection.get_connection()
-        self._data = self.handle_data
+        self.connection = RedisProxy().get_connection()
+        self._data = HandleData.load_data()
 
-    def get_allEndpoints(self, query, graph):
+    def get_allEndpoints(self, query : str, graph):
         """
-        It will return both type(class and collection) of endpoints.
-        :param query: query gets from the user, Ex: endpoints
-        :param graph: mainGraph stored in the redis.
+        Gets all the endpoints(classEndpoints as well as collectionEndpoints)
+
+        Args:
+            query: query gets from the user, Ex: endpoints
+            graph: mainGraph stored in the redis.
+        Returns:
+            result_set(str): Data stored in redis
         """
 
         graphQueryClass = 'MATCH (p:classes) RETURN p'
@@ -103,18 +43,23 @@ class EndpointQuery:
 
         encode_result(resultClass)
         encode_result(resultCollection)
-   
+
         print("Class Endpoints -- \n")
         resultClass.pretty_print()
         print("Collection Endpoints -- \n")
         resultCollection.pretty_print()
 
+        return str(resultClass.result_set) + str(resultCollection.result_set) 
+
     def get_classEndpoints(self, query, graph):
         """
         It will return all class Endpoints.
-        :param query: query get from user, Ex: classEndpoint
-        :param graph: mainGraph stored in the redis.
-        :return: get data from the Redis memory.
+        Args:
+            query: query gets from the user, Ex: endpoints
+            graph: mainGraph stored in the redis.
+        
+        Returns:
+            result_set(str): Data stored in redis
         """
 
         graphQueryClass = 'MATCH (p:classes) RETURN p'
@@ -140,7 +85,7 @@ class EndpointQuery:
 
         print("Collection Endpoints-- \n")
         resultCollection.pretty_print()
-        
+
         return resultCollection
 
 
@@ -728,16 +673,7 @@ def main():
     return query(facades)
 
 
-def encode_result(result):
-    for record in result.result_set[0:]:
-        for item in range(len(record)):
-            record[item] = record[item].decode('utf-8')
-    result.statistics = ""
-
 # help command for various commands and their formats
-
-
-
 
 
 if __name__ == "__main__":
