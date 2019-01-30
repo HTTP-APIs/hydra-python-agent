@@ -1,12 +1,11 @@
 import json
 import logging
 import urllib.request
-from classes_objects import RequestError
+from core.utils.classes_objects import RequestError
 from urllib.error import URLError, HTTPError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 class HandleData:
     """

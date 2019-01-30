@@ -1,130 +1,66 @@
-import json
 import random
 import string
-from utils.help import help
-from utils.encode_result import encode_result
-from redis_proxy import RedisProxy
-from utils.handle_data import HandleData
+import logging
+from redisgraph import Graph
+from core.utils.help import help
+from core.utils.encode_result import encode_result
+from core.utils.redis_proxy import RedisProxy
+from core.utils.handle_data import HandleData
 from hydra_graph import InitialGraph
 from hydra_python_core.doc_maker import create_doc
 from collections_endpoint import CollectionEndpoints
-from utils.classes_objects import ClassEndpoints, RequestError
+from core.utils.classes_objects import ClassEndpoints, RequestError
+from core.end_point_query import EndPointQuery
+from core.utils.check_url import check_url_exist
 
-
-class EndpointQuery:
-    """
-    EndpointQuery is used for get the endpoints from the Redis.
-
-    Attributes:
-        connection(RedisProxy) : Redis
-        handle_data()
-    """
-
-    def __init__(self):
-        self.connection = RedisProxy().get_connection()
-        self._data = HandleData.load_data()
-
-    def get_allEndpoints(self, query : str, graph):
-        """
-        Gets all the endpoints(classEndpoints as well as collectionEndpoints)
-
-        Args:
-            query: query gets from the user, Ex: endpoints
-            graph: mainGraph stored in the redis.
-        Returns:
-            result_set(str): Data stored in redis
-        """
-
-        graphQueryClass = 'MATCH (p:classes) RETURN p'
-        graphQueryCollections = 'MATCH (p:collection) RETURN p'
-
-        resultClass = graph.query(graphQueryClass)
-        resultCollection = graph.query(graphQueryCollections)
-
-        encode_result(resultClass)
-        encode_result(resultCollection)
-
-        print("Class Endpoints -- \n")
-        resultClass.pretty_print()
-        print("Collection Endpoints -- \n")
-        resultCollection.pretty_print()
-
-        return str(resultClass.result_set) + str(resultCollection.result_set) 
-
-    def get_classEndpoints(self, query, graph):
-        """
-        It will return all class Endpoints.
-        Args:
-            query: query gets from the user, Ex: endpoints
-            graph: mainGraph stored in the redis.
-        
-        Returns:
-            result_set(str): Data stored in redis
-        """
-
-        graphQueryClass = 'MATCH (p:classes) RETURN p'
-        resultClass = graph.query(graphQueryClass)
-        encode_result(resultClass)
-
-        print("Class Endpoints -- \n")
-        resultClass.pretty_print()
-
-        return resultClass
-
-    def get_collectionEndpoints(self, query, graph):
-        """
-        It will returns all collection Endpoints.
-        :param query: query get from the user, Ex: collectionEndpoint
-        :param graph: mainGraph stored in the redis.
-        :return: get data from the Redis memory.
-        """
-
-        graphQueryCollections = 'MATCH (p:collection) RETURN p'
-        resultCollection = graph.query(graphQueryCollections)
-        encode_result(resultCollection)
-
-        print("Collection Endpoints-- \n")
-        resultCollection.pretty_print()
-
-        return resultCollection
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class CollectionMembersQuery:
     """
-    CollectionMembersQuery is used for fetching members of any CollectionEndpoint.
+    CollectionMembersQuery is used for fetching members of any
+    CollectionEndpoints.
     It fetches data from the server and stores it in the redis memory.
 
-    "fs:endpoints" is using as a faceted index,
-    for track which collection endpoint's data is stored in Redis.
+    Attributes:
+        connection(RedisProxy): An instance of redis client.
+
+
     """
 
     def __init__(self, api_doc, url, graph):
-        self.redis_connection = RedisProxy()
-        self.handle_data = HandleData()
-        self.connection = self.redis_connection.get_connection()
-        self._data = self.handle_data
-        self.collection = CollectionEndpoints(graph.redis_graph,
-                                              graph.class_endpoints)
+        self.connection = RedisProxy.get_connection()
+        self.collection = CollectionEndpoints(
+            graph.redis_graph, graph.class_endpoints)
         self.api_doc = api_doc
         self.url = url
+        self._data = HandleData.load_data(self.url)
+        self.graph = graph
 
     def data_from_server(self, endpoint):
         """
         Load data from the server for first time.
-        :param endpoint: endpoint for getting data from the server.
+
+        Args:
+            endpoint: collectionEndpoint to load members from.
+
         :return: get data from the Redis memory.
         """
-        self.collection.load_from_server(endpoint,
-                                         self.api_doc,
-                                         self.url,
-                                         self.connection)
-        get_data = self.connection.execute_command(
-            'GRAPH.QUERY',
-            'apidoc',
-            'MATCH(p:collection) WHERE(p.type="{}") RETURN p.members'.format(
-                endpoint))
-        print(endpoint, " members")
-        return self._data.show_data(get_data)
+        self.collection.load_from_server(
+            endpoint, self.api_doc, self.url, self.connection
+        )
+
+        graphQuery = 'MATCH (p:collection) WHERE(p.type="{}") RETURN p.members'.format(
+            endpoint
+        )
+        resultData = self.graph.redis_graph.query(graphQuery)
+        encode_result(resultData)
+
+        print("Collection {} Members -- \n".format(endpoint))
+        resultData.pretty_print()
+
+        return resultData.result_set
 
     def get_members(self, query):
         """
@@ -133,16 +69,18 @@ class CollectionMembersQuery:
         :return: get data from the Redis memory.
         """
         endpoint = query.replace(" members", "")
-        if (str.encode("fs:endpoints") in self.connection.keys() and
-                str.encode(endpoint) in self.connection.smembers(
-                "fs:endpoints")):
+        if str.encode("fs:endpoints") in self.connection.keys() and str.encode(
+            endpoint
+        ) in self.connection.smembers("fs:endpoints"):
             get_data = self.connection.execute_command(
-                'GRAPH.QUERY',
-                'apidoc',
+                "GRAPH.QUERY",
+                "apidoc",
                 """MATCH(p:collection)
                    WHERE(p.type='{}')
                    RETURN p.members""".format(
-                    endpoint))
+                    endpoint
+                ),
+            )
             print(endpoint, " members")
             return self._data.show_data(get_data)
 
@@ -173,11 +111,12 @@ class PropertiesQuery:
         query = query.replace("class", "")
         endpoint, query = query.split(" ")
         get_data = self.connection.execute_command(
-            'GRAPH.QUERY',
-            'apidoc',
+            "GRAPH.QUERY",
+            "apidoc",
             'MATCH ( p:classes ) WHERE (p.type="{}") RETURN p.{}'.format(
-                endpoint,
-                query))
+                endpoint, query
+            ),
+        )
         print("class", endpoint, query)
         return self._data.show_data(get_data)
 
@@ -190,11 +129,12 @@ class PropertiesQuery:
         endpoint, query = query.split(" ")
 
         get_data = self.connection.execute_command(
-            'GRAPH.QUERY',
-            'apidoc',
+            "GRAPH.QUERY",
+            "apidoc",
             'MATCH ( p:collection ) WHERE (p.type="{}") RETURN p.{}'.format(
-                endpoint,
-                query))
+                endpoint, query
+            ),
+        )
 
         print("collection", endpoint, query)
         return self._data.show_data(get_data)
@@ -207,11 +147,10 @@ class PropertiesQuery:
         """
         endpoint, query = query.split(" ")
         get_data = self.connection.execute_command(
-            'GRAPH.QUERY',
-            'apidoc',
-            'MATCH ( p:{} ) RETURN p.id,p.{}'.format(
-                endpoint,
-                query))
+            "GRAPH.QUERY",
+            "apidoc",
+            "MATCH ( p:{} ) RETURN p.id,p.{}".format(endpoint, query),
+        )
 
         print("member", endpoint, query)
         return self._data.show_data(get_data)
@@ -227,12 +166,12 @@ class PropertiesQuery:
         index = endpoint.find("Collection")
         id_ = "object" + endpoint[5:index]
         get_data = self.connection.execute_command(
-            'GRAPH.QUERY',
-            'apidoc',
+            "GRAPH.QUERY",
+            "apidoc",
             'MATCH ( p:{}) WHERE (p.parent_id = "{}") RETURN p.{}'.format(
-                id_,
-                endpoint,
-                query))
+                id_, endpoint, query
+            ),
+        )
 
         print("object", endpoint, query)
         return self._data.show_data(get_data)
@@ -249,8 +188,7 @@ class ClassPropertiesValue:
         self.handle_data = HandleData()
         self.connection = self.redis_connection.get_connection()
         self._data = self.handle_data
-        self.clas = ClassEndpoints(graph.redis_graph,
-                                   graph.class_endpoints)
+        self.clas = ClassEndpoints(graph.redis_graph, graph.class_endpoints)
 
         self.api_doc = api_doc
         self.url = url
@@ -261,18 +199,18 @@ class ClassPropertiesValue:
         :param endpoint: endpoint for getting data from the server.
         :return: get data from the Redis memory.
         """
-        self.clas.load_from_server(endpoint,
-                                   self.api_doc,
-                                   self.url,
-                                   self.connection)
+        self.clas.load_from_server(
+            endpoint, self.api_doc, self.url, self.connection)
 
         get_data = self.connection.execute_command(
-            'GRAPH.QUERY',
-            'apidoc',
+            "GRAPH.QUERY",
+            "apidoc",
             """MATCH(p:classes)
                WHERE(p.type='{}')
                RETURN p.property_value""".format(
-                endpoint))
+                endpoint
+            ),
+        )
         return get_data
 
     def get_property_value(self, query):
@@ -285,16 +223,18 @@ class ClassPropertiesValue:
         """
         query = query.replace("class", "")
         endpoint = query.replace(" property_value", "")
-        if (str.encode("fs:endpoints") in self.connection.keys() and
-                str.encode(endpoint) in self.connection.smembers(
-                "fs:endpoints")):
+        if str.encode("fs:endpoints") in self.connection.keys() and str.encode(
+            endpoint
+        ) in self.connection.smembers("fs:endpoints"):
             get_data = self.connection.execute_command(
-                'GRAPH.QUERY',
-                'apidoc',
+                "GRAPH.QUERY",
+                "apidoc",
                 """MATCH (p:classes)
                    WHERE (p.type = '{}')
                    RETURN p.property_value""".format(
-                    endpoint))
+                    endpoint
+                ),
+            )
         else:
             self.connection.sadd("fs:endpoints", endpoint)
             print(self.connection.smembers("fs:endpoints"))
@@ -322,7 +262,7 @@ class CompareProperties:
         """
         It is simply concatenate the arguments and make faceted key.
         """
-        return ("{}".format("fs:" + key + ":" + value))
+        return "{}".format("fs:" + key + ":" + value)
 
     def convert_byte_string(self, value_set):
         """
@@ -330,7 +270,7 @@ class CompareProperties:
         """
         new_value_set = set()
         for obj in value_set:
-            string = obj.decode('utf-8')
+            string = obj.decode("utf-8")
             new_value_set.add(string)
         return new_value_set
 
@@ -352,12 +292,12 @@ class CompareProperties:
                 while query_list.count("or") > 0:
                     query_list.remove("or")
                 get_data = self.connection.sunion(*query_list)
-                return (get_data)
+                return get_data
             else:
                 while query_list.count("and") > 0:
                     query_list.remove("and")
                 get_data = self.connection.sinter(*query_list)
-                return (get_data)
+                return get_data
         else:
             # if both the operators are present in query
             for query_element in query_list:
@@ -371,21 +311,24 @@ class CompareProperties:
                     open_index = i
                     break
             get_value = self.and_or_query(
-                query_list[open_index + 1:close_index])
+                query_list[open_index + 1: close_index])
             get_value = self.convert_byte_string(get_value)
 
             # design random faceted key for store result of partial query.
-            faceted_key = "fs:" + \
-                ''.join(random.choice(string.ascii_letters + string.digits)
-                        for letter in range(8))
+            faceted_key = "fs:" + "".join(
+                random.choice(string.ascii_letters + string.digits)
+                for letter in range(8)
+            )
             # add data in random faceted key.
             for obj in get_value:
                 self.connection.sadd(faceted_key, obj)
             # add new executed partial query value with key in query list.
             query_list.insert(open_index, faceted_key)
             # generate new query after remove executed partial query
-            query_list = query_list[0:open_index + 1] + \
-                query_list[close_index + 2:len(query_list)]
+            query_list = (
+                query_list[0: open_index + 1]
+                + query_list[close_index + 2: len(query_list)]
+            )
             return self.and_or_query(query_list)
 
     def object_property_comparison_list(self, query):
@@ -408,10 +351,9 @@ class CompareProperties:
 
                 faceted_list.append(self.faceted_key(key, value))
                 query_list.append(
-                    self.faceted_key(
-                        key.replace(
-                            "(", ""), value.replace(
-                            ")", "")))
+                    self.faceted_key(key.replace(
+                        "(", ""), value.replace(")", ""))
+                )
                 while ")" in value:
                     query_list.append(")")
                     value = value.replace(")", "", 1)
@@ -424,10 +366,9 @@ class CompareProperties:
 
                 faceted_list.append(self.faceted_key(key, value))
                 query_list.append(
-                    self.faceted_key(
-                        key.replace(
-                            "(", ""), value.replace(
-                            ")", "")))
+                    self.faceted_key(key.replace(
+                        "(", ""), value.replace(")", ""))
+                )
                 while ")" in value:
                     query_list.append(")")
                     value = value.replace(")", "", 1)
@@ -445,9 +386,9 @@ class CompareProperties:
         """It returns the data in readable format."""
         property_list = []
         for string1 in get_data:
-            string1 = string1.decode('utf-8')
+            string1 = string1.decode("utf-8")
             property_list.append(string1)
-#        print("list   ",property_list)
+        #        print("list   ",property_list)
         return property_list
 
 
@@ -458,7 +399,7 @@ class QueryFacades:
     """
 
     def __init__(self, api_doc, url, test):
-        self.endpoint_query = EndpointQuery()
+        self.endpoint_query = EndPointQuery()
         self.api_doc = api_doc
         self.url = url
         self.properties = PropertiesQuery()
@@ -475,8 +416,8 @@ class QueryFacades:
         """
         print("Initializing the graph...")
 
-        self.graph = InitialGraph()
-        self.mainGraph = self.graph.main(self.url, self.api_doc, check_commit)
+        self.graph = InitialGraph(self.url, self.api_doc)
+        self.graph.main(check_commit)
 
     def check_fine_query(self, query):
         if query.count(" ") != 1:
@@ -490,16 +431,15 @@ class QueryFacades:
         query = query.replace("show ", "")
 
         if query == "endpoints":
-            self.endpoint_query.get_allEndpoints(query, self.mainGraph)
+            self.endpoint_query.get_allEndpoints(query, self.graph)
 
         elif query == "classEndpoints":
-            data = self.endpoint_query.get_classEndpoints(
-                query, self.mainGraph)
+            data = self.endpoint_query.get_classEndpoints(query, self.graph)
             return data
 
         elif query == "collectionEndpoints":
             data = self.endpoint_query.get_collectionEndpoints(
-                query, self.mainGraph)
+                query, self.graph)
             return data
 
         elif "members" in query:
@@ -508,9 +448,9 @@ class QueryFacades:
                 logger.info("Error: Incorrect query")
                 return None
             else:
-                self.members = CollectionMembersQuery(self.api_doc,
-                                                      self.url,
-                                                      self.graph)
+                self.members = CollectionMembersQuery(
+                    self.api_doc, self.url, self.graph
+                )
                 if self.test:
                     data = self.members.data_from_server(
                         query.replace(" members", ""))
@@ -557,9 +497,9 @@ class QueryFacades:
                 logger.info("Error: Incorrect query")
                 return None
             else:
-                self.class_property = ClassPropertiesValue(self.api_doc,
-                                                           self.url,
-                                                           self.graph)
+                self.class_property = ClassPropertiesValue(
+                    self.api_doc, self.url, self.graph
+                )
                 data = self.class_property.get_property_value(query)
                 return data
         elif "class" in query:
@@ -598,27 +538,6 @@ class QueryFacades:
             return None
 
 
-def check_url_exist(check_url, facades):
-    """
-    Checks whether URL already exists in Redis or not.
-
-    :param check_url: The URL to be checked.
-
-    :param facades: Instance of `QueryFacades` used for initializing the graph.
-    """
-
-    redis_connection = RedisProxy()
-    connection = redis_connection.get_connection()
-    url = check_url.decode("utf8")
-    if (str.encode("fs:url") in connection.keys() and
-            check_url in connection.smembers("fs:url")):
-        print("URL already exist in Redis")
-        facades.initialize(False)
-    else:
-        facades.initialize(True)
-        connection.sadd("fs:url", url)
-
-
 def query(facades):
     """
     Used to query the API Documentation
@@ -635,18 +554,39 @@ def query(facades):
         elif query == "help":
             help()
         else:
-            print(facades.user_query(query))
+            facades.user_query(query)
+
+
+def connect():
+    """Prompts user for URL of the API and initializes a graph"""
+
+    url = input(
+        "Please input the address of the API you want to connect to -> "
+    ).strip()
+
+    url_response = HandleData().load_data(url + "/vocab")
+
+    if isinstance(url_response, RequestError):
+        print("\nInvalid URL. Please try again using 'connect' command\n")
+    else:
+        api_doc = create_doc(url_response)
+        facades = QueryFacades(api_doc, url, False)
+        check_url = str.encode(url)
+        check_url_exist(check_url, facades)
+        return facades
 
 
 def main():
     """
-    Takes a command as an input
+    Main function
 
-    :return: data returned from the `query` function.
+    Returns:
+        Data returned from the query function.
     """
 
+    facades = None
     # Prompt the user for a command and check the response
-    while True:
+    while facades is None:
         command = input(">>>").strip().lower()
         if command == "exit":
             print("Exiting. Bye bye...")
@@ -655,25 +595,10 @@ def main():
             help()
             continue
         elif command == "connect":
-            url = input(
-                "Please input the address of the API you want to connect to -> ").strip()
-            url_response = HandleData().load_data(url+"/vocab")
-
-            if isinstance(url_response, RequestError):
-                print("\nInvalid URL. Please try again using 'connect' command\n")
-                continue
-            else:
-                api_doc = create_doc(url_response)
-                facades = QueryFacades(api_doc, url, False)
-                check_url = str.encode(url)
-                check_url_exist(check_url, facades)
-                break
+            facades = connect()
         else:
             print("Invalid Command")
     return query(facades)
-
-
-# help command for various commands and their formats
 
 
 if __name__ == "__main__":

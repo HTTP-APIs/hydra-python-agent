@@ -1,21 +1,30 @@
-import redis
 from redisgraph import Graph, Node
-import urllib.request
 import json
 from hydra_python_core import doc_writer
-from classes_objects import ClassEndpoints, RequestError
+from core.utils.classes_objects import ClassEndpoints
 from collections_endpoint import CollectionEndpoints
-from redis_proxy import RedisProxy
+from core.utils.redis_proxy import RedisProxy
 
 
 class InitialGraph:
+    """Creates a redis graph for the provided api doc
+
+    Attributes:
+        url: URL for the API Documentation.
+    """
+
+    def __init__(self, url, api_doc):
+        self.url = url
+        self.api_doc = api_doc
+        self.class_endpoints = {}
+        self.collection_endpoints = {}
 
     def get_apistructure(self, entrypoint_node, api_doc):
-        """ It breaks the endpoint into two parts collectionEndpoints and classEndpoints"""
+        """ It breaks the endpoint into two parts ``collectionEndpoints`` and
+        ``classEndpoints``"""
 
-        self.collection_endpoints = {}
-        self.class_endpoints = {}
-        print("Spliting Entrypoint into 2 types of Endpoints -- collectionEndpoints and classEndpoints")
+        print('Spliting Entrypoint into 2 types of Endpoints -- ',
+              'collectionEndpoints and classEndpoints')
         for support_property in api_doc.entrypoint.entrypoint.supportedProperty:
             if isinstance(
                     support_property,
@@ -40,10 +49,10 @@ class InitialGraph:
                 self.url)
 
     def get_endpoints(self, api_doc, redis_connection):
-        """Create node for entrypoint
+        """Creates entrypoint node
         """
 
-        print("Creating Entrypoint Node")
+        print("Creating Entrypoint Node...")
         entrypoint_properties = {}
         entrypoint_properties["@id"] = str("vocab:Entrypoint")
         entrypoint_properties["url"] = str(
@@ -57,19 +66,23 @@ class InitialGraph:
         redis_connection.set("EntryPoint", json.dumps(entrypoint_properties))
         return self.get_apistructure(entrypoint_node, api_doc)
 
-    def main(self, new_url, api_doc, check_commit):
-        redis_connection = RedisProxy()
-        redis_con = redis_connection.get_connection()
-        self.url = new_url
-        self.redis_graph = Graph("apidoc", redis_con)
+    def main(self, check_commit):
+        connection = RedisProxy.get_connection()
+        self.redis_graph = Graph("apidoc", connection)
+
         print("Initializing Graph...")
-        self.get_endpoints(api_doc, redis_con)
+
+        self.get_endpoints(self.api_doc, connection)
+
         if check_commit:
-            print("commiting")
-            self.redis_graph.commit()
-            # creating whole the graph in redis
-            print("done!!!!")
+            print("Commiting...")
+            try:
+                self.redis_graph.commit()
+            except Exception as err:
+                raise(err)
+            print("Done!")
         return self.redis_graph
+
         # uncomment below 2 lines for getting nodes for whole graph
     #    for node in redis_graph.nodes.values():
     #        print("\n",node.alias)

@@ -1,5 +1,8 @@
+"""Help function to help user with commands and their formats"""
+
+
 def help():
-    """ Client Commands """
+    """ Help function to help user with commands and their formats"""
     print("Connecting to an API :- \n")
     print("connect\n")
     print("Querying Format\n")

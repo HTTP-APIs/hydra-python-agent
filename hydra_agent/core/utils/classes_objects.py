@@ -1,15 +1,17 @@
-import urllib.request
 import json
 import logging
+import urllib.request
 from redisgraph import Node, Edge
 from urllib.error import URLError, HTTPError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class RequestError(Exception):
     """A class for client-side exceptions"""
     pass
+
 
 class ClassEndpoints:
     """Contains all the classes endpoint and the objects"""
@@ -18,32 +20,46 @@ class ClassEndpoints:
         self.redis_graph = redis_graph
         self.class_endpoints = class_endpoints
 
-    def addNode(self, label1, alias1, properties1):
+    def addNode(self, label, alias, properties):
         """
-        Add node to the redis graph
-        :param label1: label for the node.
-        :param alias1: alias for the node.
-        :param properties: properties for the node.
-        :return: Created Node
+        Add node to the redis graph.
+
+        Args:
+            label: Label for the Node.
+            alias: Alias for the Node.
+            properties: Properties of the Node.
+        Returns:
+            Node object created by the function.
         """
-        node = Node(label=label1, alias=alias1, properties=properties1)
+        node = Node(label=label, alias=alias, properties=properties)
         self.redis_graph.add_node(node)
         return node
 
-    def addEdge(self, source_node, predicate, dest_node):
-        """Add edge between nodes in redis graph
-        :param source_node: source node of the edge.
-        :param predicate: relationship between the source and destination node
-        :param dest_node: destination node of the edge.
+    def addEdge(self, subject_node, predicate, object_node):
+        """Add edge between 2 nodes in the redis graph.
+
+        Args:
+            subject_node: Subject of the new triple.
+            predicate: Predicate of the new triple.
+            object_node: Object of the new triple.
         """
-        edge = Edge(source_node, predicate, dest_node)
-        self.redis_graph.add_edge(edge)
+        edge = Edge(subject_node, predicate, object_node)
+        try:
+            self.redis_graph.add_edge(edge)
+        except Exception as err:
+            logger.error("Error : {}".format(err))
 
     def get_operation(self, api_doc, endpoint):
-        """Return all the supportedOperations for given endpoint
-        :param api_doc: Apidocumentaion for particular url.
-        :param endpoint: particular endpoint for getting supportedOperations.
-        :return: All operations for endpoint.
+        """
+        Return all the supportedOperations for given endpoint.
+
+        Args:
+            api_doc: API Documentaion for particular url.
+            endpoint: Particular endpoint for getting
+            supportedOperations.
+
+        Returns:
+            List of supportedOperations.
         """
         endpoint_method = []
 
@@ -51,8 +67,6 @@ class ClassEndpoints:
                 endpoint][
                 "class"].supportedOperation:
             endpoint_method.append(support_operation.method)
-#        print("supportedOperation", endpoint_method)
-        # all the operations for the object is stored in endpoint_method
 
         return str(endpoint_method)
 
@@ -62,7 +76,9 @@ class ClassEndpoints:
             new_list,
             no_endpoint_property,
             api_doc):
-        """Nodes for every that property which is itself an object
+        """
+        Nodes for every that property which is itself an object.
+        
         :param objects_node: particular member or class node(parent node).
         :param new_list: list of object properties.
         :param no_endpoint_property: property_value for new_list properties.
@@ -96,7 +112,7 @@ class ClassEndpoints:
             # set edge between the object and its parent object
             if endpoint_prop:
                 self.objects_property(
-                    object_node, endpoint_prop, api_doc)
+                    object_node, properties_title, endpoint_prop, api_doc)
 
     def faceted_key(self, key, value):
         return ("{}".format("fs:" + key + ":" + value))
@@ -130,13 +146,13 @@ class ClassEndpoints:
         try:
             response = urllib.request.urlopen(new_url)
         except HTTPError as e:
-            logger.info('Error code: ', e.code)
+            logger.error('Error code: {}'.format(e.code))
             return None
         except URLError as e:
-            logger.info('Reason: ', e.reason)
+            logger.error('Reason: {}'.format(e.reason))
             return None
         except ValueError as e:
-            logger.info("value error:", e)
+            logger.info("Value Error: {}".format(e))
             return None
         else:
             new_file = json.loads(response.read().decode('utf-8'))

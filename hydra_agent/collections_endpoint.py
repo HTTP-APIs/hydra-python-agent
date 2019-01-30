@@ -3,7 +3,7 @@ import json
 import re
 import logging
 from urllib.error import URLError, HTTPError
-from classes_objects import ClassEndpoints,RequestError
+from core.utils.classes_objects import ClassEndpoints,RequestError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,13 +23,13 @@ class CollectionEndpoints:
         try:
             response = urllib.request.urlopen(new_url)
         except HTTPError as e:
-            logger.info('Error code: ', e.code)
+            logger.error('Error code: {}'.format(e.code))
             return RequestError("error")
         except URLError as e:
-            logger.info('Reason: ', e.reason)
+            logger.error('Reason: {}'.format(e.reason))
             return RequestError("error")
         except ValueError as e:
-            logger.info("value error:",e)
+            logger.info("Value Error: {}".format(e))
             return RequestError("error")
         else:
             return json.loads(response.read().decode('utf-8'))
