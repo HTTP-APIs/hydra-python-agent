@@ -1,180 +1,19 @@
 import random
 import string
 import logging
-from redisgraph import Graph
 from core.utils.help import help
-from core.utils.encode_result import encode_result
 from core.utils.redis_proxy import RedisProxy
 from core.utils.handle_data import HandleData
 from hydra_graph import InitialGraph
 from hydra_python_core.doc_maker import create_doc
-from core.utils.collections_endpoint import CollectionEndpoints
 from core.utils.classes_objects import ClassEndpoints, RequestError
 from core.end_point_query import EndPointQuery
 from core.utils.check_url import check_url_exist
+from core.collection_member_query import CollectionMembersQuery
+from core.properties_query import PropertiesQuery
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-class CollectionMembersQuery:
-    """
-    CollectionMembersQuery is used for fetching members of any
-    CollectionEndpoints.
-    It fetches data from the server and adds it to the redis graph.
-
-    Attributes:
-        connection(RedisProxy): An instance of redis client.
-
-
-    """
-
-    def __init__(self, api_doc, url, graph):
-        self.connection = RedisProxy.get_connection()
-        self.api_doc = api_doc
-        self.url = url
-        self._data = HandleData.load_data(self.url)
-        self.graph = graph
-        self.collection = CollectionEndpoints(
-            graph.redis_graph, graph.class_endpoints, api_doc)
-
-    def data_from_server(self, endpoint):
-        """
-        Load data from the server for first time.
-
-        Args:
-            endpoint: collectionEndpoint to load members from.
-
-        :return: get data from the Redis memory.
-        """
-        self.collection.load_from_server(
-            endpoint, self.api_doc, self.url, self.connection
-        )
-
-        graphQuery = 'MATCH (p:collection) WHERE(p.type="{}") RETURN p.members'.format(
-            endpoint
-        )
-        resultData = self.graph.redis_graph.query(graphQuery)
-        encode_result(resultData)
-
-        print("Collection {} Members -- \n".format(endpoint))
-        resultData.pretty_print()
-
-        return resultData.result_set
-
-    def get_members(self, query):
-        """
-        Gets Data from the Redis.
-        :param query: query get from the user, Ex: DroneCollection members
-        :return: get data from the Redis memory.
-        """
-        endpoint = query.replace(" members", "")
-        if str.encode("fs:endpoints") in self.connection.keys() and str.encode(
-            endpoint
-        ) in self.connection.smembers("fs:endpoints"):
-            get_data = self.connection.execute_command(
-                "GRAPH.QUERY",
-                "apidoc",
-                """MATCH(p:collection)
-                   WHERE(p.type='{}')
-                   RETURN p.members""".format(
-                    endpoint
-                ),
-            )
-            print(endpoint, " members")
-            return self._data.show_data(get_data)
-
-        else:
-            self.connection.sadd("fs:endpoints", endpoint)
-            print(self.connection.smembers("fs:endpoints"))
-            return self.data_from_server(endpoint)
-
-
-class PropertiesQuery:
-    """
-    PropertiesQuery is used for all properties for alltypes of  nodes like:
-    classes or collection endpoints, members,object.
-    """
-
-    def __init__(self):
-        self.redis_connection = RedisProxy()
-        self.handle_data = HandleData()
-        self.connection = self.redis_connection.get_connection()
-        self._data = self.handle_data
-
-    def get_classes_properties(self, query):
-        """
-        Show the given type of property of given Class endpoint.
-        :param query: get query from the user, Ex: classLocation properties
-        :return: get data from the Redis memory.
-        """
-        query = query.replace("class", "")
-        endpoint, query = query.split(" ")
-        get_data = self.connection.execute_command(
-            "GRAPH.QUERY",
-            "apidoc",
-            'MATCH ( p:classes ) WHERE (p.type="{}") RETURN p.{}'.format(
-                endpoint, query
-            ),
-        )
-        print("class", endpoint, query)
-        return self._data.show_data(get_data)
-
-    def get_collection_properties(self, query):
-        """
-        Show the given type of property of given collection endpoint.
-        :param query: get query from the user, Ex: DroneCollection properties.
-        :return: get data from the Redis memory.
-        """
-        endpoint, query = query.split(" ")
-
-        get_data = self.connection.execute_command(
-            "GRAPH.QUERY",
-            "apidoc",
-            'MATCH ( p:collection ) WHERE (p.type="{}") RETURN p.{}'.format(
-                endpoint, query
-            ),
-        )
-
-        print("collection", endpoint, query)
-        return self._data.show_data(get_data)
-
-    def get_members_properties(self, query):
-        """
-        Show the given type of property of given member.
-        :param query: gete query from the user, Ex: objectsDrone properties
-        :return: get data from the Redis memory.
-        """
-        endpoint, query = query.split(" ")
-        get_data = self.connection.execute_command(
-            "GRAPH.QUERY",
-            "apidoc",
-            "MATCH ( p:{} ) RETURN p.id,p.{}".format(endpoint, query),
-        )
-
-        print("member", endpoint, query)
-        return self._data.show_data(get_data)
-
-    def get_object_property(self, query):
-        """
-        Show the given type of property of given object.
-        :param query: get query from the user,Ex:object</api/DroneCollection/2
-        :return: get data from the Redis memory.
-        """
-        endpoint, query = query.split(" ")
-        endpoint = endpoint.replace("object", "")
-        index = endpoint.find("Collection")
-        id_ = "object" + endpoint[5:index]
-        get_data = self.connection.execute_command(
-            "GRAPH.QUERY",
-            "apidoc",
-            'MATCH ( p:{}) WHERE (p.parent_id = "{}") RETURN p.{}'.format(
-                id_, endpoint, query
-            ),
-        )
-
-        print("object", endpoint, query)
-        return self._data.show_data(get_data)
 
 
 class ClassPropertiesValue:
@@ -467,7 +306,7 @@ class QueryFacades:
                 logger.info("Error: Incorrect query")
                 return None
             else:
-                data = self.properties.get_members_properties(query)
+                data = self.properties.get_members_properties(query, self.graph)
                 return data
         elif "object" in query:
             if query[-1] == " ":
@@ -478,7 +317,7 @@ class QueryFacades:
                 logger.info("Error: Incorrect query")
                 return None
             else:
-                data = self.properties.get_object_property(query)
+                data = self.properties.get_object_property(query, self.graph)
                 return data
         elif "Collection" in query:
             if query[-1] == " ":
@@ -489,7 +328,7 @@ class QueryFacades:
                 logger.info("Error: Incorrect query")
                 return None
             else:
-                data = self.properties.get_collection_properties(query)
+                data = self.properties.get_collection_properties(query, self.graph)
                 return data
         elif "class" in query and "property_value" in query:
             check_query = self.check_fine_query(query)
@@ -511,7 +350,7 @@ class QueryFacades:
                 logger.info("Error: Incorrect query")
                 return None
             else:
-                data = self.properties.get_classes_properties(query)
+                data = self.properties.get_classes_properties(query, self.graph)
                 return data
         else:
             if " and " in query or " or " in query:

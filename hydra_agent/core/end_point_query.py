@@ -15,7 +15,7 @@ class EndPointQuery:
     def __init__(self):
         self.connection = RedisProxy().get_connection()
 
-    def get_allEndpoints(self, query : str, graph : Graph):
+    def get_allEndpoints(self, query: str, graph: Graph):
         """
         Gets all the endpoints(classEndpoints as well as collectionEndpoints)
 

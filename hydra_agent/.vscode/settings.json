@@ -1,7 +1,0 @@
-{
-    "python.pythonPath": "/home/shravan/Projects/HTTP-APIs/python-hydra-agent/venv/bin/python",
-    "python.linting.banditEnabled": false,
-    "python.linting.flake8Enabled": true,
-    "python.linting.pylintEnabled": false,
-    "python.linting.enabled": true
-}

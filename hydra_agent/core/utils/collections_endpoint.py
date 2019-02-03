@@ -190,6 +190,7 @@ class CollectionEndpoints:
                 node.properties["members"] = str(new_file["members"])
                 # update the properties of node by its members
                 endpoint_collection_node = node
+                break;
 
         self.collectionobjects(
             endpoint_collection_node,
