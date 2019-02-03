@@ -2,7 +2,7 @@ from redisgraph import Graph, Node
 import json
 from hydra_python_core import doc_writer
 from core.utils.classes_objects import ClassEndpoints
-from collections_endpoint import CollectionEndpoints
+from core.utils.collections_endpoint import CollectionEndpoints
 from core.utils.redis_proxy import RedisProxy
 
 
@@ -11,6 +11,12 @@ class InitialGraph:
 
     Attributes:
         url: URL for the API Documentation.
+        api_doc: HydraDoc object corresponding to
+                 API Documentation
+        class_endpoints: A dictionary of classEndpoints
+        collection_endpoints: A dictionary of
+                              collectionEndpoints
+        entrypoint_node: EntryPoint of the API Documentation
     """
 
     def __init__(self, url, api_doc):
@@ -19,40 +25,48 @@ class InitialGraph:
         self.class_endpoints = {}
         self.collection_endpoints = {}
 
-    def get_apistructure(self, entrypoint_node, api_doc):
-        """ It breaks the endpoint into two parts ``collectionEndpoints`` and
-        ``classEndpoints``"""
-
-        print('Spliting Entrypoint into 2 types of Endpoints -- ',
-              'collectionEndpoints and classEndpoints')
-        for support_property in api_doc.entrypoint.entrypoint.supportedProperty:
-            if isinstance(
-                    support_property,
-                    doc_writer.EntryPointClass):
-                self.class_endpoints[support_property.name] = support_property.id_
-
-            if isinstance(
-                    support_property,
-                    doc_writer.EntryPointCollection):
-                self.collection_endpoints[support_property.name] = support_property.id_
-
-        if len(self.class_endpoints.keys()) > 0:
-            clas = ClassEndpoints(self.redis_graph, self.class_endpoints)
-            clas.endpointclasses(entrypoint_node, api_doc, self.url)
-
-        if len(self.collection_endpoints.keys()) > 0:
-            coll = CollectionEndpoints(self.redis_graph, self.class_endpoints)
-            coll.endpointCollection(
-                self.collection_endpoints,
-                entrypoint_node,
-                api_doc,
-                self.url)
-
-    def get_endpoints(self, api_doc, redis_connection):
-        """Creates entrypoint node
+    def get_entrypoint_properties(self, api_doc):
+        """
+        It breaks the endpoint into two parts ``collectionEndpoints`` and
+        ``classEndpoints`` and creates nodes for each endpoint
+        Args:
+            entrypoint_node : Node for the Entrypoint of API
+                              Documentation
+            api_doc: HydraDoc corresponding to API Documentation
         """
 
-        print("Creating Entrypoint Node...")
+        for entrypoint_prop in api_doc.entrypoint.entrypoint.supportedProperty:
+            if isinstance(
+                    entrypoint_prop,
+                    doc_writer.EntryPointClass):
+                self.class_endpoints[entrypoint_prop.name] = entrypoint_prop.id_
+            elif isinstance(
+                    entrypoint_prop,
+                    doc_writer.EntryPointCollection):
+                self.collection_endpoints[entrypoint_prop.name] = entrypoint_prop.id_
+
+        if self.class_endpoints:
+            class_nodes = ClassEndpoints(
+                self.redis_graph, self.class_endpoints, self.api_doc)
+            class_nodes.create_endpoint_nodes(
+                self.entrypoint_node, self.url)
+
+        if self.collection_endpoints:
+            coll = CollectionEndpoints(self.redis_graph, self.class_endpoints, self.api_doc)
+            coll.create_collection_endpoints(
+                self.collection_endpoints,
+                self.entrypoint_node,
+                self.url)
+                
+    def create_entrypoint(self, api_doc, redis_connection):
+        """
+            Creates an entrypoint node
+
+            Args:
+                api_doc: HydraDoc object corresponding to the API
+                         Documentation
+                redis_connection: An instance of redis-client
+        """
         entrypoint_properties = {}
         entrypoint_properties["@id"] = str("vocab:Entrypoint")
         entrypoint_properties["url"] = str(
@@ -62,26 +76,25 @@ class InitialGraph:
             label="id",
             alias="Entrypoint",
             properties=entrypoint_properties)
-        self.redis_graph.add_node(entrypoint_node)
-        redis_connection.set("EntryPoint", json.dumps(entrypoint_properties))
-        return self.get_apistructure(entrypoint_node, api_doc)
+        try:
+            self.redis_graph.add_node(entrypoint_node)
+        except Exception as err:
+            raise err
+        return entrypoint_node
 
     def main(self, check_commit):
         connection = RedisProxy.get_connection()
         self.redis_graph = Graph("apidoc", connection)
 
-        print("Initializing Graph...")
-
-        self.get_endpoints(self.api_doc, connection)
+        self.entrypoint_node = self.create_entrypoint(self.api_doc, connection)
+        self.get_entrypoint_properties(self.api_doc)
 
         if check_commit:
-            print("Commiting...")
             try:
                 self.redis_graph.commit()
             except Exception as err:
                 raise(err)
             print("Done!")
-        return self.redis_graph
 
         # uncomment below 2 lines for getting nodes for whole graph
     #    for node in redis_graph.nodes.values():

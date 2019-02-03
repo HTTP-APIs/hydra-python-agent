@@ -3,17 +3,21 @@ import json
 import re
 import logging
 from urllib.error import URLError, HTTPError
-from core.utils.classes_objects import ClassEndpoints,RequestError
+from core.utils.classes_objects import RequestError, ClassEndpoints
+from core.utils.graph_functions import GraphFunctions
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class CollectionEndpoints:
     """Contains all the collections endpoints and objects"""
 
-    def __init__(self, redis_graph, class_endpoints):
-        self.redis_graph = redis_graph
+    def __init__(self, redis_graph, class_endpoints, api_doc):
         self.class_endpoints = class_endpoints
+        self.redis_graph = redis_graph
+        self.api_doc = api_doc
+        self.graph_funcs = GraphFunctions(self.redis_graph, self.api_doc)
 
     def fetch_data(self, new_url):
         """Fetching data from the server
@@ -61,7 +65,7 @@ class CollectionEndpoints:
         """
         print("accesing the collection object like events or drones")
         if endpoint_list:
-            clas = ClassEndpoints(self.redis_graph, self.class_endpoints)
+            clas = ClassEndpoints(self.redis_graph, self.class_endpoints, api_doc)
             for endpoint in endpoint_list:
                 node_properties = {}
                 no_endpoint_list = []
@@ -132,12 +136,12 @@ class CollectionEndpoints:
                     endpoint["@id"], redis_connection, member)
                 node_properties["properties"] = str(supported_property_list)
                 # add object as a node in redis
-                collection_object_node = clas.addNode(
+                collection_object_node = self.graph_funcs.addNode(
                     str("objects" + str(endpoint["@type"])),
                     str(member_alias.capitalize()),
                     node_properties)
                 # set an edge between the collection and its object
-                clas.addEdge(endpoint_collection_node,
+                self.graph_funcs.addEdge(endpoint_collection_node,
                              "has_" + str(endpoint["@type"]),
                              collection_object_node)
 
@@ -145,7 +149,7 @@ class CollectionEndpoints:
                     for endpoint_property in endpoint_property_list:
                         for nodes in self.redis_graph.nodes.values():
                             if endpoint_property == nodes.alias:
-                                clas.addEdge(
+                                self.graph_funcs.addEdge(
                                     collection_object_node,
                                     "hasendpointproperty",
                                     nodes)
@@ -205,19 +209,23 @@ class CollectionEndpoints:
 #        for node in self.redis_graph.nodes.values():
 #            print("\n",node.alias)
 
-    def endpointCollection(
+    def create_collection_endpoints(
             self,
             collection_endpoint,
             entrypoint_node,
-            api_doc,
             url):
-        """It makes a node for every collection endpoint."""
-        print("accessing every collection in entrypoint")
-        clas = ClassEndpoints(self.redis_graph, self.class_endpoints)
+        """Creates a node for each collectionEndpoint.
+        
+        Args:
+            collection_endpoint: Dictionary of collectionEndpoints
+                                 with title and id
+            entrypoint_node: EntryPoint for the API Documentation
+            url: URL for the API Documentation
+        """
         for endpoint in collection_endpoint:
             endpoint_method = []
             node_properties = {}
-            for support_operation in api_doc.collections[
+            for support_operation in self.api_doc.collections[
                     endpoint][
                     "collection"].supportedOperation:
                 endpoint_method.append(support_operation.method)
@@ -226,10 +234,10 @@ class CollectionEndpoints:
 #            print("supportedOperations",node_properties["operations"])
             node_properties["@id"] = str(collection_endpoint[endpoint])
             node_properties["@type"] = str(endpoint)
-            endpoint_collection_node = clas.addNode(
+            endpoint_collection_node = self.graph_funcs.addNode(
                 "collection", endpoint, node_properties)
 #            print(endpoint_collection_node)
-            clas.addEdge(
+            self.graph_funcs.addEdge(
                 entrypoint_node,
                 "has_collection",
                 endpoint_collection_node)

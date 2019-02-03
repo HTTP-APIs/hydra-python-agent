@@ -8,7 +8,7 @@ from core.utils.redis_proxy import RedisProxy
 from core.utils.handle_data import HandleData
 from hydra_graph import InitialGraph
 from hydra_python_core.doc_maker import create_doc
-from collections_endpoint import CollectionEndpoints
+from core.utils.collections_endpoint import CollectionEndpoints
 from core.utils.classes_objects import ClassEndpoints, RequestError
 from core.end_point_query import EndPointQuery
 from core.utils.check_url import check_url_exist
@@ -21,7 +21,7 @@ class CollectionMembersQuery:
     """
     CollectionMembersQuery is used for fetching members of any
     CollectionEndpoints.
-    It fetches data from the server and stores it in the redis memory.
+    It fetches data from the server and adds it to the redis graph.
 
     Attributes:
         connection(RedisProxy): An instance of redis client.
@@ -31,12 +31,12 @@ class CollectionMembersQuery:
 
     def __init__(self, api_doc, url, graph):
         self.connection = RedisProxy.get_connection()
-        self.collection = CollectionEndpoints(
-            graph.redis_graph, graph.class_endpoints)
         self.api_doc = api_doc
         self.url = url
         self._data = HandleData.load_data(self.url)
         self.graph = graph
+        self.collection = CollectionEndpoints(
+            graph.redis_graph, graph.class_endpoints, api_doc)
 
     def data_from_server(self, endpoint):
         """

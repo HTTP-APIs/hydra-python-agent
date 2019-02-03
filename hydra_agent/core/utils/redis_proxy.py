@@ -5,6 +5,7 @@ This is use to provide the connection to Redis memory.
 import redis
 import os
 
+
 class RedisProxy:
     """
     RedisProxy is used for make a connection to the Redis.
@@ -17,8 +18,6 @@ class RedisProxy:
         Returns:
             An instance of redis client
         """
-
-        
         host = os.getenv("REDIS_HOST", "localhost")
         try:
             connection = redis.StrictRedis(host=host, port=6379, db=0)

@@ -3,6 +3,7 @@ import logging
 import urllib.request
 from redisgraph import Node, Edge
 from urllib.error import URLError, HTTPError
+from core.utils.graph_functions import GraphFunctions
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,24 +17,11 @@ class RequestError(Exception):
 class ClassEndpoints:
     """Contains all the classes endpoint and the objects"""
 
-    def __init__(self, redis_graph, class_endpoints):
-        self.redis_graph = redis_graph
+    def __init__(self, redis_graph, class_endpoints, api_doc):
         self.class_endpoints = class_endpoints
-
-    def addNode(self, label, alias, properties):
-        """
-        Add node to the redis graph.
-
-        Args:
-            label: Label for the Node.
-            alias: Alias for the Node.
-            properties: Properties of the Node.
-        Returns:
-            Node object created by the function.
-        """
-        node = Node(label=label, alias=alias, properties=properties)
-        self.redis_graph.add_node(node)
-        return node
+        self.redis_graph = redis_graph
+        self.api_doc = api_doc
+        self.graph_funcs = GraphFunctions(self.redis_graph, self.api_doc)
 
     def addEdge(self, subject_node, predicate, object_node):
         """Add edge between 2 nodes in the redis graph.
@@ -47,9 +35,9 @@ class ClassEndpoints:
         try:
             self.redis_graph.add_edge(edge)
         except Exception as err:
-            logger.error("Error : {}".format(err))
+            raise err
 
-    def get_operation(self, api_doc, endpoint):
+    def get_operation(self, endpoint):
         """
         Return all the supportedOperations for given endpoint.
 
@@ -61,14 +49,14 @@ class ClassEndpoints:
         Returns:
             List of supportedOperations.
         """
-        endpoint_method = []
+        endpoint_operations = []
 
-        for support_operation in api_doc.parsed_classes[
+        for support_operation in self.api_doc.parsed_classes[
                 endpoint][
                 "class"].supportedOperation:
-            endpoint_method.append(support_operation.method)
+            endpoint_operations.append(support_operation.method)
 
-        return str(endpoint_method)
+        return str(endpoint_operations)
 
     def objects_property(
             self,
@@ -78,7 +66,7 @@ class ClassEndpoints:
             api_doc):
         """
         Nodes for every that property which is itself an object.
-        
+
         :param objects_node: particular member or class node(parent node).
         :param new_list: list of object properties.
         :param no_endpoint_property: property_value for new_list properties.
@@ -104,11 +92,11 @@ class ClassEndpoints:
             node_alias = str(objects_node.alias + str(obj)).lower()
             # key for the node of the object
             node_properties["parent_id"] = str(objects_node.properties["@id"])
-            object_node = self.addNode(
+            object_node = self.graph_funcs.addNode(
                 str("object" + str(objects_node.properties["@type"])),
                 node_alias,
                 node_properties)
-            self.addEdge(objects_node, "has" + str(obj), object_node)
+            self.graph_funcs.addEdge(objects_node, "has" + str(obj), object_node)
             # set edge between the object and its parent object
             if endpoint_prop:
                 self.objects_property(
@@ -204,61 +192,51 @@ class ClassEndpoints:
         # save the new data.
         self.redis_graph.commit()
 
-    def endpointclasses(
+    def connect_nodes(self, endpoint_properties, node_alias):
+        for class_endpoint in endpoint_properties:
+            src_node = node_alias.get(class_endpoint)
+            for endpoint in endpoint_properties[class_endpoint]:
+                node = node_alias.get(endpoint)
+                self.graph_funcs.addEdge(src_node, 'has_endpoint_property', node)
+
+    def create_endpoint_nodes(
             self,
             entrypoint_node,
-            api_doc,
             base_url):
-        """Node for every class which have an endpoint.
-        :param entrypoint_node: Endtrypoint or parent node.
-        :param api_doc: Apidocumentation for particular url.
-        :param base_url: parent url for accessing server.
+        """Creates a node for each classEndpoint.
+
+        Args:
+            entrypoint_node: Entrypoint Node or Parent Node.
+            api_doc: Api Documentation for particular URL.
+            base_url: Parent URL for accessing server.
         """
-        print("classes endpoint or accessing classes")
-        endpoint_property_list = {}
-        # endpoint_property_list contain all endpoints
-        # which have other endpoints as a property ex: State.
+        # classEndpoints with other classEndpoints as properties
+        node_alias = {}
+        endpoint_properties = {}
         for endpoint in self.class_endpoints:
-            supported_properties_list = []
-            # node_properties is used for set the properties of node.
-            node_properties = {}
+            # list of properties supported by the classEndpoint
+            supported_properties = []
             property_list = []
-            # store the operations for the endpoint
-            node_properties["operations"] = self.get_operation(
-                api_doc, endpoint)
-            # supported_property_list contain all the properties of endpoint.
-            # property list store the properties which is endpoint as well.
-            for support_property in api_doc.parsed_classes[
+            for endpoint_prop in self.api_doc.parsed_classes[
                     endpoint][
                     "class"].supportedProperty:
-                supported_properties_list.append(support_property.title)
-                # findout the properties which is also an endpoint.
-                if endpoint != support_property.title:
-                    if support_property.title in self.class_endpoints:
-                        property_list.append(support_property.title)
+                supported_properties.append(endpoint_prop.title)
+                # search for properties which are also classEndpoints
+                # if endpoint != endpoint_prop.title:
+                if endpoint_prop.title in self.class_endpoints:
+                    property_list.append(endpoint_prop.title)
 
-            endpoint_property_list[endpoint] = property_list
             # node_properties contains data to store in particular node.
+            node_properties = {}
+            node_properties["operations"] = self.get_operation(endpoint)
             node_properties["@id"] = str(self.class_endpoints[endpoint])
             node_properties["@type"] = str(endpoint)
-            node_properties["properties"] = str(supported_properties_list)
-            class_object_node = self.addNode(
+            node_properties["properties"] = str(supported_properties)
+            class_object_node = self.graph_funcs.addNode(
                 "classes", str(endpoint), node_properties)
             # set edge between the entrypoint and the class endpoint.
-            self.addEdge(entrypoint_node, "has" + endpoint, class_object_node)
-
-        # for connect the nodes to endpoint which have endpoint as a property.
-        if endpoint_property_list:
-            for endpoint_property in endpoint_property_list:
-                for src_node in self.redis_graph.nodes.values():
-                    if str(endpoint_property) == src_node.alias:
-                        for endpoints in endpoint_property_list[
-                                endpoint_property]:
-                            for nodes in self.redis_graph.nodes.values():
-                                if endpoints == nodes.alias:
-                                    self.addEdge(
-                                        src_node,
-                                        "has_endpoint_property",
-                                        nodes)
-                                    break
-                        break
+            node_alias[str(endpoint)] = class_object_node
+            self.graph_funcs.addEdge(entrypoint_node, "has" + endpoint, class_object_node)
+            # add property_list to the endpoint_properties for corresponding endpoint
+            endpoint_properties[endpoint] = property_list
+        self.connect_nodes(endpoint_properties, node_alias)

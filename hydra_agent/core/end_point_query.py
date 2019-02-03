@@ -3,6 +3,7 @@ from core.utils.classes_objects import RequestError
 from core.utils.redis_proxy import RedisProxy
 from core.utils.encode_result import encode_result
 
+
 class EndPointQuery:
     """
     EndpointQuery is used for get the endpoints from the Redis.
@@ -29,8 +30,14 @@ class EndPointQuery:
         graphQueryClass = 'MATCH (p:classes) RETURN p'
         graphQueryCollections = 'MATCH (p:collection) RETURN p'
 
-        resultClass = graph.redis_graph.query(graphQueryClass)
-        resultCollection = graph.redis_graph.query(graphQueryCollections)
+        try:
+            resultClass = graph.redis_graph.query(graphQueryClass)
+        except RequestError as err:
+            raise err
+        try:
+            resultCollection = graph.redis_graph.query(graphQueryCollections)
+        except RequestError as err:
+            raise err
 
         encode_result(resultClass)
         encode_result(resultCollection)
@@ -42,7 +49,7 @@ class EndPointQuery:
 
         return str(resultClass.result_set) + str(resultCollection.result_set) 
 
-    def get_classEndpoints(self, query : str, graph : Graph):
+    def get_classEndpoints(self, query: str, graph: Graph):
         """
         It will return all class Endpoints.
 
@@ -55,7 +62,7 @@ class EndPointQuery:
         """
 
         graphQueryClass = 'MATCH (p:classes) RETURN p'
-        resultClass = graph.query(graphQueryClass)
+        resultClass = graph.redis_graph.query(graphQueryClass)
         encode_result(resultClass)
 
         print("Class Endpoints -- \n")
@@ -63,7 +70,7 @@ class EndPointQuery:
 
         return resultClass.result_set
 
-    def get_collectionEndpoints(self, query : str, graph : Graph):
+    def get_collectionEndpoints(self, query: str, graph: Graph):
         """
         It will returns all collection Endpoints.
         
@@ -76,7 +83,7 @@ class EndPointQuery:
         """
 
         graphQueryCollections = 'MATCH (p:collection) RETURN p'
-        resultCollection = graph.query(graphQueryCollections)
+        resultCollection = graph.redis_graph.query(graphQueryCollections)
         encode_result(resultCollection)
 
         print("Collection Endpoints-- \n")
