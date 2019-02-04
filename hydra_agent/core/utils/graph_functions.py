@@ -1,4 +1,5 @@
-from redisgraph import Node, Edge
+from redisgraph import Node, Edge, Graph
+from hydra_python_core.doc_writer import HydraDoc
 
 
 class GraphFunctions:
@@ -10,11 +11,11 @@ class GraphFunctions:
         api_doc: HydraDoc object of the API Documentation
     """
 
-    def __init__(self, redis_graph, api_doc):
+    def __init__(self, redis_graph: Graph, api_doc: HydraDoc):
         self.redis_graph = redis_graph
         self.api_doc = api_doc
 
-    def addNode(self, label, alias, properties):
+    def addNode(self, label: str, alias: str, properties: dict) -> Node:
         """
         Adds a node to the redis graph.
 
@@ -32,7 +33,7 @@ class GraphFunctions:
             raise err
         return node
 
-    def addEdge(self, subject_node, predicate, object_node):
+    def addEdge(self, subject_node: Node, predicate: str, object_node: Node):
         """Add edge between 2 nodes in the redis graph.
 
         Args:

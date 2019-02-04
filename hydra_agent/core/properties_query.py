@@ -1,5 +1,6 @@
+from redisgraph import Graph
+from redisgraph.query_result import QueryResult
 from core.utils.redis_proxy import RedisProxy
-from core.utils.handle_data import HandleData
 from core.utils.encode_result import encode_result
 
 
@@ -7,21 +8,25 @@ class PropertiesQuery:
     """
     PropertiesQuery is used to query properties of various types:
     classes or collection endpoints, members, object etc.
+
+    Attributes:
+        connection: Instance of redis-client
+        graph: Instance of InitializeGraph for the API Documentation
     """
 
-    def __init__(self):
+    def __init__(self, graph: Graph):
         self.connection = RedisProxy.get_connection()
-        self._data = HandleData()
+        self.graph = graph
 
-    def get_classes_properties(self, query, graph):
+    def get_classes_properties(self, query: str) -> QueryResult:
         """
-        Show the given type of property of given Class endpoint.
+        Gets properties of a classEndpoint based on input
 
         Args:
             query: Input query from the user
 
         Returns:
-            Data from the Redis memory.
+            Data from the redis memory.
         """
         query = query.replace("class", "")
         endpoint, query = query.split(" ")
@@ -29,7 +34,7 @@ class PropertiesQuery:
             endpoint, query)
 
         try:
-            resultData = graph.redis_graph.query(graphQuery)
+            resultData = self.graph.redis_graph.query(graphQuery)
         except Exception as err:
             raise err
         encode_result(resultData)
@@ -37,17 +42,17 @@ class PropertiesQuery:
         print("class", endpoint, query)
         resultData.pretty_print()
 
-        return resultData.result_set
+        return resultData
 
-    def get_collection_properties(self, query, graph):
+    def get_collection_properties(self, query: str) -> QueryResult:
         """
-        Query properties of collection based on input
+        Gets properties of a collectionEndpoint based on input
 
         Args:
             query: Input query from the user
 
         Returns:
-            Data from the Redis memory.
+            Data from the redis memory.
         """
         endpoint, query = query.split(" ")
 
@@ -55,7 +60,7 @@ class PropertiesQuery:
             endpoint, query)
 
         try:
-            resultData = graph.redis_graph.query(graphQuery)
+            resultData = self.graph.redis_graph.query(graphQuery)
         except Exception as err:
             raise err
         encode_result(resultData)
@@ -63,24 +68,24 @@ class PropertiesQuery:
         print("collection", endpoint, query)
         resultData.pretty_print()
 
-        return resultData.result_set
+        return resultData
 
-    def get_members_properties(self, query, graph):
+    def get_members_properties(self, query: str) -> QueryResult:
         """
-        Query properties of member based on input
+        Gets members of collectionEndpoint based on input
 
         Args:
             query: Input query from the user
 
         Returns:
-            Data from the Redis memory.
+            Data from the redis memory.
         """
         endpoint, query = query.split(" ")
 
         graphQuery = "MATCH ( p:{} ) RETURN p.id,p.{}".format(endpoint, query)
 
         try:
-            resultData = graph.redis_graph.query(graphQuery)
+            resultData = self.graph.redis_graph.query(graphQuery)
         except Exception as err:
             raise err
         encode_result(resultData)
@@ -88,17 +93,17 @@ class PropertiesQuery:
         print("member", endpoint, query)
         resultData.pretty_print()
 
-        return resultData.result_set
+        return resultData
 
-    def get_object_property(self, query, graph):
+    def get_object_property(self, query: str) -> QueryResult:
         """
-        Show the given type of property of given object.
+        Gets properties of objects
 
         Args:
             query: Input query from the user
 
         Returns:
-            Data from the Redis memory.
+            Data from the redis memory.
         """
         endpoint, query = query.split(" ")
         endpoint = endpoint.replace("object", "")
@@ -109,7 +114,7 @@ class PropertiesQuery:
             id_, endpoint, query)
 
         try:
-            resultData = graph.redis_graph.query(graphQuery)
+            resultData = self.graph.redis_graph.query(graphQuery)
         except Exception as err:
             raise err
         encode_result(resultData)
@@ -117,4 +122,4 @@ class PropertiesQuery:
         print("object", endpoint, query)
         resultData.pretty_print()
 
-        return resultData.result_set
+        return resultData

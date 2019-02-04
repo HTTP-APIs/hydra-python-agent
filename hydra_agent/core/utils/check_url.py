@@ -1,7 +1,7 @@
 from core.utils.redis_proxy import RedisProxy
 
 
-def check_url_exist(check_url, facades):
+def check_url_exist(check_url: str, facades):
     """
     Checks whether URL already exists in Redis or not.
 

@@ -3,23 +3,29 @@ import json
 import re
 import logging
 from urllib.error import URLError, HTTPError
+from typing import Union
+from redisgraph import Graph
+from redis.client import Redis
+from hydra_python_core.doc_writer import HydraDoc
 from core.utils.classes_objects import RequestError, ClassEndpoints
 from core.utils.graph_functions import GraphFunctions
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+fetched_data = Union[dict, RequestError]
+
 
 class CollectionEndpoints:
     """Contains all the collections endpoints and objects"""
 
-    def __init__(self, redis_graph, class_endpoints, api_doc):
+    def __init__(self, redis_graph: Graph, class_endpoints: dict, api_doc: HydraDoc):
         self.class_endpoints = class_endpoints
         self.redis_graph = redis_graph
         self.api_doc = api_doc
         self.graph_funcs = GraphFunctions(self.redis_graph, self.api_doc)
 
-    def fetch_data(self, new_url):
+    def fetch_data(self, new_url: str) -> fetched_data:
         """Fetching data from the server
         :param new_url: url for fetching the data.
         :return: loaded data.
@@ -38,10 +44,10 @@ class CollectionEndpoints:
         else:
             return json.loads(response.read().decode('utf-8'))
 
-    def faceted_key(self, fs, key, value):
+    def faceted_key(self, fs: str, key: str, value: str) -> str:
         return ("{}".format(fs + ":" + key + ":" + value))
 
-    def faceted_indexing(self, key, redis_connection, member):
+    def faceted_indexing(self, key: str, redis_connection: Redis, member: list):
         for keys in member:
             redis_connection.sadd(
                 self.faceted_key(
@@ -65,7 +71,8 @@ class CollectionEndpoints:
         """
         print("accesing the collection object like events or drones")
         if endpoint_list:
-            clas = ClassEndpoints(self.redis_graph, self.class_endpoints, api_doc)
+            clas = ClassEndpoints(
+                self.redis_graph, self.class_endpoints, api_doc)
             for endpoint in endpoint_list:
                 node_properties = {}
                 no_endpoint_list = []
@@ -87,7 +94,7 @@ class CollectionEndpoints:
                 member_url = new_url + "/" + member_id
                 # object data retrieving from the server
                 new_file = self.fetch_data(member_url)
-                if isinstance (new_file, RequestError):
+                if isinstance(new_file, RequestError):
                     return None
                 for support_operation in api_doc.parsed_classes[
                     endpoint["@type"]
@@ -141,9 +148,8 @@ class CollectionEndpoints:
                     str(member_alias.capitalize()),
                     node_properties)
                 # set an edge between the collection and its object
-                self.graph_funcs.addEdge(endpoint_collection_node,
-                             "has_" + str(endpoint["@type"]),
-                             collection_object_node)
+                self.graph_funcs.addEdge(
+                    endpoint_collection_node, "has_" + str(endpoint["@type"]), collection_object_node)
 
                 if endpoint_property_list:
                     for endpoint_property in endpoint_property_list:
@@ -182,7 +188,7 @@ class CollectionEndpoints:
         new_url = url + "/" + endpoint
         # url for every collection endpoint
         new_file = self.fetch_data(new_url)
-        if isinstance (new_file, RequestError):
+        if isinstance(new_file, RequestError):
             return None
         # retrieving the objects from the collection endpoint
         for node in self.redis_graph.nodes.values():
@@ -190,7 +196,7 @@ class CollectionEndpoints:
                 node.properties["members"] = str(new_file["members"])
                 # update the properties of node by its members
                 endpoint_collection_node = node
-                break;
+                break
 
         self.collectionobjects(
             endpoint_collection_node,
@@ -216,7 +222,7 @@ class CollectionEndpoints:
             entrypoint_node,
             url):
         """Creates a node for each collectionEndpoint.
-        
+
         Args:
             collection_endpoint: Dictionary of collectionEndpoints
                                  with title and id

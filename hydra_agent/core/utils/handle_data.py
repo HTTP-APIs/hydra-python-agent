@@ -1,11 +1,13 @@
 import json
 import logging
+from typing import Union
 import urllib.request
 from core.utils.classes_objects import RequestError
 from urllib.error import URLError, HTTPError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class HandleData:
     """
@@ -14,15 +16,15 @@ class HandleData:
     No public attributes.
     """
     @staticmethod
-    def load_data(url: str):
+    def load_data(url: str) -> Union[dict, RequestError]:
         """
         Tries to fetch json from the url provided. Also handles the errors that may arise.
 
         Args:
-            url(str): URL to the API Documentation.
+            url: URL to the API Documentation.
 
         Returns:
-            Data(Dict) if successful, RequestError otherwise.
+            Data if successful, RequestError otherwise.
         """
 
         try:

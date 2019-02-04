@@ -1,7 +1,7 @@
 import json
 import logging
 import urllib.request
-from redisgraph import Node, Edge
+from redisgraph import Edge
 from urllib.error import URLError, HTTPError
 from core.utils.graph_functions import GraphFunctions
 

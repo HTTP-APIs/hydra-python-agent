@@ -4,6 +4,7 @@ This is use to provide the connection to Redis memory.
 
 import redis
 import os
+from redis.client import Redis
 
 
 class RedisProxy:
@@ -11,7 +12,7 @@ class RedisProxy:
     RedisProxy is used for make a connection to the Redis.
     """
     @staticmethod
-    def get_connection():
+    def get_connection() -> Redis:
         """
         Connects to redis server
 
