@@ -10,6 +10,7 @@ This branch has been created only to be used as a reference when refactoring pyt
 - Better printing format of the data
 - Added try-except block wherever necessary
 - Some methods have been converted to static methods to improve performance and purity
+- Improved docstrings
 
 ### Explanation
 
