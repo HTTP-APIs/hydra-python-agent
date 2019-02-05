@@ -11,6 +11,8 @@ This branch has been created only to be used as a reference when refactoring pyt
 - Added try-except block wherever necessary
 - Some methods have been converted to static methods to improve performance and purity
 - Improved docstrings
+- Fixed the errors related to input(whitespaces and extra '/')
+- Added context-managers wherever necessary
 
 ### Explanation
 
