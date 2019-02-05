@@ -62,7 +62,7 @@ Fire up `redisgraph` server(assuming you have docker installed)
 docker run -p 6379:6379 --rm redislabs/redisgraph
 ```
 
-One a new terminal window type the following--
+On a new terminal window, type the following--
 
 ```bash
 git clone https://github.com/ShravanDoda/python-hydra-agent.git
