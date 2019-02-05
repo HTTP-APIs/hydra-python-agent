@@ -205,6 +205,9 @@ def connect() -> QueryFacades:
         "Please input the address of the API you want to connect to -> "
     ).strip()
 
+    if url[-1] == '/':
+        url = url[0:-1]
+
     url_response = HandleData().load_data(url + "/vocab")
 
     if isinstance(url_response, RequestError):
