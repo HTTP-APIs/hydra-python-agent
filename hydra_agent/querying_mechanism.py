@@ -29,7 +29,8 @@ class HandleData:
         :return: loaded data
         """
         try:
-            response = urllib.request.urlopen(url)
+            with urllib.request.urlopen(url) as response:
+                return json.loads(response.read().decode('utf-8'))
         except HTTPError as e:
             logger.error('Error Code: {}'.format(e.code))
             return RequestError("error")
@@ -39,8 +40,6 @@ class HandleData:
         except ValueError as e:
             logger.error("Value Error: {}".format(e))
             return RequestError("error")
-        else:
-            return json.loads(response.read().decode('utf-8'))
 
     def show_data(self, get_data):
         """
@@ -658,7 +657,7 @@ def query(apidoc, url):
 
     while True:
         print("press exit to quit")
-        query = input(">>>")
+        query = input(">>>").strip()
         if query == "exit":
             break
         elif query == "help":
@@ -672,14 +671,16 @@ def main():
     Take URL as an input and make graph using initilize function.
     :return: call query function for more query.
     """
-    url = input("url>>>")
+    url = input("url>>>").strip()
     if url == "exit":
         print("exit...")
         return 0
     handle_data = HandleData()
+    if url[-1] == '/':
+        url = url[0:-1]
     apidoc = handle_data.load_data(url + "/vocab")
     while True:
-        if isinstance (apidoc, RequestError):
+        if isinstance(apidoc, RequestError):
             print("enter right url")
             url = input("url>>>")
             if url == "exit":
