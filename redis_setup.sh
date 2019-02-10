@@ -1,7 +1,7 @@
 
 #It will check, if docker is not installed then install it.
 docker -v
-if [ echo "$?" = "127" ]
+if [ "$?" = "127" ]
 then
 sudo apt-get update
 sudo apt-get install docker
