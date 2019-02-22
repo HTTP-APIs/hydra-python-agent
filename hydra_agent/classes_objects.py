@@ -188,6 +188,13 @@ class ClassEndpoints:
         # save the new data.
         self.redis_graph.commit()
 
+    def connect_nodes(self, endpoint_properties, node_alias):
+        for class_endpoint in endpoint_properties:
+            src_node = node_alias.get(class_endpoint)
+            for endpoint in endpoint_properties[class_endpoint]:
+                node = node_alias.get(endpoint)
+                self.addEdge(src_node, 'has_endpoint_property', node)
+
     def endpointclasses(
             self,
             entrypoint_node,
@@ -200,6 +207,7 @@ class ClassEndpoints:
         """
         print("classes endpoint or accessing classes")
         endpoint_property_list = {}
+        node_alias = {}
         # endpoint_property_list contain all endpoints
         # which have other endpoints as a property ex: State.
         for endpoint in self.class_endpoints:
@@ -230,19 +238,6 @@ class ClassEndpoints:
                 "classes", str(endpoint), node_properties)
             # set edge between the entrypoint and the class endpoint.
             self.addEdge(entrypoint_node, "has" + endpoint, class_object_node)
-
-        # for connect the nodes to endpoint which have endpoint as a property.
-        if endpoint_property_list:
-            for endpoint_property in endpoint_property_list:
-                for src_node in self.redis_graph.nodes.values():
-                    if str(endpoint_property) == src_node.alias:
-                        for endpoints in endpoint_property_list[
-                                endpoint_property]:
-                            for nodes in self.redis_graph.nodes.values():
-                                if endpoints == nodes.alias:
-                                    self.addEdge(
-                                        src_node,
-                                        "has_endpoint_property",
-                                        nodes)
-                                    break
-                        break
+            node_alias[str(endpoint)] = class_object_node
+            endpoint_property_list[endpoint] = property_list
+        self.connect_nodes(endpoint_property_list, node_alias)
