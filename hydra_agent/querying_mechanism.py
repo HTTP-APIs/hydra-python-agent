@@ -3,6 +3,7 @@ import string
 import logging
 from hydra_agent.hydra_graph import InitialGraph
 import urllib.request
+from urllib.parse import urljoin
 import json
 from hydrus.hydraspec import doc_maker
 from urllib.error import URLError, HTTPError
@@ -29,18 +30,17 @@ class HandleData:
         :return: loaded data
         """
         try:
-            response = urllib.request.urlopen(url)
+            with urllib.request.urlopen(url) as response:
+                return json.loads(response.read().decode('utf-8'))
         except HTTPError as e:
-            logger.info('Error code: ', e.code)
+            logger.error('Error code: {}'.format(e.code))
             return RequestError("error")
         except URLError as e:
-            logger.info('Reason: ', e.reason)
+            logger.error('Reason: {}'.format(e.reason))
             return RequestError("error")
         except ValueError as e:
-            logger.info("value error:", e)
+            logger.info("Value Error: {}".format(e))
             return RequestError("error")
-        else:
-            return json.loads(response.read().decode('utf-8'))
 
     def show_data(self, get_data):
         """
@@ -685,7 +685,9 @@ def main():
             if url == "exit":
                 print("exit...")
                 return 0
-            apidoc = handle_data.load_data(url + "/vocab")
+            url = url.rstrip('/')+'/'
+            url = urljoin(url, 'vocab')
+            apidoc = handle_data.load_data(url)
         else:
             break
     return query(apidoc, url)
