@@ -2,7 +2,7 @@ import redis
 from redisgraph import Graph, Node
 import urllib.request
 import json
-from hydra_python_core import doc_maker 
+from hydra_python_core import doc_maker, doc_writer
 from graphviz import Digraph
 from hydra_agent.classes_objects import ClassEndpoints,RequestError
 from hydra_agent.collections_endpoint import CollectionEndpoints
