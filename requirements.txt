@@ -5,6 +5,6 @@ httplib2
 redis
 redisgraph
 graphviz
--e git+https://github.com/HTTP-APIs/hydra-python-core#egg=hydra-python-core
--e git+https://github.com/HTTP-APIs/hydra-openapi-parser#egg=hydra-openapi-parser
+-e git+https://github.com/HTTP-APIs/hydra-python-core#egg=hydra_python_core
+-e git+https://github.com/HTTP-APIs/hydra-openapi-parser#egg=hydra_openapi_parser
 -e git+https://github.com/HTTP-APIs/hydrus.git#egg=hydrus
