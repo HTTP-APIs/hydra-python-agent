@@ -12,7 +12,6 @@ python:
   - "3.6-dev"  # 3.6 development branch
   - "3.7-dev"
 install:
-  - pip install -e git+https://github.com/HTTP-APIs/hydrus#egg=hydrus
-  - pip install -e .
+  - pip install -r requirements.txt
   
 script: python -m unittest discover
