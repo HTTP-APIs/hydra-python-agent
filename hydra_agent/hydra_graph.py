@@ -4,7 +4,6 @@ import urllib.request
 import json
 import hydra_python_core
 from hydra_python_core import doc_maker
-import hydrus
 from graphviz import Digraph
 from hydra_agent.classes_objects import ClassEndpoints,RequestError
 from hydra_agent.collections_endpoint import CollectionEndpoints
