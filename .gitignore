@@ -86,6 +86,9 @@ celerybeat-schedule
 .venv
 venv/
 ENV/
+share
+include
+bin
 
 # Spyder project settings
 .spyderproject
@@ -99,3 +102,6 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+#build packages
+src
