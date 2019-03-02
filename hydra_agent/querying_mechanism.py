@@ -4,6 +4,7 @@ import logging
 from hydra_agent.hydra_graph import InitialGraph
 import urllib.request
 import json
+import hydra_python_core
 from hydra_python_core import doc_maker
 from urllib.error import URLError, HTTPError
 from hydra_agent.collections_endpoint import CollectionEndpoints

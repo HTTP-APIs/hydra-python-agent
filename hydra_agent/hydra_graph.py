@@ -2,6 +2,7 @@ import redis
 from redisgraph import Graph, Node
 import urllib.request
 import json
+import hydra_python_core
 from hydra_python_core import doc_maker
 import hydrus
 from graphviz import Digraph
