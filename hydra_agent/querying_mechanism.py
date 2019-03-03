@@ -30,7 +30,8 @@ class HandleData:
         :return: loaded data
         """
         try:
-            response = urllib.request.urlopen(url)
+            with urllib.request.urlopen(url) as response:
+                return json.loads(response.read().decode('utf-8'))
         except HTTPError as e:
             logger.info('Error code: ', e.code)
             return RequestError("error")
@@ -40,8 +41,6 @@ class HandleData:
         except ValueError as e:
             logger.info("value error:", e)
             return RequestError("error")
-        else:
-            return json.loads(response.read().decode('utf-8'))
 
     def show_data(self, get_data):
         """
