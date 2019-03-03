@@ -33,13 +33,13 @@ class HandleData:
             with urllib.request.urlopen(url) as response:
                 return json.loads(response.read().decode('utf-8'))
         except HTTPError as e:
-            logger.info('Error code: ', e.code)
+            logger.error('Error Code: {}'.format(e.code))
             return RequestError("error")
         except URLError as e:
-            logger.info('Reason: ', e.reason)
+            logger.error('Reason: {}'.format(e.reason))
             return RequestError("error")
         except ValueError as e:
-            logger.info("value error:", e)
+            logger.error("Value Error: {}".format(e))
             return RequestError("error")
 
     def show_data(self, get_data):
