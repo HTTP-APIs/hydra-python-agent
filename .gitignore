@@ -86,6 +86,13 @@ celerybeat-schedule
 .venv
 venv/
 ENV/
+share
+include
+bin
+
+# pipenv generated filespip 
+Pipfile
+Pipfile.lock
 
 # Spyder project settings
 .spyderproject
@@ -100,6 +107,5 @@ ENV/
 # mypy
 .mypy_cache/
 
-# pipenv generated filespip 
-Pipfile
-Pipfile.lock
+#build packages
+src 
