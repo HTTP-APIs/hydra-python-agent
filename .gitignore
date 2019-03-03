@@ -99,3 +99,7 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# pipenv generated filespip 
+Pipfile
+Pipfile.lock
