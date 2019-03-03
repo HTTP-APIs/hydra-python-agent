@@ -3,6 +3,7 @@ import string
 import logging
 from hydra_agent.hydra_graph import InitialGraph
 import urllib.request
+from urllib.parse import urljoin
 import json
 from hydra_python_core import doc_maker
 from urllib.error import URLError, HTTPError
@@ -685,7 +686,9 @@ def main():
             if url == "exit":
                 print("exit...")
                 return 0
-            apidoc = handle_data.load_data(url + "/vocab")
+            url = url.rstrip('/') + '/'
+            url = urljoin(url, 'vocab')
+            apidoc = handle_data.load_data(url)
         else:
             break
     return query(apidoc, url)
