@@ -239,5 +239,4 @@ class ClassEndpoints:
             # set edge between the entrypoint and the class endpoint.
             self.addEdge(entrypoint_node, "has" + endpoint, class_object_node)
             node_alias[str(endpoint)] = class_object_node
-            endpoint_property_list[endpoint] = property_list
         self.connect_nodes(endpoint_property_list, node_alias)
