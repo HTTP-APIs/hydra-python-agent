@@ -127,17 +127,23 @@ class TestCollectionmembersQuery(unittest.TestCase):
             return [b"TestEndpoint"]
 
     def test_get_members_if(self):
+        # query param to be passed to get_members
         query = "TestEndpoint members"
         connection_mock = self.cmq.connection
 
+        # making the if condition true
         connection_mock.keys.return_value = [b'fs:endpoints']
         connection_mock.smembers.side_effect = self.smembers_mock_func
+
+        # call to get_members
         self.cmq.get_members(query)
 
+        # checking the call made to connection_mock.execute_command with correct params
         connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', """MATCH(p:collection)
                    WHERE(p.type='TestEndpoint')
                    RETURN p.members""")
 
+        # asserting that connection.sadd was not called
         connection_mock.sadd.assert_not_called()
 
     def smembers_mock_func_else(self, inp):
@@ -145,14 +151,18 @@ class TestCollectionmembersQuery(unittest.TestCase):
             return [b"TestEndpoint"]
 
     def test_get_members_else(self):
+        # query param to be passed to get_members
         query = "TestEndpoint members"
         connection_mock = self.cmq.connection
 
+        # making the if condition false
         connection_mock.keys.return_value = []
         connection_mock.smembers.side_effect = self.smembers_mock_func_else
 
+        # call to get_members
         self.cmq.get_members(query)
 
+        # asserting that connection_mock.sadd was called
         connection_mock.sadd.assert_called_with("fs:endpoints", "TestEndpoint")
 
 
@@ -162,38 +172,49 @@ class TestPropertiesQuery(unittest.TestCase):
         self.properties_query = PropertiesQuery()
 
     def test_get_classes_properties(self):
+        # query param for get_classes_properties
         query = "classClassEndpoint properties"
         connection_mock = self.properties_query.connection
 
+        # call to get_classes_properties
         self.properties_query.get_classes_properties(query)
 
+        # asserting that redis_query was called with correct params
         connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', 'MATCH ( p:classes ) WHERE (p.type="ClassEndpoint") RETURN p.properties')
 
     def test_get_collection_properties(self):
+        # query param for get_collection_properties
         query = "collectionEndpoint properties"
-
         connection_mock = self.properties_query.connection
 
+        # call to get_collection_properties
         self.properties_query.get_collection_properties(query)
 
+        # asserting that redis query was called with correct params
         connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', 'MATCH ( p:collection ) WHERE (p.type="collectionEndpoint") RETURN p.properties')
 
     def test_members_properties(self):
+        # query param for get_members_properties
         query = "testMember properties"
 
         connection_mock = self.properties_query.connection
 
+        # call to get_members_properties
         self.properties_query.get_members_properties(query)
 
+        # asserting that redis query was called with correct params
         connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', 'MATCH ( p:testMember ) RETURN p.id,p.properties')
 
     def test_object_properties(self):
+        #  query for get_object_property
         query = "object/api/TestCollection/2 properties"
 
         connection_mock = self.properties_query.connection
 
+        # call to get_object_property
         self.properties_query.get_object_property(query)
 
+        # asserting that redis query was called with correct params
         connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', 'MATCH ( p:objectTest) WHERE (p.parent_id = "/api/TestCollection/2") RETURN p.properties')
 
 
