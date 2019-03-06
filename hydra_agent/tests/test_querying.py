@@ -220,3 +220,5 @@ class TestClassPropertiesValue(unittest.TestCase):
                RETURN p.property_value""")
 
 
+if __name__ == "__main__":
+    unittest.main()
