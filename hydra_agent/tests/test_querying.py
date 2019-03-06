@@ -156,3 +156,44 @@ class TestCollectionmembersQuery(unittest.TestCase):
         connection_mock.sadd.assert_called_with("fs:endpoints", "TestEndpoint")
 
 
+class TestPropertiesQuery(unittest.TestCase):
+    @patch('hydra_agent.querying_mechanism.RedisProxy')
+    def setUp(self, redis_mock):
+        self.properties_query = PropertiesQuery()
+
+    def test_get_classes_properties(self):
+        query = "classClassEndpoint properties"
+        connection_mock = self.properties_query.connection
+
+        self.properties_query.get_classes_properties(query)
+
+        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', 'MATCH ( p:classes ) WHERE (p.type="ClassEndpoint") RETURN p.properties')
+
+    def test_get_collection_properties(self):
+        query = "collectionEndpoint properties"
+
+        connection_mock = self.properties_query.connection
+
+        self.properties_query.get_collection_properties(query)
+
+        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', 'MATCH ( p:collection ) WHERE (p.type="collectionEndpoint") RETURN p.properties')
+
+    def test_members_properties(self):
+        query = "testMember properties"
+
+        connection_mock = self.properties_query.connection
+
+        self.properties_query.get_members_properties(query)
+
+        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', 'MATCH ( p:testMember ) RETURN p.id,p.properties')
+
+    def test_object_properties(self):
+        query = "object/api/TestCollection/2 properties"
+
+        connection_mock = self.properties_query.connection
+
+        self.properties_query.get_object_property(query)
+
+        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', 'MATCH ( p:objectTest) WHERE (p.parent_id = "/api/TestCollection/2") RETURN p.properties')
+
+
