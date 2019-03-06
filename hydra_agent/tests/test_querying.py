@@ -1,81 +1,43 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import patch, MagicMock, call
+from hydra_agent.querying_mechanism import HandleData, logger
+from hydra_agent.querying_mechanism import EndpointQuery, CollectionmembersQuery, PropertiesQuery, ClassPropertiesValue
 
 
-class TestQueryingMechanism(unittest.TestCase):
+class TestHandleData(unittest.TestCase):
+    def setUp(self):
+        self.handle_data = HandleData()
 
-    def test_1_classendpoint(self):
-        """Test for class endpoint"""
-        check_data = [['p.properties', 'p.id', 'p.type'],
-                      ["['Location']",'vocab:EntryPoint/Location','Location']]
-        query = "show classEndpoints"
-        EndpointQuery_get_classEndpoints = MagicMock(return_value=check_data)
-        data = EndpointQuery_get_classEndpoints(query)
-        print("testing classEndpoints...")
-        assert data == check_data
+    @patch('hydra_agent.querying_mechanism.json.loads', spec_set=True)
+    @patch('hydra_agent.querying_mechanism.urllib.request.urlopen', spec_set=True)
+    def test_load_data(self, request_mock, json_mock):
+        # url passed to load_data as an argument
+        url = "TestURL"
 
+        # mock to return byte code for response.read()
+        intermediate_mock = MagicMock()
+        intermediate_mock.read.return_value = b"TestResponse"
 
-    def test_2_collectionendpoint(self):
-        """Test for collection endpoint"""
-        check_data = ["ControllerLogCollection",
-                      "DroneLogCollection",
-                      "AnomalyCollection",
-                      "DroneCollection",
-                      "CommandCollection",
-                      "HttpApiLogCollection",
-                      "DatastreamCollection",
-                      "MessageCollection"]
-        query = "show collectionEndpoints"
-        EndpointQuery_get_collectionEndpoints = MagicMock(
-                                                    return_value=check_data)
-        data = EndpointQuery_get_collectionEndpoints(query)
-        print("testing collectionEndpoints...")
-        assert data == check_data
+        # making sure that request doesn't raise an exception
+        request_mock.return_value = intermediate_mock
 
+        # call load_data with url as param
+        self.handle_data.load_data(url)
 
-    def test_3_CommandCollectionmember(self):
-        """
-        Test for all Commands in CommandCollection.
-        """
-        check_data = ['[]']
-        query = "show CommandCollection members"
-        CollectionmembersQuery_get_members =MagicMock(return_value=check_data)
-        data = CollectionmembersQuery_get_members(query)
-        print("testing CommandCollection members...")
-        assert data==check_data
+        # assert that json.loads was called with right params
+        json_mock.assert_called_with("TestResponse")
 
+    @patch('hydra_agent.querying_mechanism.json.loads', spec_set=True)
+    @patch('hydra_agent.querying_mechanism.logger')
+    @patch('hydra_agent.querying_mechanism.urllib.request.urlopen', spec_set=True)
+    def test_load_data_with_errors(self, request_mock, logger_mock, json_mock):
+        # url passed to load_data as an argument
+        url = "TestURL"
+        # request raises an exception (ValueError can be replaced by URLError or HTTPError)
+        request_mock.side_effect = ValueError
 
-    def test_4_ControllerLogCollectionmember(self):
-        """
-        Test for all controller logs for ControllerLogCollection.
-        Whole object of ControllerLogCollection is stored in check data.
-        """
-        check_data = [{'@id': '/api/ControllerLogCollection/65',
-                       '@type': 'ControllerLog'},
-                      {'@id': '/api/ControllerLogCollection/183',
-                       '@type': 'ControllerLog'},
-                      {'@id': '/api/ControllerLogCollection/374',
-                       '@type': 'ControllerLog'}]
-        query = "show ControllerLogCollection members"
-        CollectionmembersQuery_get_members =MagicMock(return_value=check_data)
-        data = CollectionmembersQuery_get_members(query)
-        print("testing ControllerLogCollection members...")
-        assert data == check_data
+        # Call load_data
+        self.handle_data.load_data(url)
 
-
-    def test_5_DatastreamCollectionmember(self):
-        """Test for all datastream with Drone ID 2"""
-        check_data = ['/api/DatastreamCollection/19']
-        query = "show DatastreamCollection members"
-        CollectionmembersQuery_get_members =MagicMock(return_value=check_data)
-        data = CollectionmembersQuery_get_members(query)
-        # Here are find the datastream only for those which have DroneID 2.
-        query = "show DroneID 2 and type Datastream"
-        CompareProperties_object_property_comparison_list = MagicMock(return_value=check_data)
-        data = CompareProperties_object_property_comparison_list(query)
-        print("testing DatastreamCollection members...")
-        assert data == check_data
-
-
-if __name__ == "__main__":
-    unittest.main()
+        # Assert that json.loads wasn't called
+        json_mock.assert_not_called()
