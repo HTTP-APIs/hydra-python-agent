@@ -197,3 +197,26 @@ class TestPropertiesQuery(unittest.TestCase):
         connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', 'MATCH ( p:objectTest) WHERE (p.parent_id = "/api/TestCollection/2") RETURN p.properties')
 
 
+class TestClassPropertiesValue(unittest.TestCase):
+    @patch('hydra_agent.querying_mechanism.ClassEndpoints', autospec=True)
+    @patch('hydra_agent.querying_mechanism.RedisProxy')
+    def setUp(self, redis_mock, classEndpoint_mock):
+        api_doc = MagicMock()
+        url = MagicMock()
+        graph = MagicMock()
+        self.cpv = ClassPropertiesValue(api_doc, url, graph)
+
+    def test_data_from_server(self):
+        endpoint = "TestEndpoint"
+        clas_mock = self.cpv.clas
+        connection_mock = self.cpv.connection
+
+        self.cpv.data_from_server(endpoint)
+
+        clas_mock.load_from_server.assert_called_with(endpoint, self.cpv.api_doc, self.cpv.url, connection_mock)
+
+        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', """MATCH(p:classes)
+               WHERE(p.type='TestEndpoint')
+               RETURN p.property_value""")
+
+
