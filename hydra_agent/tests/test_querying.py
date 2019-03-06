@@ -92,3 +92,67 @@ class TestEndpointQuery(unittest.TestCase):
             'MATCH (p:collection) RETURN p')]
         connection_mock.execute_command.assert_has_calls(calls)
 
+
+class TestCollectionmembersQuery(unittest.TestCase):
+    @patch('hydra_agent.querying_mechanism.CollectionEndpoints', autospec=True)
+    @patch('hydra_agent.querying_mechanism.RedisProxy', autospec=True)
+    def setUp(self, redis_mock, collections_mock):
+        api_doc = MagicMock()
+        url = MagicMock()
+        graph = MagicMock()
+        self.cmq = CollectionmembersQuery(api_doc, url, graph)
+
+    def test_data_from_server(self):
+        # endpoint param to be passed to data_from_server
+        endpoint = "TestEndpoint"
+
+        load_server_mock = self.cmq.collection.load_from_server
+        connection_mock = self.cmq.connection
+
+        # call to data_from_server
+        self.cmq.data_from_server(endpoint)
+
+        # asserting that load_from_server was called with right params
+        load_server_mock.assert_called_with(endpoint,
+                self.cmq.api_doc,
+                self.cmq.url,
+                self.cmq.connection)
+
+        # asserting that execute_command was called with right params
+        calls = [call('GRAPH.QUERY', 'apidoc', 'MATCH(p:collection) WHERE(p.type="TestEndpoint") RETURN p.members')]
+        connection_mock.execute_command.assert_has_calls(calls)
+
+    def smembers_mock_func(self, inp):
+        if inp == "fs:endpoints":
+            return [b"TestEndpoint"]
+
+    def test_get_members_if(self):
+        query = "TestEndpoint members"
+        connection_mock = self.cmq.connection
+
+        connection_mock.keys.return_value = [b'fs:endpoints']
+        connection_mock.smembers.side_effect = self.smembers_mock_func
+        self.cmq.get_members(query)
+
+        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', """MATCH(p:collection)
+                   WHERE(p.type='TestEndpoint')
+                   RETURN p.members""")
+
+        connection_mock.sadd.assert_not_called()
+
+    def smembers_mock_func_else(self, inp):
+        if inp == "fs:endpoints":
+            return [b"TestEndpoint"]
+
+    def test_get_members_else(self):
+        query = "TestEndpoint members"
+        connection_mock = self.cmq.connection
+
+        connection_mock.keys.return_value = []
+        connection_mock.smembers.side_effect = self.smembers_mock_func_else
+
+        self.cmq.get_members(query)
+
+        connection_mock.sadd.assert_called_with("fs:endpoints", "TestEndpoint")
+
+
