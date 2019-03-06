@@ -268,7 +268,7 @@ class TestClassPropertiesValue(unittest.TestCase):
         # asserting that connection.sadd was not called
         connection_mock.sadd.assert_not_called()
 
-    def smembers_mock_func_else(self):
+    def smembers_mock_func_else(self, inp):
         return []
 
     def test_get_property_value_else(self):
