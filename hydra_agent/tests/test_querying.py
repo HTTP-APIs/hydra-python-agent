@@ -228,17 +228,63 @@ class TestClassPropertiesValue(unittest.TestCase):
         self.cpv = ClassPropertiesValue(api_doc, url, graph)
 
     def test_data_from_server(self):
+        # endpoint param for data_from_server
         endpoint = "TestEndpoint"
         clas_mock = self.cpv.clas
         connection_mock = self.cpv.connection
 
+        # call to data_from_server
         self.cpv.data_from_server(endpoint)
 
+        # asserting that load_from_server was called with correct params
         clas_mock.load_from_server.assert_called_with(endpoint, self.cpv.api_doc, self.cpv.url, connection_mock)
 
+        # asserting that redis_query was called with correct params
         connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', """MATCH(p:classes)
                WHERE(p.type='TestEndpoint')
                RETURN p.property_value""")
+
+    def smembers_mock_func(self, inp):
+        if inp == "fs:endpoints":
+            return [b"TestClass"]
+
+    def test_get_property_value(self):
+        # query param for get_property_value
+        query = "classTestClass property_value"
+        connection_mock = self.cpv.connection
+
+        # making the if condition true
+        connection_mock.keys.return_value = [b'fs:endpoints']
+        connection_mock.smembers.side_effect = self.smembers_mock_func
+
+        # call to get_members
+        self.cpv.get_property_value(query)
+
+        # checking the call made to connection_mock.execute_command with correct params
+        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', """MATCH (p:classes)
+                   WHERE (p.type = 'TestClass')
+                   RETURN p.property_value""")
+
+        # asserting that connection.sadd was not called
+        connection_mock.sadd.assert_not_called()
+
+    def smembers_mock_func_else(self):
+        return []
+
+    def test_get_property_value_else(self):
+        # query param for get_property_value
+        query = "classTestClass property_value"
+        connection_mock = self.cpv.connection
+
+        # making the if condition false
+        connection_mock.keys.return_value = []
+        connection_mock.smembers.side_effect = self.smembers_mock_func_else
+
+        # call to get_members
+        self.cpv.get_property_value(query)
+
+        # asserting that connection.sadd was called
+        connection_mock.sadd.assert_called_with("fs:endpoints", "TestClass")
 
 
 if __name__ == "__main__":
