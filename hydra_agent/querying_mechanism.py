@@ -658,7 +658,7 @@ def query(apidoc, url):
 
     while True:
         print("press exit to quit")
-        query = input(">>>")
+        query = input(">>>").strip()
         if query == "exit":
             break
         elif query == "help":
@@ -672,7 +672,7 @@ def main():
     Take URL as an input and make graph using initilize function.
     :return: call query function for more query.
     """
-    url = input("url>>>")
+    url = input("url>>>").strip()
     if url == "exit":
         print("exit...")
         return 0
@@ -681,7 +681,7 @@ def main():
     while True:
         if isinstance (apidoc, RequestError):
             print("enter right url")
-            url = input("url>>>")
+            url = input("url>>>").strip()
             if url == "exit":
                 print("exit...")
                 return 0
