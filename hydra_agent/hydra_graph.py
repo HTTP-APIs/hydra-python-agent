@@ -2,8 +2,7 @@ import redis
 from redisgraph import Graph, Node
 import urllib.request
 import json
-from hydrus.hydraspec import doc_maker
-import hydrus
+from hydra_python_core import doc_maker, doc_writer
 from graphviz import Digraph
 from hydra_agent.classes_objects import ClassEndpoints,RequestError
 from hydra_agent.collections_endpoint import CollectionEndpoints
@@ -21,12 +20,12 @@ class InitialGraph:
         for support_property in api_doc.entrypoint.entrypoint.supportedProperty:
             if isinstance(
                     support_property,
-                    hydrus.hydraspec.doc_writer.EntryPointClass):
+                    doc_writer.EntryPointClass):
                 self.class_endpoints[support_property.name] = support_property.id_
 
             if isinstance(
                     support_property,
-                    hydrus.hydraspec.doc_writer.EntryPointCollection):
+                    doc_writer.EntryPointCollection):
                 self.collection_endpoints[support_property.name] = support_property.id_
 
         if len(self.class_endpoints.keys())>0:
