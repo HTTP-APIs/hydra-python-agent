@@ -1,8 +1,10 @@
-# python-hydra-agent [![Build Status](https://travis-ci.com/HTTP-APIs/python-hydra-agent.svg?branch=master)](https://travis-ci.com/HTTP-APIs/python-hydra-agent)
+
+
+# hydra-python-agent [![Build Status](https://travis-ci.com/HTTP-APIs/hydra-python-agent.svg?branch=master)](https://travis-ci.com/HTTP-APIs/hydra-python-agent)
 
 For a general introduction to Hydra Ecosystem, see [hydraecosystem.org](http://hydraecosystem.org).
 
-`python-hydra-agent` is a smart Hydra client implemented in Python which works with [hydrus](https://github.com/HTTP-APIs/hydrus). Reference implementation is [Heracles.ts](https://github.com/HydraCG/Heracles.ts). Smart clients are generic automated clients that establish resilient connected data networks leveraging knowledge graphs.
+`hydra-python-agent` is a smart Hydra client implemented in Python which works with [hydrus](https://github.com/HTTP-APIs/hydrus). Reference implementation is [Heracles.ts](https://github.com/HydraCG/Heracles.ts). Smart clients are generic automated clients that establish resilient connected data networks leveraging knowledge graphs.
 
 ## General characteristics
 
@@ -12,7 +14,7 @@ The client is designed to:
 * simply, metadata and data are loaded from the server and stored in Redis;
 * The graph can be queried using OpenCypher.
 
-The starting objective is to create a querying layer that is able to reach data in one or more Hydra srever/s. Leveraging Redis, clients can construct their own representation of the data stored in one or more Hydra servers; querying the data as they need it, and respond complex semantic queries. This will allow any client connected to any server to have access to an "aggregated view" of the connected network (the network of all the servers it connects to). 
+The starting objective is to create a querying layer that is able to reach data in one or more Hydra server/s. Leveraging Redis, clients can construct their own representation of the data stored in one or more Hydra servers; querying the data as they need it, and respond complex semantic queries. This will allow any client connected to any server to have access to an "aggregated view" of the connected network (the network of all the servers it connects to). 
 
 ## Missing bits at the moment
 * For now it is a proof-of-concept, only `GET` functionality
@@ -23,7 +25,7 @@ The starting objective is to create a querying layer that is able to reach data 
 **NOTE:** You'll need to use python3.
 
 To install only requirements:
-   
+
     pip3 install -r requirements.txt
 
 or,
@@ -41,15 +43,15 @@ To install Redis and other Redis modules:
 
 ### Demo
 
-To run the demo for python-hydra-agent, you have to follow the instructions:
+To run the demo for hydra-python-agent, you have to follow the instructions:
 
 * Clone the repo:
 
-        git clone https://github.com/HTTP-APIs/python-hydra-agent.git
-    
+        git clone https://github.com/HTTP-APIs/hydra-python-agent.git
+
 * Change directory and switch to the develop branch:
 
-        cd python-hydra-agent
+        cd hydra-python-agent
         git checkout -b develop origin/develop
 
 * Now to install the requirements or setup the environment:
@@ -59,12 +61,12 @@ To run the demo for python-hydra-agent, you have to follow the instructions:
 After setup the environment. You can query or run the client.
 
 * To run both the things Redis server and the client. You can run the command:
-    
+
         docker-compose run client
 
 
     and provide a valid URL and then you can query in querying format.
-
+    
         `>>>url` #here url should be a valid link, for testing you can use http://35.224.198.158:8080/api
         `>>>help` # it will provide the querying format
 
