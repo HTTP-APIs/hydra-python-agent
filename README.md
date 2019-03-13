@@ -1,8 +1,8 @@
-# hydra-python-agent [![Build Status](https://travis-ci.com/HTTP-APIs/python-hydra-agent.svg?branch=master)](https://travis-ci.com/HTTP-APIs/python-hydra-agent)
+# hydra-python-agent [![Build Status](https://travis-ci.com/HTTP-APIs/hydra-python-agen.svg?branch=master)](https://travis-ci.com/HTTP-APIs/hydra-python-agen)
 
 For a general introduction to Hydra Ecosystem, see [hydraecosystem.org](http://hydraecosystem.org).
 
-`python-hydra-agent` is a smart Hydra client implemented in Python which works with [hydrus](https://github.com/HTTP-APIs/hydrus). Reference implementation is [Heracles.ts](https://github.com/HydraCG/Heracles.ts). Smart clients are generic automated clients that establish resilient connected data networks leveraging knowledge graphs.
+`hydra-python-agent` is a smart Hydra client implemented in Python which works with [hydrus](https://github.com/HTTP-APIs/hydrus). Reference implementation is [Heracles.ts](https://github.com/HydraCG/Heracles.ts). Smart clients are generic automated clients that establish resilient connected data networks leveraging knowledge graphs.
 
 ## General characteristics
 
