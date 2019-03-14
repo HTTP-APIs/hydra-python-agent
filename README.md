@@ -41,15 +41,15 @@ To install Redis and other Redis modules:
 
 ### Demo
 
-To run the demo for python-hydra-agent, you have to follow the instructions:
+To run the demo for hydra-python-agent, you have to follow the instructions:
 
 * Clone the repo:
 
-        git clone https://github.com/HTTP-APIs/python-hydra-agent.git
+        git clone https://github.com/HTTP-APIs/hydra-python-agent.git
     
 * Change directory and switch to the develop branch:
 
-        cd python-hydra-agent
+        cd hydra-python-agent
         git checkout -b develop origin/develop
 
 * Now to install the requirements or setup the environment:
