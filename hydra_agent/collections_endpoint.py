@@ -127,7 +127,6 @@ class CollectionEndpoints:
                 member[endpoint["@type"]] = str(endpoint["@id"])
                 node_properties["property_value"] = str(member)
                 member["type"] = str(endpoint["@type"])
-                redis_connection.set((endpoint["@id"]), (member))
                 self.faceted_indexing(
                     endpoint["@id"], redis_connection, member)
                 node_properties["properties"] = str(supported_property_list)

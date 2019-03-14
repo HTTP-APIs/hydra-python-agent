@@ -169,7 +169,6 @@ class ClassEndpoints:
                 # update the properties of the node
                 node.properties["property_value"] = str(member)
                 # Use faceted index to handle with comparison in properties.
-                redis_connection.set((endpoint), member)
                 self.faceted_indexing(endpoint, redis_connection, member)
                 class_object_node = node
                 print(class_object_node)
