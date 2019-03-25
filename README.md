@@ -17,6 +17,7 @@ The starting objective is to create a querying layer that is able to reach data 
 ## Missing bits at the moment
 * For now it is a proof-of-concept, only `GET` functionality
 * Soon to develop, a reliable synchronization mechanism to allow strong consistency between server-side data and client-side representation ([#98](https://github.com/HTTP-APIs/hydra-python-agent/issues/98)).
+* Allow users to interact with the server using Natural Language which is a processed machine consumable language. **(under development)**
 
 ## Installation
 
