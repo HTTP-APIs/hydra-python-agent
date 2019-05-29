@@ -1,8 +1,8 @@
-# python-hydra-agent [![Build Status](https://travis-ci.com/HTTP-APIs/python-hydra-agent.svg?branch=master)](https://travis-ci.com/HTTP-APIs/python-hydra-agent)
+# hydra-python-agent [![Build Status](https://travis-ci.com/HTTP-APIs/hydra-python-agent.svg?branch=master)](https://travis-ci.com/HTTP-APIs/hydra-python-agent)
 
 For a general introduction to Hydra Ecosystem, see [hydraecosystem.org](http://hydraecosystem.org).
 
-`python-hydra-agent` is a smart Hydra client implemented in Python which works with [hydrus](https://github.com/HTTP-APIs/hydrus). Reference implementation is [Heracles.ts](https://github.com/HydraCG/Heracles.ts). Smart clients are generic automated clients that establish resilient connected data networks leveraging knowledge graphs.
+`hydra-python-agent` is a smart Hydra client implemented in Python which works with [hydrus](https://github.com/HTTP-APIs/hydrus). Reference implementation is [Heracles.ts](https://github.com/HydraCG/Heracles.ts). Smart clients are generic automated clients that establish resilient connected data networks leveraging knowledge graphs.
 
 ## General characteristics
 
@@ -16,7 +16,8 @@ The starting objective is to create a querying layer that is able to reach data 
 
 ## Missing bits at the moment
 * For now it is a proof-of-concept, only `GET` functionality
-* Soon to develop, a reliable synchronization mechanism to allow strong consistency between server-side data and client-side representation.
+* Soon to develop, a reliable synchronization mechanism to allow strong consistency between server-side data and client-side representation ([#98](https://github.com/HTTP-APIs/hydra-python-agent/issues/98)).
+* Allow users to interact with the server using Natural Language which is a processed machine consumable language. **(under development)**
 
 ## Installation
 
@@ -41,15 +42,15 @@ To install Redis and other Redis modules:
 
 ### Demo
 
-To run the demo for python-hydra-agent, you have to follow the instructions:
+To run the demo for hydra-python-agent, you have to follow the instructions:
 
 * Clone the repo:
 
-        git clone https://github.com/HTTP-APIs/python-hydra-agent.git
+        git clone https://github.com/HTTP-APIs/hydra-python-agent.git
     
 * Change directory and switch to the develop branch:
 
-        cd python-hydra-agent
+        cd hydra-python-agent
         git checkout -b develop origin/develop
 
 * Now to install the requirements or setup the environment:
