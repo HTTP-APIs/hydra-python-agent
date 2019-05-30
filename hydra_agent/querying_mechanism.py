@@ -192,6 +192,26 @@ class CollectionmembersQuery:
             print(self.connection.smembers("fs:endpoints"))
             return self.data_from_server(endpoint)
 
+    def insert_server(self, endpoint, new_object):
+        """
+        Insert a new object into the server.
+        :param endpoint: collection endpoint to add the object.
+        :param new_object: object that will be added to the server.
+        :return: the response from the server.
+        """
+        self.collection.insert_server(endpoint,
+                                      new_object,
+                                      self.api_doc,
+                                      self.url,
+                                      self.connection)
+
+        get_data = self.connection.execute_command(
+            'GRAPH.QUERY',
+            'apidoc',
+            'MATCH(p:collection) WHERE(p.type="{}") RETURN p.members'.format(
+                endpoint))
+        print(endpoint, " members")
+        return self._data.show_data(get_data)
 
 class PropertiesQuery:
     """
