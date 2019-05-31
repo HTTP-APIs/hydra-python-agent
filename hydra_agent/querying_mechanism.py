@@ -650,6 +650,7 @@ class QueryFacades:
             logger.info("Incorrect query: Use 'help' to know about querying format")
             return None
 
+
 def check_url_exist(check_url,facades):
     redis_connection = RedisProxy()
     connection = redis_connection.get_connection()
@@ -661,6 +662,7 @@ def check_url_exist(check_url,facades):
     else:
         facades.initialize(True)
         connection.sadd("fs:url", url)
+
 
 def query(apidoc, url):
     """
@@ -689,7 +691,7 @@ def query(apidoc, url):
 
 def main():
     """
-    Take URL as an input and make graph using initilize function.
+    Take URL as an input and make graph using initialize function.
     :return: call query function for more query.
     """
     url = input("url>>>").strip()
@@ -699,7 +701,7 @@ def main():
     handle_data = HandleData()
     apidoc = handle_data.load_data(url + "/vocab")
     while True:
-        if isinstance (apidoc, RequestError):
+        if isinstance(apidoc, RequestError):
             print("enter right url")
             url = input("url>>>").strip()
             if url == "exit":
