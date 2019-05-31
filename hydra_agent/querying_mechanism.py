@@ -708,7 +708,7 @@ def main():
     Take URL as an input and make graph using initialize function.
     :return: call query function for more query.
     """
-    url = input("url>>>").strip()
+    url = input("url>>>").strip().rstrip('/')
     if url == "exit":
         print("exit...")
         return 0
