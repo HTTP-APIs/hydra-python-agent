@@ -199,19 +199,12 @@ class CollectionmembersQuery:
         :param new_object: object that will be added to the server.
         :return: the response from the server.
         """
-        self.collection.insert_server(endpoint,
-                                      new_object,
-                                      self.api_doc,
-                                      self.url,
-                                      self.connection)
-
-        get_data = self.connection.execute_command(
-            'GRAPH.QUERY',
-            'apidoc',
-            'MATCH(p:collection) WHERE(p.type="{}") RETURN p.members'.format(
-                endpoint))
-        print(endpoint, " members")
-        return self._data.show_data(get_data)
+        response = self.collection.insert_server(endpoint,
+                                                 new_object,
+                                                 self.api_doc,
+                                                 self.url,
+                                                 self.connection)
+        return response
 
 class PropertiesQuery:
     """
@@ -546,108 +539,129 @@ class QueryFacades:
         """
         It calls function based on queries type.
         """
-        query = query.replace("show ", "")
-        if query == "endpoints":
-            data = self.endpoint_query.get_allEndpoints(query)
-            return data
-        elif query == "classEndpoints":
-            data = self.endpoint_query.get_classEndpoints(query)
-            return data
-        elif query == "collectionEndpoints":
-            data = self.endpoint_query.get_collectionEndpoints(query)
-            return data
-        elif "members" in query:
-            check_query = self.check_fine_query(query)
-            if isinstance (check_query, RequestError):
-                logger.info("Error: Incorrect query")
-                return None
-            else:
-                self.members = CollectionmembersQuery(self.api_doc,
-                                                      self.url,
-                                                      self.graph)
-                if self.test:
-                    data = self.members.data_from_server(
-                        query.replace(" members", ""))
-                    return data
-                else:
-                    data = self.members.get_members(query)
-                    return data
-        elif "objects" in query:
-            if query[-1] == " ":
-                logger.info("Error: incorrect query")
-                return None
-            check_query = self.check_fine_query(query)
-            if isinstance (check_query, RequestError):
-                logger.info("Error: Incorrect query")
-                return None
-            else:
-                data = self.properties.get_members_properties(query)
+        if "show" in query:
+            query = query.replace("show ", "")
+            if query == "endpoints":
+                data = self.endpoint_query.get_allEndpoints(query)
                 return data
-        elif "object" in query:
-            if query[-1] == " ":
-                logger.info("Error: incorrect query")
-                return None
-            check_query = self.check_fine_query(query)
-            if isinstance (check_query, RequestError):
-                logger.info("Error: Incorrect query")
-                return None
-            else:
-                data = self.properties.get_object_property(query)
+            elif query == "classEndpoints":
+                data = self.endpoint_query.get_classEndpoints(query)
                 return data
-        elif "Collection" in query:
-            if query[-1] == " ":
-                logger.info("Error: incorrect query")
-                return None
-            check_query = self.check_fine_query(query)
-            if isinstance (check_query, RequestError):
-                logger.info("Error: Incorrect query")
-                return None
-            else:
-                data = self.properties.get_collection_properties(query)
+            elif query == "collectionEndpoints":
+                data = self.endpoint_query.get_collectionEndpoints(query)
                 return data
-        elif "class" in query and "property_value" in query:
-            check_query = self.check_fine_query(query)
-            if isinstance (check_query, RequestError):
-                logger.info("Error: Incorrect query")
-                return None
-            else:
-                self.class_property = ClassPropertiesValue(self.api_doc,
-                                                           self.url,
-                                                           self.graph)
-                data = self.class_property.get_property_value(query)
-                return data
-        elif "class" in query:
-            if query[-1] == " ":
-                logger.info("Error: incorrect query")
-                return None
-            check_query = self.check_fine_query(query)
-            if isinstance (check_query, RequestError):
-                logger.info("Error: Incorrect query")
-                return None
-            else:
-                data = self.properties.get_classes_properties(query)
-                return data
-        else:
-            if " and " in query or " or " in query:
-                if query[-1] == " " or query[-3] == "and" or query[-2] == "or":
-                    logger.info("Error: incorrect query")
-                    return None
-                query_len = len(query.split())
-                and_or_count = query.count("and") + query.count("or")
-                if query_len != (and_or_count + 2 * (and_or_count + 1)):
+            elif "members" in query:
+                check_query = self.check_fine_query(query)
+                if isinstance (check_query, RequestError):
                     logger.info("Error: Incorrect query")
                     return None
-                data = self.compare.object_property_comparison_list(query)
-                return data
-            elif query.count(" ") == 1:
-                key, value = query.split(" ")
-                print("query: ", query)
-                search_index = "fs:" + key + ":" + value
-                for key in self.connection.keys():
-                    if search_index == key.decode("utf8"):
-                        data = self.connection.smembers(key)
+                else:
+                    self.members = CollectionmembersQuery(self.api_doc,
+                                                        self.url,
+                                                        self.graph)
+                    if self.test:
+                        data = self.members.data_from_server(
+                            query.replace(" members", ""))
                         return data
-            logger.info("Incorrect query: Use 'help' to know about querying format")
+                    else:
+                        data = self.members.get_members(query)
+                        return data
+            elif "objects" in query:
+                if query[-1] == " ":
+                    logger.info("Error: incorrect query")
+                    return None
+                check_query = self.check_fine_query(query)
+                if isinstance (check_query, RequestError):
+                    logger.info("Error: Incorrect query")
+                    return None
+                else:
+                    data = self.properties.get_members_properties(query)
+                    return data
+            elif "object" in query:
+                if query[-1] == " ":
+                    logger.info("Error: incorrect query")
+                    return None
+                check_query = self.check_fine_query(query)
+                if isinstance (check_query, RequestError):
+                    logger.info("Error: Incorrect query")
+                    return None
+                else:
+                    data = self.properties.get_object_property(query)
+                    return data
+            elif "Collection" in query:
+                if query[-1] == " ":
+                    logger.info("Error: incorrect query")
+                    return None
+                check_query = self.check_fine_query(query)
+                if isinstance (check_query, RequestError):
+                    logger.info("Error: Incorrect query")
+                    return None
+                else:
+                    data = self.properties.get_collection_properties(query)
+                    return data
+            elif "class" in query and "property_value" in query:
+                check_query = self.check_fine_query(query)
+                if isinstance (check_query, RequestError):
+                    logger.info("Error: Incorrect query")
+                    return None
+                else:
+                    self.class_property = ClassPropertiesValue(self.api_doc,
+                                                            self.url,
+                                                            self.graph)
+                    data = self.class_property.get_property_value(query)
+                    return data
+            elif "class" in query:
+                if query[-1] == " ":
+                    logger.info("Error: incorrect query")
+                    return None
+                check_query = self.check_fine_query(query)
+                if isinstance (check_query, RequestError):
+                    logger.info("Error: Incorrect query")
+                    return None
+                else:
+                    data = self.properties.get_classes_properties(query)
+                    return data
+            else:
+                if " and " in query or " or " in query:
+                    if query[-1] == " " or query[-3] == "and" or query[-2] == "or":
+                        logger.info("Error: incorrect query")
+                        return None
+                    query_len = len(query.split())
+                    and_or_count = query.count("and") + query.count("or")
+                    if query_len != (and_or_count + 2 * (and_or_count + 1)):
+                        logger.info("Error: Incorrect query")
+                        return None
+                    data = self.compare.object_property_comparison_list(query)
+                    return data
+                elif query.count(" ") == 1:
+                    key, value = query.split(" ")
+                    print("query: ", query)
+                    search_index = "fs:" + key + ":" + value
+                    for key in self.connection.keys():
+                        if search_index == key.decode("utf8"):
+                            data = self.connection.smembers(key)
+                            return data
+                logger.info("Incorrect query: Use 'help' to know about\
+                            querying format")
+                return None
+        elif "create" in query:
+            query = query.replace("create", "").strip()
+            if "in" in query:
+                query = query.replace("in", "").strip()
+                collection = query.split(" ", 1)[0]
+                new_object = query.replace(collection, "").strip()
+                self.members = CollectionmembersQuery(self.api_doc,
+                                                        self.url,
+                                                        self.graph)
+                response = self.members.insert_server('DroneCollection', '{"@type":"Drone", "DroneState" : "dronestate", "name" : "Drone3", "model" : "model", "MaxSpeed" : "speed", "Sensor" : "sensor"}')
+                return response['message']
+            else:
+                logger.info("Incorrect query: Use 'help' to know about\
+                                querying format")
+                return None
+        else:
+            logger.info("Incorrect query: Use 'help' to know about\
+                         querying format")
             return None
 
 
