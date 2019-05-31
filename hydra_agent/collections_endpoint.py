@@ -35,6 +35,32 @@ class CollectionEndpoints:
         else:
             return json.loads(response.read().decode('utf-8'))
 
+    def put_data(self, collection_url, new_object):
+        """Fetching data from the server
+        :param collection_url: Collection url to PUT the data into.
+        :param new_object: Object that will be added to the server.
+        :return: server response.
+        """
+        try:
+            encoded_object = new_object.encode('utf-8')
+            request = urllib.request.Request(url=collection_url,
+                                             data=encoded_object,
+                                             method='PUT')
+            request.add_header('Content-Type', 'application/json')
+            with urllib.request.urlopen(request) as response:
+                response_dict = json.loads(response.read().decode('utf-8'))
+        except HTTPError as e:
+            logger.info('Request Error Code: ', e.code)
+            return RequestError("error")
+        except URLError as e:
+            logger.info('Request Error Reason: ', e.reason)
+            return RequestError("error")
+        except ValueError as e:
+            logger.info("Request Value Error:", e)
+            return RequestError("error")
+        else:
+            return response_dict
+
     def faceted_key(self, fs, key, value):
         return ("{}".format(fs + ":" + key + ":" + value))
 
@@ -200,6 +226,36 @@ class CollectionEndpoints:
         self.redis_graph.commit()
         # for node in self.redis_graph.nodes.values():
         # print("\n",node.alias)
+
+    def insert_server(
+            self,
+            endpoint,
+            new_object,
+            api_doc,
+            url,
+            redis_connection):
+        """Load data or members from collection endpoint
+        :param endpoint: Given endpoint for load data from server.
+        :param new_object: Object that will be added to the server.
+        :param api_doc: Apidocumentation for particular url.
+        :param url: Base url given by user.
+        :param redis_connection: connection to Redis memory.
+        """
+        print("Inserting new member in " + endpoint)
+        new_url = url + "/" + endpoint
+        response = self.put_data(new_url, new_object)
+        if isinstance(response, RequestError):
+            logger.info('Request error, verify your request')
+            return None
+        elif 'message' not in response:
+            logger.info('Something went wrong, verify your request')
+        else:
+            # This may be deleted after implementing the
+            # automatic sync mechanism
+            self.load_from_server(endpoint, api_doc, url, redis_connection)
+
+            return response
+
 
     def endpointCollection(
             self,
