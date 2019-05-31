@@ -110,6 +110,8 @@ you can query as following querying formats:
     print("Get all collection_endpoints:- show collectionEndpoints")
     print("Get all members of collection_endpoint:-",
           "show <collection_endpoint> members")
+    print("Create new member in a collection:-",
+          "create in <collection_endpoint> <json-ld object>")
     print("Get all properties of objects:-",
           "show objects<endpoint_type> properties")
     print("Get all properties of any member:-",
@@ -117,7 +119,7 @@ you can query as following querying formats:
     print("Get all classes properties:-show class<class_endpoint> properties")
     print("Get data with compare properties:-",
           "show <key> <value> and/or <key1> <value1>")
-    print("Get data by using both opeartions(and,or)",
+    print("Get data by using both operations(and,or)",
           " you should use brackets like:-",
           "show model xyz and (name Drone1 or name Drone2)",
           "or, show <key> <value> and (<key> <value> or <key> <value>)")

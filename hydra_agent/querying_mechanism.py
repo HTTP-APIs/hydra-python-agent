@@ -737,6 +737,8 @@ def help():
     print("Get all collection_endpoints:- show collectionEndpoints")
     print("Get all members of collection_endpoint:-",
           "show <collection_endpoint> members")
+    print("Create new member in a collection:-",
+          "create in <collection_endpoint> <json-ld object>")
     print("Get all properties of objects:-",
           "show objects<endpoint_type> properties")
     print("Get all properties of any member:-",
