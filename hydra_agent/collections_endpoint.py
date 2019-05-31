@@ -3,10 +3,11 @@ import json
 import re
 import logging
 from urllib.error import URLError, HTTPError
-from hydra_agent.classes_objects import ClassEndpoints,RequestError
+from hydra_agent.classes_objects import ClassEndpoints, RequestError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class CollectionEndpoints:
     """Contains all the collections endpoints and objects"""
@@ -23,13 +24,13 @@ class CollectionEndpoints:
         try:
             response = urllib.request.urlopen(new_url)
         except HTTPError as e:
-            logger.info('Error code: ', e.code)
+            logger.info('Request Error Code: ', e.code)
             return RequestError("error")
         except URLError as e:
-            logger.info('Reason: ', e.reason)
+            logger.info('Request Error Reason: ', e.reason)
             return RequestError("error")
         except ValueError as e:
-            logger.info("value error:",e)
+            logger.info("Request Value Error:", e)
             return RequestError("error")
         else:
             return json.loads(response.read().decode('utf-8'))
@@ -59,7 +60,6 @@ class CollectionEndpoints:
         :param url: Base url given by user.
         :param redis_connection: connection of Redis memory.
         """
-        print("accesing the collection object like events or drones")
         if endpoint_list:
             clas = ClassEndpoints(self.redis_graph, self.class_endpoints)
             for endpoint in endpoint_list:
@@ -76,7 +76,7 @@ class CollectionEndpoints:
                                               match_obj.group(2))
                 entrypoint_member = endpoint["@type"].lower(
                 ) + match_obj.group(3)
-#                print(base_url, entrypoint_member,endpoint["@type"])
+                # print(base_url, entrypoint_member,endpoint["@type"])
                 member_alias = entrypoint_member
                 # key for the object node is memeber_alias
                 member_id = match_obj.group(3)
@@ -170,14 +170,11 @@ class CollectionEndpoints:
         :param url: Base url given by user.
         :param redis_connection: connection to Redis memory.
         """
-        print(
-            "check url for endpoint",
-            url + "/" +
-            endpoint)
+        #print("Loading data from: " url+ "/" + endpoint)
         new_url = url + "/" + endpoint
         # url for every collection endpoint
         new_file = self.fetch_data(new_url)
-        if isinstance (new_file, RequestError):
+        if isinstance(new_file, RequestError):
             return None
         # retrieving the objects from the collection endpoint
         for node in self.redis_graph.nodes.values():
@@ -201,8 +198,8 @@ class CollectionEndpoints:
                 redis_connection.delete(key)
         # save the new data.
         self.redis_graph.commit()
-#        for node in self.redis_graph.nodes.values():
-#            print("\n",node.alias)
+        # for node in self.redis_graph.nodes.values():
+        # print("\n",node.alias)
 
     def endpointCollection(
             self,
@@ -222,12 +219,12 @@ class CollectionEndpoints:
                 endpoint_method.append(support_operation.method)
             node_properties["operations"] = str(endpoint_method)
             # all the operations for the collection endpoint is stored in
-#            print("supportedOperations",node_properties["operations"])
+           #print("supportedOperations",node_properties["operations"])
             node_properties["@id"] = str(collection_endpoint[endpoint])
             node_properties["@type"] = str(endpoint)
             endpoint_collection_node = clas.addNode(
                 "collection", endpoint, node_properties)
-#            print(endpoint_collection_node)
+           #print(endpoint_collection_node)
             clas.addEdge(
                 entrypoint_node,
                 "has_collection",
