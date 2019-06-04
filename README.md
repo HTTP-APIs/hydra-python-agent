@@ -69,6 +69,8 @@ After setup the environment. You can query or run the client.
         `>>>url` #here url should be a valid link, for testing you can use http://35.224.198.158:8080/api
         `>>>help` # it will provide the querying format
 
+**Obs.: If failing to connect to localhost** running the Agent via Docker, head to [issue #104](https://github.com/HTTP-APIs/hydra-python-agent/issues/104#issuecomment-497381440).
+
 #### Code simplification
 
 To create the graph in Redis memory, use(hydra_graph.py) :
