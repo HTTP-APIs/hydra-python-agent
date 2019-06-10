@@ -672,22 +672,20 @@ def main():
     Take URL as an input and make graph using initilize function.
     :return: call query function for more query.
     """
-    url = input("url>>>").strip()
+    url = input("url>>>").strip().rstrip('/')
     if url == "exit":
         print("exit...")
         return 0
     handle_data = HandleData()
     apidoc = handle_data.load_data(url + "/vocab")
     while True:
-        if isinstance (apidoc, RequestError):
+        if isinstance(apidoc, RequestError):
             print("enter right url")
-            url = input("url>>>").strip()
+            url = input("url>>>").strip().rstrip('/')
             if url == "exit":
                 print("exit...")
                 return 0
-            url = url.rstrip('/') + '/'
-            url = urljoin(url, 'vocab')
-            apidoc = handle_data.load_data(url)
+            apidoc = handle_data.load_data(url + "/vocab")
         else:
             break
     return query(apidoc, url)
