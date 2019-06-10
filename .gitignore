@@ -98,6 +98,9 @@ Pipfile.lock
 .spyderproject
 .spyproject
 
+# Spyder project settings
+.vscode
+
 # Rope project settings
 .ropeproject
 

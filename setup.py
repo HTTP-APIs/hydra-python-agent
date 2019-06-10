@@ -14,7 +14,7 @@ except ImportError:  # for pip <= 9.0.3
 install_requires = parse_requirements('requirements.txt', session=PipSession())
 dependencies = [str(package.req) for package in install_requires]
 
-setup(name='python-hydra-agent',
+setup(name='hydra-python-agent',
       include_package_data=True,
       version='0.0.1',
       description='A Hydra agent using Python and Redis',
