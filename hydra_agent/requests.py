@@ -17,11 +17,11 @@ class Requests:
         self.redis_connection = redis_connection
         self.connection = redis_connection.get_connection()
         self.vocabulary = 'vocab'
-        self.graph_methods = GraphUtils(redis_connection)
+        self.graph_utils = GraphUtils(redis_connection)
         self.redis_graph = Graph("apidoc", redis_connection)
 
     def get(self, url):
-        """Fetching data from the server
+        """Fetch data from the server and update Redis accordingly
         :param url: url for fetching the data.
         :return: loaded data.
         """
@@ -41,6 +41,7 @@ class Requests:
             json_response = json.loads(response.read().decode('utf-8'))
 
         if self.entrypoint_url in url:
+            url = url.rstrip('/')
             url = url.replace(self.entrypoint_url, "EntryPoint")
         else:
             print("URL doesn't match with server URL")
@@ -51,37 +52,41 @@ class Requests:
         try:
             entrypoint, resource_endpoint, resource_id = url.split('/')
 
+            # Building the the collection id, i.e. vocab:Entrypoint/Collection
             redis_resource_id = self.vocabulary + \
                 ":" + entrypoint + \
                 "/" + resource_endpoint
 
-            collection_members = self.connection.execute_command(
-                            'GRAPH.QUERY',
-                            'apidoc',
-                            """MATCH(p:collection)
-                                WHERE(p.id='{}')
-                                RETURN p.members""".format(
-                                    redis_resource_id))
+            collection_members = self.graph_utils.read(
+                match="collection",
+                where="id='{}'".format(redis_resource_id),
+                ret="members")
 
-            # Accessing the members from redis-set response structure
+            # Accessing the members with redis-set response structure
             # eval to parse it to a python list
             collection_members = eval(collection_members[0][1][0].decode())
             collection_members.append({'@id': json_response['@id'],
                                        '@type': json_response['@type']})
 
-            self.connection.execute_command(
-                            'GRAPH.QUERY',
-                            'apidoc',
-                            """MATCH(p:collection)
-                                WHERE(p.id='{}')
-                                SET p.members = \"{}\" """.format(
-                                    redis_resource_id,
-                                    str(collection_members)))
+            self.graph_utils.update(
+                match="collection",
+                where="id='{}'".format(redis_resource_id),
+                set="members = \"{}\"".format(str(collection_members)))
             return json_response
         except ValueError as e:
             # Second Case - When processing a GET for a Colletion
             try:
                 entrypoint, resource_endpoint = url.split('/')
+                redis_resource_id = self.vocabulary + \
+                    ":" + entrypoint + \
+                    "/" + resource_endpoint
+
+                self.graph_utils.update(
+                    match="collection",
+                    where="id='{}'".format(redis_resource_id),
+                    set="members = \"{}\"".format(str(json_response["members"])))
+                return json_response
+
             # Third Case - When processing a valid GET that is not compatible
             # the Redis Structure built, only returns response
             except Exception as e:
@@ -92,4 +97,4 @@ if __name__ == "__main__":
     requests = Requests("http://localhost:8080/serverapi",
                         RedisProxy())
 
-    print(requests.get("http://localhost:8080/serverapi/DroneCollection/e86729e8-1518-4c55-aae6-181a54588b43"))
+    logger.info(requests.get("http://localhost:8080/serverapi/DroneCollection/"))
