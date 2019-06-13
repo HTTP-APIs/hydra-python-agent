@@ -22,9 +22,9 @@ class SynchronizationProcessing(Session):
         self.redis_graph = Graph("apidoc", redis_connection)
         super().__init__()
 
-    def sync_get(self, url):
+    def sync_get(self, url) -> None:
         """Synchronize Redis upon new GET operations
-        :param url: URL for to updated in Redis.
+        :param url: Resource URL to be updated in Redis.
         :return: None.
         """
         # Receiving updated object from the Server
@@ -76,7 +76,25 @@ class SynchronizationProcessing(Session):
                 logger.info("No modification to Redis was made")
                 return
 
-    def sync_delete(self, url):
+    def sync_put(self, url) -> None:
+        """Synchronize Redis upon new PUT operations
+        :param url: URL for the resource to be created.
+        :return: None.
+        """
+        # Simply call sync_get to add the resource to the collection at Redis
+        self.sync_get(url)
+        return
+
+    def sync_post(self, url) -> None:
+        """Synchronize Redis upon new POST operations
+        :param url: URL for the resource to be updated.
+        :return: None.
+        """
+        # Simply call sync_get to add the resource to the collection at Redis
+        self.sync_get(url)
+        return
+
+    def sync_delete(self, url) -> None:
         """Synchronize Redis upon new DELETE operations
         :param url: URL for the resource deleted.
         :return: None.
@@ -115,11 +133,17 @@ class SynchronizationProcessing(Session):
         """
         # [To be implemented] Should send here the new operation-
         # to the server modifications table
-        
+
         if method == "GET":
             self.sync_get(url)
 
-        if method == "DELETE":
+        elif method == "PUT":
+            self.sync_put(url)
+
+        elif method == "POST":
+            self.sync_post(url)
+
+        elif method == "DELETE":
             self.sync_delete(url)
 
 if __name__ == "__main__":
