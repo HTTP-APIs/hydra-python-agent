@@ -51,10 +51,25 @@ class GraphOperations(Session):
             collection_members.append({'@id': resource['@id'],
                                        '@type': resource['@type']})
 
+            # Updating the collection properties with the nem member
             self.graph_utils.update(
                 match="collection",
                 where="id='{}'".format(redis_collection_id),
                 set="members = \"{}\"".format(str(collection_members)))
+            # Creating node for new collection member
+            node = self.graph_utils.add_node("objects" + resource['@type'],
+                                             resource['@type'] + resource_id,
+                                             {'property_value': resource})
+            # Creating relation between collection node and member
+            self.graph_utils.create_relation(label_source="collection",
+                                             where_source="type = \'" +
+                                             resource_endpoint + "\'",
+                                             relation_type="has_r" +
+                                             resource['@type'],
+                                             label_dest="objects" +
+                                             resource['@type'],
+                                             where_dest="id: \'" +
+                                             resource['@id'] + "\'")
             return
         except ValueError as e:
             # Second Case - When processing a GET for a Colletion
@@ -67,7 +82,7 @@ class GraphOperations(Session):
                 self.graph_utils.update(
                     match="collection",
                     where="id='{}'".format(redis_collection_id),
-                    set="members = \"{}\"".format(str(json_response["members"])))
+                    set="members = \"{}\"".format(str(resource["members"])))
                 return
 
             # Third Case - When processing a valid GET that is not compatible-
@@ -123,6 +138,7 @@ class GraphOperations(Session):
             where="id='{}'".format(redis_collection_id),
             set="members = \"{}\"".format(str(collection_members)))
         return
+
 
 if __name__ == "__main__":
     requests = Requests("http://localhost:8080/serverapi",

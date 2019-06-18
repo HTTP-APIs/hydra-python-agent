@@ -46,7 +46,22 @@ class GraphUtils:
                                                      self.graph_name,
                                                      query)
 
-    def addNode(self, label: str, alias: str, properties: dict) -> Node:
+    def create_relation(self, label_source: str, where_source: str,
+                        relation_type: str, label_dest: str,
+                        where_dest: str) -> list:
+        """
+        Create a relation(edge) between nodes according to WHERE filters
+        and the relation_type given.
+        """
+        query = "MATCH(p:{})".format(label_source)
+        query += " WHERE(p.{})".format(where_source)
+        query += " CREATE (p)-[:{}]->(:".format(relation_type)
+        query += "{} {{{}}})".format(label_dest, where_dest)
+        return self.redis_connection.execute_command("GRAPH.QUERY",
+                                                     self.graph_name,
+                                                     query)
+
+    def add_node(self, label: str, alias: str, properties: dict) -> Node:
         """
         Add node to the redis graph
         :param label1: label for the node.
@@ -58,8 +73,8 @@ class GraphUtils:
         self.redis_graph.add_node(node)
         return node
 
-    def addEdge(self, source_node: Node, predicate: str,
-                dest_node: str) -> None:
+    def add_edge(self, source_node: Node, predicate: str,
+                 dest_node: str) -> None:
         """Add edge between nodes in redis graph
         :param source_node: source node of the edge.
         :param predicate: relationship between the source and destination node
@@ -68,7 +83,8 @@ class GraphUtils:
         edge = Edge(source_node, predicate, dest_node)
         self.redis_graph.add_edge(edge)
 
-    def processOutput(self, get_data: list) -> list:
+
+    def process_output(self, get_data: list) -> list:
         """
         Partial data processing for redis-sets
         Count is using for avoid stuffs like query internal execution time.
