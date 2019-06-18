@@ -21,9 +21,10 @@ class GraphOperations(Session):
         self.redis_graph = Graph("apidoc", redis_connection)
         super().__init__()
 
-    def get_processing(self, url) -> None:
+    def get_processing(self, url: str, resource: dict) -> None:
         """Synchronize Redis upon new GET operations
         :param url: Resource URL to be updated in Redis.
+        :param resource: Resource object fetched from server.
         :return: None.
         """
         # Receiving updated object from the Server
@@ -47,8 +48,8 @@ class GraphOperations(Session):
 
             # Accessing the members with redis-set response structure
             collection_members = eval(collection_members[0][1][0].decode())
-            collection_members.append({'@id': json_response['@id'],
-                                       '@type': json_response['@type']})
+            collection_members.append({'@id': resource['@id'],
+                                       '@type': resource['@type']})
 
             self.graph_utils.update(
                 match="collection",
@@ -75,22 +76,22 @@ class GraphOperations(Session):
                 logger.info("No modification to Redis was made")
                 return
 
-    def put_processing(self, url) -> None:
+    def put_processing(self, url, new_object) -> None:
         """Synchronize Redis upon new PUT operations
         :param url: URL for the resource to be created.
         :return: None.
         """
         # Simply call sync_get to add the resource to the collection at Redis
-        self.get_processing(url)
+        self.get_processing(url, new_object)
         return
 
-    def post_processing(self, url) -> None:
+    def post_processing(self, url, resource, updated_object) -> None:
         """Synchronize Redis upon new POST operations
         :param url: URL for the resource to be updated.
         :return: None.
         """
         # Simply call sync_get to add the resource to the collection at Redis
-        self.get_processing(url)
+        self.get_processing(url, updated_object)
         return
 
     def delete_processing(self, url) -> None:

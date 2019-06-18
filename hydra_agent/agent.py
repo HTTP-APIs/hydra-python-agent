@@ -18,7 +18,7 @@ class HydraAgent(Session):
         response = super().get(url)
 
         if response.status_code == 200:
-            self.graph_operations.get_processing(url)
+            self.graph_operations.get_processing(url, response.json())
 
         return response
 
@@ -27,7 +27,7 @@ class HydraAgent(Session):
 
         if response.status_code == 201:
             url = response.headers['Location']
-            self.graph_operations.put_processing(url)
+            self.graph_operations.put_processing(url, new_object)
 
         return response
 
@@ -35,7 +35,7 @@ class HydraAgent(Session):
         response = super().post(url, json=updated_object)
 
         if response.status_code == 200:
-            self.graph_operations.post_processing(url)
+            self.graph_operations.post_processing(url, updated_object)
 
         return response
 
