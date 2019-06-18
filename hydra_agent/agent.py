@@ -1,6 +1,9 @@
+import logging
 from redis_proxy import RedisProxy
 from graphutils_operations import GraphOperations
 from requests import Session
+
+logger = logging.getLogger(__file__)
 
 
 class HydraAgent(Session):
@@ -51,9 +54,9 @@ if __name__ == "__main__":
                   "name": "Smart Drone", "model": "Hydra Drone",
                   "MaxSpeed": "999", "Sensor": "Wind"}
 
-    print(HydraAgent.get("http://localhost:8080/serverapi/DroneCollection/"))
-    # print(HydraAgent.put("http://localhost:8080/serverapi/DroneCollection/",
+    logger.info(HydraAgent.get("http://localhost:8080/serverapi/DroneCollection/"))
+    # logger.info(HydraAgent.put("http://localhost:8080/serverapi/DroneCollection/",
     #      new_object))
-    # print(HydraAgent.post("http://localhost:8080/serverapi/DroneCollection/ec86b237-d75d-4911-9220-8e02ea4ef860",
+    # logger.info(HydraAgent.post("http://localhost:8080/serverapi/DroneCollection/fd1e4cc5-6223-4e8a-b544-6dc9b2e60cf7",
     #      new_object))
-    # print(HydraAgent.delete("http://localhost:8080/serverapi/DroneCollection/255e9a19-010d-4dab-ad9c-329316c20246"))
+    # logger.info(HydraAgent.delete("http://localhost:8080/serverapi/DroneCollection/fd1e4cc5-6223-4e8a-b544-6dc9b2e60cf7"))
