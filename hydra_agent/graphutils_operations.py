@@ -7,11 +7,10 @@ from graphutils import GraphUtils
 from redisgraph import Graph, Node
 from requests import Session
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__file__)
 
 
-class SynchronizationProcessing(Session):
+class GraphOperations(Session):
 
     def __init__(self, entrypoint_url, redis_connection):
         self.entrypoint_url = entrypoint_url
@@ -22,7 +21,7 @@ class SynchronizationProcessing(Session):
         self.redis_graph = Graph("apidoc", redis_connection)
         super().__init__()
 
-    def sync_get(self, url) -> None:
+    def get_processing(self, url) -> None:
         """Synchronize Redis upon new GET operations
         :param url: Resource URL to be updated in Redis.
         :return: None.
@@ -76,25 +75,25 @@ class SynchronizationProcessing(Session):
                 logger.info("No modification to Redis was made")
                 return
 
-    def sync_put(self, url) -> None:
+    def put_processing(self, url) -> None:
         """Synchronize Redis upon new PUT operations
         :param url: URL for the resource to be created.
         :return: None.
         """
         # Simply call sync_get to add the resource to the collection at Redis
-        self.sync_get(url)
+        self.get_processing(url)
         return
 
-    def sync_post(self, url) -> None:
+    def post_processing(self, url) -> None:
         """Synchronize Redis upon new POST operations
         :param url: URL for the resource to be updated.
         :return: None.
         """
         # Simply call sync_get to add the resource to the collection at Redis
-        self.sync_get(url)
+        self.get_processing(url)
         return
 
-    def sync_delete(self, url) -> None:
+    def delete_processing(self, url) -> None:
         """Synchronize Redis upon new DELETE operations
         :param url: URL for the resource deleted.
         :return: None.
@@ -123,28 +122,6 @@ class SynchronizationProcessing(Session):
             where="id='{}'".format(redis_collection_id),
             set="members = \"{}\"".format(str(collection_members)))
         return
-
-    def add_operation(self, method, url):
-        """Add operation to the Modifications Table at the server
-        and also calls the respective method to synchronize Redis
-        :param operation: Method that was sent to the server.
-        :param url: URL for the resource modified.
-        :return: None.
-        """
-        # [To be implemented] Should send here the new operation-
-        # to the server modifications table
-
-        if method == "GET":
-            self.sync_get(url)
-
-        elif method == "PUT":
-            self.sync_put(url)
-
-        elif method == "POST":
-            self.sync_post(url)
-
-        elif method == "DELETE":
-            self.sync_delete(url)
 
 if __name__ == "__main__":
     requests = Requests("http://localhost:8080/serverapi",

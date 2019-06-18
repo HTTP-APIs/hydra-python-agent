@@ -1,5 +1,5 @@
 from redis_proxy import RedisProxy
-from sync_mechanism import SynchronizationProcessing
+from graphutils_operations import GraphOperations
 from requests import Session
 
 
@@ -7,15 +7,15 @@ class HydraAgent(Session):
     def __init__(self, entrypoint_url):
         self.entrypoint_url = entrypoint_url
         self.redis_proxy = RedisProxy()
-        self.sync_processing = SynchronizationProcessing(entrypoint_url,
-                                                         self.redis_proxy)
+        self.graph_operations = GraphOperations(entrypoint_url,
+                                                self.redis_proxy)
         super().__init__()
 
     def get(self, url):
         response = super().get(url)
 
         if response.status_code == 200:
-            self.sync_processing.add_operation("GET", url)
+            self.graph_operations.get_processing(url)
 
         return response
 
@@ -24,7 +24,7 @@ class HydraAgent(Session):
 
         if response.status_code == 201:
             url = response.headers['Location']
-            self.sync_processing.add_operation("PUT", url)
+            self.graph_operations.put_processing(url)
 
         return response
 
@@ -32,7 +32,7 @@ class HydraAgent(Session):
         response = super().post(url, json=updated_object)
 
         if response.status_code == 200:
-            self.sync_processing.add_operation("POST", url)
+            self.graph_operations.post_processing(url)
 
         return response
 
@@ -40,7 +40,7 @@ class HydraAgent(Session):
         response = super().delete(url)
 
         if response.status_code == 200:
-            self.sync_processing.add_operation("DELETE", url)
+            self.graph_operations.delete_processing(url)
 
         return response
 
