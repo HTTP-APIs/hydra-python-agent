@@ -1,4 +1,6 @@
 from redisgraph import Node, Edge, Graph
+from typing import Union, Optional
+from redis.exceptions import ResponseError
 
 
 class GraphUtils:
@@ -9,7 +11,8 @@ class GraphUtils:
         self.graph_name = graph_name
         self.redis_graph = Graph("apidoc", redis_proxy)
 
-    def read(self, match, ret, where=None):
+    def read(self, match: str, ret: str,
+             where: Optional[str]=None) -> Union[int, list, ResponseError]:
         """
         Run query to read nodes in Redis and return the result
         :param match: Relationship between queried entities.
@@ -26,13 +29,13 @@ class GraphUtils:
                                                      self.graph_name,
                                                      query)
 
-    def update(self, match, set, where=None):
+    def update(self, match: str, set: str, where: Optional[str]=None) -> list:
         """
-        Run query to read nodes in Redis and return the result
+        Run query to update nodes in Redis and return the result
         :param match: Relationship between queried entities.
-        :param ret: Defines which property/ies will be returned.
         :param set: The property to be updated.
-        :return: Corresponding Nodes
+        :param where: Used to filter results, not mandatory.
+        :return: Query results
         """
         query = "MATCH(p:{})".format(match)
         if where is not None:
@@ -43,7 +46,7 @@ class GraphUtils:
                                                      self.graph_name,
                                                      query)
 
-    def addNode(self, label1, alias1, properties1):
+    def addNode(self, label: str, alias: str, properties: dict) -> Node:
         """
         Add node to the redis graph
         :param label1: label for the node.
@@ -51,11 +54,12 @@ class GraphUtils:
         :param properties: properties for the node.
         :return: Created Node
         """
-        node = Node(label=label1, alias=alias1, properties=properties1)
+        node = Node(label=label, alias=alias, properties=properties)
         self.redis_graph.add_node(node)
         return node
 
-    def addEdge(self, source_node, predicate, dest_node):
+    def addEdge(self, source_node: Node, predicate: str,
+                dest_node: str) -> None:
         """Add edge between nodes in redis graph
         :param source_node: source node of the edge.
         :param predicate: relationship between the source and destination node
@@ -64,7 +68,7 @@ class GraphUtils:
         edge = Edge(source_node, predicate, dest_node)
         self.redis_graph.add_edge(edge)
 
-    def processOutput(self, get_data):
+    def processOutput(self, get_data: list) -> list:
         """
         Partial data processing for redis-sets
         Count is using for avoid stuffs like query internal execution time.
