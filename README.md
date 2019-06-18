@@ -139,6 +139,48 @@ Query test can be done like this:
 
 For more detail take a look at [wiki file](https://github.com/HTTP-APIs/http-apis.github.io/blob/master/hydra-agent-redis-graph.md)
 
+#### Querying Redis
+Reference can be found here: https://oss.redislabs.com/redisgraph/commands/
+
+Entity structure: alias:label {filters}.
+
+Example of MATCH:
+(a:actor)-[:act]->(m:movie {title:"straight outta compton"})
+
+Hydra Python naming:
+
+labels:
+
+- collection, classes - 
+- objectsDrone - for members
+
+alias:
+
+DroneCollection - alias for collection example
+Dronea9d6f083-79dc-48e2-9e4b-fd5e9fc849ab - alias for collection member
+
+To get all nodes from the Graph:
+```
+GRAPH.QUERY apidoc "MATCH (p) RETURN p" 
+```
+
+To get all nodes from the Graph:
+```
+GRAPH.QUERY apidoc "MATCH (p:collection) RETURN p" 
+```
+
+To read all the edges connected to a node
+```
+GRAPH.QUERY apidoc "MATCH (p)-[r]->() WHERE p.type = 'DroneCollection' RETURN type(r)"
+```
+
+To read all the edges of the graph
+```
+GRAPH.QUERY apidoc "MATCH ()-[r]->() RETURN type(r)"
+```
+
+
+
 References
 ----------
 
