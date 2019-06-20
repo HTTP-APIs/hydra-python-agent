@@ -3,10 +3,11 @@ import json
 import re
 import logging
 from urllib.error import URLError, HTTPError
-from hydra_agent.classes_objects import ClassEndpoints,RequestError
+from hydra_agent.classes_objects import ClassEndpoints, RequestError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class CollectionEndpoints:
     """Contains all the collections endpoints and objects"""
@@ -29,7 +30,7 @@ class CollectionEndpoints:
             logger.info('Reason: ', e.reason)
             return RequestError("error")
         except ValueError as e:
-            logger.info("value error:",e)
+            logger.info("value error:", e)
             return RequestError("error")
         else:
             return json.loads(response.read().decode('utf-8'))
@@ -83,7 +84,7 @@ class CollectionEndpoints:
                 member_url = new_url + "/" + member_id
                 # object data retrieving from the server
                 new_file = self.fetch_data(member_url)
-                if isinstance (new_file, RequestError):
+                if isinstance(new_file, RequestError):
                     return None
                 for support_operation in api_doc.parsed_classes[
                     endpoint["@type"]
@@ -92,7 +93,8 @@ class CollectionEndpoints:
                     endpoint_method.append(support_operation.method)
                 # all the operations for the object is stored in method
                 node_properties["operations"] = str(endpoint_method)
-                # endpoint_property_list store all properties which is class/object and also an endpoint.
+                # endpoint_property_list store all properties which-
+                # is class/object and also an endpoint.
                 # supported_property_list store all the properties.
                 # no_endpoint_list store all properties which is class/object
                 # but not endpoint.
@@ -108,7 +110,8 @@ class CollectionEndpoints:
                         no_endpoint_list.append(support_property.title)
 
                     # members contain all the property with value.
-                    # it contains null value for the property which not have value in server.
+                    # it contains null value for the property which-
+                    #  not have value in server.
                     # no_endpoint_properrty store value for no_endpoint_list.
                     if support_property.title in new_file:
                         if isinstance(new_file[support_property.title], str):
@@ -135,6 +138,7 @@ class CollectionEndpoints:
                     str("objects" + str(endpoint["@type"])),
                     str(member_alias.capitalize()),
                     node_properties)
+                print(collection_object_node)
                 # set an edge between the collection and its object
                 clas.addEdge(endpoint_collection_node,
                              "has_" + str(endpoint["@type"]),
@@ -177,7 +181,7 @@ class CollectionEndpoints:
         new_url = url + "/" + endpoint
         # url for every collection endpoint
         new_file = self.fetch_data(new_url)
-        if isinstance (new_file, RequestError):
+        if isinstance(new_file, RequestError):
             return None
         # retrieving the objects from the collection endpoint
         for node in self.redis_graph.nodes.values():
@@ -225,6 +229,9 @@ class CollectionEndpoints:
 #            print("supportedOperations",node_properties["operations"])
             node_properties["@id"] = str(collection_endpoint[endpoint])
             node_properties["@type"] = str(endpoint)
+            print("-----------------------------")
+            print(endpoint)
+            print(node_properties)
             endpoint_collection_node = clas.addNode(
                 "collection", endpoint, node_properties)
 #            print(endpoint_collection_node)
