@@ -56,19 +56,22 @@ class GraphOperations(Session):
                 match="collection",
                 where="id='{}'".format(redis_collection_id),
                 set="members = \"{}\"".format(str(collection_members)))
-            # Creating node for new collection member
-            node = self.graph_utils.add_node("objects" + resource['@type'],
-                                             resource['@type'] + resource_id,
-                                             {'property_value': resource})
+
+            # Creating node for new collection member and commiting to Redis
+            self.graph_utils.add_node("objects" + resource['@type'],
+                                      resource['@type'] + resource_id,
+                                      resource)
+            self.graph_utils.commit()
+
             # Creating relation between collection node and member
             self.graph_utils.create_relation(label_source="collection",
-                                             where_source="type = \'" +
+                                             where_source="type : \'" +
                                              resource_endpoint + "\'",
-                                             relation_type="has_r" +
+                                             relation_type="has_" +
                                              resource['@type'],
                                              label_dest="objects" +
                                              resource['@type'],
-                                             where_dest="id: \'" +
+                                             where_dest="id : \'" +
                                              resource['@id'] + "\'")
             return
         except ValueError as e:

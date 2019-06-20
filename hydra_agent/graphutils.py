@@ -53,10 +53,9 @@ class GraphUtils:
         Create a relation(edge) between nodes according to WHERE filters
         and the relation_type given.
         """
-        query = "MATCH(p:{})".format(label_source)
-        query += " WHERE(p.{})".format(where_source)
-        query += " CREATE (p)-[:{}]->(:".format(relation_type)
-        query += "{} {{{}}})".format(label_dest, where_dest)
+        query = "MATCH(s:{} {{{}}}), ".format(label_source, where_source)
+        query += "(d:{} {{{}}})".format(label_dest, where_dest)
+        query += " CREATE (s)-[:{}]->(d)".format(relation_type)
         return self.redis_connection.execute_command("GRAPH.QUERY",
                                                      self.graph_name,
                                                      query)
@@ -83,6 +82,9 @@ class GraphUtils:
         edge = Edge(source_node, predicate, dest_node)
         self.redis_graph.add_edge(edge)
 
+    def commit(self) -> None:
+        """Commit the changes made to the Graph to Redi"""
+        self.redis_graph.commit()
 
     def process_output(self, get_data: list) -> list:
         """
