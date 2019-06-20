@@ -9,7 +9,7 @@ class GraphUtils:
         self.redis_proxy = redis_proxy
         self.redis_connection = redis_proxy.get_connection()
         self.graph_name = graph_name
-        self.redis_graph = Graph("apidoc", redis_proxy)
+        self.redis_graph = Graph("apidoc", self.redis_connection)
 
     def read(self, match: str, ret: str,
              where: Optional[str]=None) -> Union[int, list, ResponseError]:
@@ -50,8 +50,12 @@ class GraphUtils:
                         relation_type: str, label_dest: str,
                         where_dest: str) -> list:
         """
-        Create a relation(edge) between nodes according to WHERE filters
-        and the relation_type given.
+        Create a relation(edge) between nodes according to WHERE filters.
+        :param label_source: Source node label.
+        :param where_source: Where statement to filter source node.
+        :param relation_type: The name of the relation type to assign.
+        :param label_dest: Label name for the destination node.
+        :param where_dest: Where statement to filter destination node
         """
         query = "MATCH(s:{} {{{}}}), ".format(label_source, where_source)
         query += "(d:{} {{{}}})".format(label_dest, where_dest)
@@ -63,8 +67,8 @@ class GraphUtils:
     def add_node(self, label: str, alias: str, properties: dict) -> Node:
         """
         Add node to the redis graph
-        :param label1: label for the node.
-        :param alias1: alias for the node.
+        :param label: label for the node.
+        :param alias: alias for the node.
         :param properties: properties for the node.
         :return: Created Node
         """
@@ -112,6 +116,5 @@ class GraphUtils:
                         check = property_list.pop()
                         property_list.append(check.replace("\x00", ""))
                         if property_list[0] != "NULL":
-    #                        print(property_list)
                             all_property_lists.append(property_list)
         return all_property_lists

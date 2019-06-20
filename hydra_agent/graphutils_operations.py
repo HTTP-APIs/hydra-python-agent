@@ -12,13 +12,13 @@ logger = logging.getLogger(__file__)
 
 class GraphOperations(Session):
 
-    def __init__(self, entrypoint_url, redis_connection):
+    def __init__(self, entrypoint_url, redis_proxy):
         self.entrypoint_url = entrypoint_url
-        self.redis_connection = redis_connection
-        self.connection = redis_connection.get_connection()
+        self.redis_proxy = redis_proxy
+        self.redis_connection = redis_proxy.get_connection()
         self.vocabulary = 'vocab'
-        self.graph_utils = GraphUtils(redis_connection)
-        self.redis_graph = Graph("apidoc", redis_connection)
+        self.graph_utils = GraphUtils(redis_proxy)
+        self.redis_graph = Graph("apidoc", self.redis_connection)
         super().__init__()
 
     def get_processing(self, url: str, resource: dict) -> None:
@@ -27,9 +27,6 @@ class GraphOperations(Session):
         :param resource: Resource object fetched from server.
         :return: None.
         """
-        # Receiving updated object from the Server
-        json_response = super().get(url).json()
-
         url = url.rstrip('/').replace(self.entrypoint_url, "EntryPoint")
         # Updating Redis
         # First case - When processing a GET for a resource
@@ -144,7 +141,4 @@ class GraphOperations(Session):
 
 
 if __name__ == "__main__":
-    requests = Requests("http://localhost:8080/serverapi",
-                        RedisProxy())
-
-    logger.info(requests.get("http://localhost:8080/serverapi/DroneCollection/"))
+    pass
