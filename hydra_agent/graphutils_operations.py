@@ -26,9 +26,10 @@ class GraphOperations():
         :return: None.
         """
         url = url.rstrip('/').replace(self.entrypoint_url, "EntryPoint")
+        url_list = url.split('/')
         # Updating Redis
         # First case - When processing a GET for a resource
-        try:
+        if len(url_list) == 3:
             entrypoint, resource_endpoint, resource_id = url.split('/')
 
             # Building the the collection id, i.e. vocab:Entrypoint/Collection
@@ -70,24 +71,23 @@ class GraphOperations():
                                              resource['@id'] + "\'")
             return
         # Second Case - When processing a GET for a Collection
-            # Second Case - When processing a GET for a Colletion
-            try:
-                entrypoint, resource_endpoint = url.split('/')
-                redis_collection_id = self.vocabulary + \
-                    ":" + entrypoint + \
-                    "/" + resource_endpoint
+        elif len(url_list) == 2:
+            entrypoint, resource_endpoint = url.split('/')
+            redis_collection_id = self.vocabulary + \
+                ":" + entrypoint + \
+                "/" + resource_endpoint
 
-                self.graph_utils.update(
-                    match="collection",
-                    where="id='{}'".format(redis_collection_id),
-                    set="members = \"{}\"".format(str(resource["members"])))
-                return
+            self.graph_utils.update(
+                match="collection",
+                where="id='{}'".format(redis_collection_id),
+                set="members = \"{}\"".format(str(resource["members"])))
+            return
 
-            # Third Case - When processing a valid GET that is not compatible-
-            # with the Redis Hydra structure, only returns response
-            except Exception as e:
-                logger.info("No modification to Redis was made")
-                return
+        # Third Case - When processing a valid GET that is not compatible-
+        # with the Redis Hydra structure, only returns response
+        else:
+            logger.info("No modification to Redis was made")
+            return
 
     def put_processing(self, url, new_object) -> None:
         """Synchronize Redis upon new PUT operations
