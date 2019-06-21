@@ -87,7 +87,7 @@ class GraphUtils:
         self.redis_graph.add_edge(edge)
 
     def commit(self) -> None:
-        """Commit the changes made to the Graph to Redi"""
+        """Commit the changes made to the Graph to Redis"""
         self.redis_graph.commit()
 
     def process_output(self, get_data: list) -> list:

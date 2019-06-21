@@ -69,7 +69,7 @@ class GraphOperations():
                                              where_dest="id : \'" +
                                              resource['@id'] + "\'")
             return
-        except ValueError as e:
+        # Second Case - When processing a GET for a Collection
             # Second Case - When processing a GET for a Colletion
             try:
                 entrypoint, resource_endpoint = url.split('/')
