@@ -6,7 +6,7 @@ from requests import Session
 logger = logging.getLogger(__file__)
 
 
-class HydraAgent(Session):
+class Agent(Session):
     def __init__(self, entrypoint_url):
         self.entrypoint_url = entrypoint_url
         self.redis_proxy = RedisProxy()
@@ -48,15 +48,16 @@ class HydraAgent(Session):
         return response
 
 if __name__ == "__main__":
-    HydraAgent = HydraAgent("http://localhost:8080/serverapi")
+    Agent = Agent("http://localhost:8080/serverapi")
 
     new_object = {"@type": "Drone", "DroneState": "Simplified state",
                   "name": "Smart Drone", "model": "Hydra Drone",
                   "MaxSpeed": "999", "Sensor": "Wind"}
 
-    logger.info(HydraAgent.get("http://localhost:8080/serverapi/DroneCollection/"))
-    # logger.info(HydraAgent.put("http://localhost:8080/serverapi/DroneCollection/",
+    # logger.info(Agent.get("http://localhost:8080/serverapi/DroneCollection/"))
+    logger.info(Agent.get("http://localhost:8080/serverapi/DroneCollection/8b74a56a-1ed4-41aa-8024-c3330490f6e5"))
+    # logger.info(Agent.put("http://localhost:8080/serverapi/DroneCollection/",
     #      new_object))
-    # logger.info(HydraAgent.post("http://localhost:8080/serverapi/DroneCollection/fd1e4cc5-6223-4e8a-b544-6dc9b2e60cf7",
+    # logger.info(Agent.post("http://localhost:8080/serverapi/DroneCollection/fd1e4cc5-6223-4e8a-b544-6dc9b2e60cf7",
     #      new_object))
-    # logger.info(HydraAgent.delete("http://localhost:8080/serverapi/DroneCollection/fd1e4cc5-6223-4e8a-b544-6dc9b2e60cf7"))
+    # logger.info(Agent.delete("http://localhost:8080/serverapi/DroneCollection/fd1e4cc5-6223-4e8a-b544-6dc9b2e60cf7"))
