@@ -5,12 +5,11 @@ from urllib.error import URLError, HTTPError
 from redis_proxy import RedisProxy
 from graphutils import GraphUtils
 from redisgraph import Graph, Node
-from requests import Session
 
 logger = logging.getLogger(__file__)
 
 
-class GraphOperations(Session):
+class GraphOperations():
 
     def __init__(self, entrypoint_url, redis_proxy):
         self.entrypoint_url = entrypoint_url
@@ -19,7 +18,6 @@ class GraphOperations(Session):
         self.vocabulary = 'vocab'
         self.graph_utils = GraphUtils(redis_proxy)
         self.redis_graph = Graph("apidoc", self.redis_connection)
-        super().__init__()
 
     def get_processing(self, url: str, resource: dict) -> None:
         """Synchronize Redis upon new GET operations
