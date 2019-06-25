@@ -229,9 +229,6 @@ class CollectionEndpoints:
 #            print("supportedOperations",node_properties["operations"])
             node_properties["@id"] = str(collection_endpoint[endpoint])
             node_properties["@type"] = str(endpoint)
-            print("-----------------------------")
-            print(endpoint)
-            print(node_properties)
             endpoint_collection_node = clas.addNode(
                 "collection", endpoint, node_properties)
 #            print(endpoint_collection_node)
