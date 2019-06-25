@@ -5,11 +5,11 @@ from redis.exceptions import ResponseError
 
 class GraphUtils:
 
-    def __init__(self, redis_proxy, graph_name='apidoc'):
+    def __init__(self, redis_proxy, graph_name="apigraph"):
         self.redis_proxy = redis_proxy
         self.redis_connection = redis_proxy.get_connection()
         self.graph_name = graph_name
-        self.redis_graph = Graph("apidoc", self.redis_connection)
+        self.redis_graph = Graph(graph_name, self.redis_connection)
 
     def read(self, match: str, ret: str,
              where: Optional[str]=None) -> Union[int, list, ResponseError]:

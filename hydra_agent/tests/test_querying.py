@@ -91,7 +91,7 @@ class TestEndpointQuery(unittest.TestCase):
         self.endpoint_query.get_allEndpoints(query)
 
         # asserting the connection.execute_command had calls with right parameters
-        calls = [call('GRAPH.QUERY', 'apidoc', 'MATCH (p:classes) RETURN p'), call('GRAPH.QUERY', 'apidoc',
+        calls = [call('GRAPH.QUERY', 'apigraph', 'MATCH (p:classes) RETURN p'), call('GRAPH.QUERY', 'apigraph',
                  'MATCH (p:collection) RETURN p')]
         connection_mock.execute_command.assert_has_calls(calls)
 
@@ -109,7 +109,7 @@ class TestEndpointQuery(unittest.TestCase):
         self.endpoint_query.get_classEndpoints(query)
 
         # asserting the connection.execute_command had calls with right parameters
-        calls = [call('GRAPH.QUERY', 'apidoc', 'MATCH (p:classes) RETURN p')]
+        calls = [call('GRAPH.QUERY', 'apigraph', 'MATCH (p:classes) RETURN p')]
         connection_mock.execute_command.assert_has_calls(calls)
 
     def test_get_collectionEndpoints(self):
@@ -126,7 +126,7 @@ class TestEndpointQuery(unittest.TestCase):
         self.endpoint_query.get_collectionEndpoints(query)
 
         # asserting the connection.execute_command had calls with right parameters
-        calls = [call('GRAPH.QUERY', 'apidoc',
+        calls = [call('GRAPH.QUERY', 'apigraph',
             'MATCH (p:collection) RETURN p')]
         connection_mock.execute_command.assert_has_calls(calls)
 
@@ -171,7 +171,7 @@ class TestCollectionmembersQuery(unittest.TestCase):
                 self.cmq.connection)
 
         # asserting that execute_command was called with right params
-        calls = [call('GRAPH.QUERY', 'apidoc', 'MATCH(p:collection) WHERE(p.type="TestEndpoint") RETURN p.members')]
+        calls = [call('GRAPH.QUERY', 'apigraph', 'MATCH(p:collection) WHERE(p.type="TestEndpoint") RETURN p.members')]
         connection_mock.execute_command.assert_has_calls(calls)
 
     def smembers_mock_func(self, inp):
@@ -200,7 +200,7 @@ class TestCollectionmembersQuery(unittest.TestCase):
         self.cmq.get_members(query)
 
         # checking the call made to connection_mock.execute_command with correct params
-        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', """MATCH(p:collection)
+        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apigraph', """MATCH(p:collection)
                    WHERE(p.type='TestEndpoint')
                    RETURN p.members""")
 
@@ -262,7 +262,7 @@ class TestPropertiesQuery(unittest.TestCase):
         self.properties_query.get_classes_properties(query)
 
         # asserting that redis_query was called with correct params
-        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', 'MATCH ( p:classes ) WHERE (p.type="ClassEndpoint") RETURN p.properties')
+        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apigraph', 'MATCH ( p:classes ) WHERE (p.type="ClassEndpoint") RETURN p.properties')
 
     def test_get_collection_properties(self):
         """
@@ -276,7 +276,7 @@ class TestPropertiesQuery(unittest.TestCase):
         self.properties_query.get_collection_properties(query)
 
         # asserting that redis query was called with correct params
-        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', 'MATCH ( p:collection ) WHERE (p.type="collectionEndpoint") RETURN p.properties')
+        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apigraph', 'MATCH ( p:collection ) WHERE (p.type="collectionEndpoint") RETURN p.properties')
 
     def test_members_properties(self):
         """
@@ -291,7 +291,7 @@ class TestPropertiesQuery(unittest.TestCase):
         self.properties_query.get_members_properties(query)
 
         # asserting that redis query was called with correct params
-        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', 'MATCH ( p:testMember ) RETURN p.id,p.properties')
+        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apigraph', 'MATCH ( p:testMember ) RETURN p.id,p.properties')
 
     def test_object_properties(self):
         """
@@ -306,7 +306,7 @@ class TestPropertiesQuery(unittest.TestCase):
         self.properties_query.get_object_property(query)
 
         # asserting that redis query was called with correct params
-        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', 'MATCH ( p:objectTest) WHERE (p.parent_id = "/api/TestCollection/2") RETURN p.properties')
+        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apigraph', 'MATCH ( p:objectTest) WHERE (p.parent_id = "/api/TestCollection/2") RETURN p.properties')
 
 
 class TestClassPropertiesValue(unittest.TestCase):
@@ -344,7 +344,7 @@ class TestClassPropertiesValue(unittest.TestCase):
         clas_mock.load_from_server.assert_called_with(endpoint, self.cpv.api_doc, self.cpv.url, connection_mock)
 
         # asserting that redis_query was called with correct params
-        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', """MATCH(p:classes)
+        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apigraph', """MATCH(p:classes)
                WHERE(p.type='TestEndpoint')
                RETURN p.property_value""")
 
@@ -374,7 +374,7 @@ class TestClassPropertiesValue(unittest.TestCase):
         self.cpv.get_property_value(query)
 
         # checking the call made to connection_mock.execute_command with correct params
-        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apidoc', """MATCH (p:classes)
+        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apigraph', """MATCH (p:classes)
                    WHERE (p.type = 'TestClass')
                    RETURN p.property_value""")
 

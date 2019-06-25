@@ -17,7 +17,7 @@ class GraphOperations():
         self.redis_connection = redis_proxy.get_connection()
         self.vocabulary = 'vocab'
         self.graph_utils = GraphUtils(redis_proxy)
-        self.redis_graph = Graph("apidoc", self.redis_connection)
+        self.redis_graph = Graph("apigraph", self.redis_connection)
 
     def get_processing(self, url: str, resource: dict) -> None:
         """Synchronize Redis upon new GET operations

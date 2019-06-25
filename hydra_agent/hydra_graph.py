@@ -62,7 +62,7 @@ class InitialGraph:
         redis_connection = RedisProxy()
         redis_con = redis_connection.get_connection()
         self.url = new_url
-        self.redis_graph = Graph("apidoc", redis_con)
+        self.redis_graph = Graph("apigraph", redis_con)
         print("loading... of graph")
         self.get_endpoints(api_doc, redis_con)
         if check_commit:
