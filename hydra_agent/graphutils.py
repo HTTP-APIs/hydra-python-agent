@@ -2,6 +2,8 @@ from redisgraph import Node, Edge, Graph
 from typing import Union, Optional
 from redis.exceptions import ResponseError
 
+logger = logging.getLogger(__file__)
+
 
 class GraphUtils:
 
@@ -12,7 +14,7 @@ class GraphUtils:
         self.redis_graph = Graph(graph_name, self.redis_connection)
 
     def read(self, match: str, ret: str,
-             where: Optional[str]=None) -> Union[int, list, ResponseError]:
+             where: Optional[str]=None) -> Union[list, None]:
         """
         Run query to read nodes in Redis and return the result
         :param match: Relationship between queried entities.
@@ -20,14 +22,27 @@ class GraphUtils:
         :param where: Used to filter results, not mandatory.
         :return: Corresponding Nodes
         """
-        query = "MATCH(p:{})".format(match)
+        query = "MATCH(p{})".format(match)
         if where is not None:
             query += " WHERE(p.{})".format(where)
-        query += " RETURN p.{}".format(ret)
+        query += " RETURN p{}".format(ret)
 
-        return self.redis_connection.execute_command("GRAPH.QUERY",
-                                                     self.graph_name,
-                                                     query)
+        query_result = self.redis_connection.execute_command("GRAPH.QUERY",
+                                                             self.graph_name,
+                                                             query)
+
+        try:
+            # This specific index is used to ignore headers returned by Redis
+            # With its Redis-set response
+            query_result = query_result[0][1]
+        except IndexError as e:
+            logger.info("Index Error: ", e)
+            query_result = None
+        except AttributeError as e:
+            logger.info("Attribute Error: ", e)
+            query_result = None
+
+        return query_result
 
     def update(self, match: str, set: str, where: Optional[str]=None) -> list:
         """

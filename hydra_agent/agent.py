@@ -27,6 +27,10 @@ class HydraAgent(Session):
         self.redis_connection.sadd("fs:url", self.entrypoint_url)
 
     def get(self, url):
+        response = self.graph_operations.get_resource(url)
+        if response is not None:
+            return response
+
         response = super().get(url)
 
         if response.status_code == 200:

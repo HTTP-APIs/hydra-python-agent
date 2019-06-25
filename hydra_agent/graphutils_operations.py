@@ -2,8 +2,8 @@ import urllib.request
 import json
 import logging
 from urllib.error import URLError, HTTPError
-from redis_proxy import RedisProxy
-from graphutils import GraphUtils
+from hydra_agent.redis_proxy import RedisProxy
+from hydra_agent.graphutils import GraphUtils
 from redisgraph import Graph, Node
 
 logger = logging.getLogger(__file__)
@@ -38,15 +38,22 @@ class GraphOperations():
                 "/" + resource_endpoint
 
             collection_members = self.graph_utils.read(
-                match="collection",
+                match=":collection",
                 where="id='{}'".format(redis_collection_id),
-                ret="members")
+                ret=".members")
 
-            # Accessing the members with redis-set response structure
-            collection_members = eval(collection_members[0][1][0].decode())
+            # Acessing the members from the first node returned
+            # Here we are sure it's the only one
+            collection_members = collection_members[0]
+
+            # Checking if it's the first member to be loaded
+            if collection_members is None:
+                collection_members = []
+            else:
+                collection_members = eval(collection_members.decode())
+
             collection_members.append({'@id': resource['@id'],
                                        '@type': resource['@type']})
-
             # Updating the collection properties with the nem member
             self.graph_utils.update(
                 match="collection",
@@ -94,15 +101,22 @@ class GraphOperations():
         :param url: URL for the resource to be created.
         :return: None.
         """
+        # Manually add the id that will be on the server for the object added
+        url_list = url.split('/', 3)
+        new_object["@id"] = '/' + url_list[-1]
         # Simply call sync_get to add the resource to the collection at Redis
         self.get_processing(url, new_object)
         return
 
-    def post_processing(self, url, resource, updated_object) -> None:
+    def post_processing(self, url, updated_object) -> None:
         """Synchronize Redis upon new POST operations
         :param url: URL for the resource to be updated.
         :return: None.
         """
+        # Manually add the id that will be on the server for the object added
+        url_list = url.split('/', 3)
+        updated_object["@id"] = '/' + url_list[-1]
+
         # Simply call sync_get to add the resource to the collection at Redis
         self.get_processing(url, updated_object)
         return
@@ -121,12 +135,16 @@ class GraphOperations():
             "/" + resource_endpoint
 
         collection_members = self.graph_utils.read(
-            match="collection",
+            match=":collection",
             where="id='{}'".format(redis_collection_id),
-            ret="members")
+            ret=".members")
 
-        # Accessing the members with redis-set response structure and deleting
-        collection_members = eval(collection_members[0][1][0].decode())
+        # Checking if it's the first member to be loaded
+        if collection_members is None:
+            return
+        else:
+            collection_members = eval(collection_members[0].decode())
+
         for member in collection_members:
             if resource_id in member['@id']:
                 collection_members.remove(member)
@@ -137,6 +155,33 @@ class GraphOperations():
             set="members = \"{}\"".format(str(collection_members)))
         return
 
+    def get_resource(self, url: str) -> dict:
+        """Get resources already stored on Redis and return
+        :param url: URL for the resource to fetch.
+        :return: Object with resource found.
+        """
+        # This is the first step to interact with Redis properly
+        # This method should eventually accept a type, a id or an url 
+        # do the proper checking and then return the cached info
+        url_aux = url.rstrip('/').replace(self.entrypoint_url, "EntryPoint")
+        url_list = url_aux.split('/')
+
+        # Checking if querying for cached Collection or Member
+        if len(url_list) == 2:
+            entrypoint, resource_endpoint = url_aux.split('/')
+            object_id = self.vocabulary + \
+                ":" + entrypoint + \
+                "/" + resource_endpoint
+        else:
+            url_list = url.split('/', 3)
+            object_id = '/' + url_list[-1]
+
+        resource = self.graph_utils.read(
+                            match="",
+                            where="id='{}'".format(object_id),
+                            ret="")
+
+        return resource
 
 if __name__ == "__main__":
     pass
