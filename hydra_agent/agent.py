@@ -8,7 +8,7 @@ from requests import Session
 logger = logging.getLogger(__file__)
 
 
-class HydraAgent(Session):
+class Agent(Session):
     def __init__(self, entrypoint_url):
         self.entrypoint_url = entrypoint_url.strip().rstrip('/')
         self.redis_proxy = RedisProxy()
@@ -64,29 +64,4 @@ class HydraAgent(Session):
         return response
 
 if __name__ == "__main__":
-    Agent = HydraAgent("http://localhost:8080/serverapi")
-
-    new_object = {"@type": "Drone", "DroneState": "Simplified state",
-                  "name": "Smart Drone", "model": "Hydra Drone",
-                  "MaxSpeed": "999", "Sensor": "Wind"}
-
-    response = Agent.put("http://localhost:8080/serverapi/DroneCollection/",
-                         new_object)
-
-    new_resource_url = response.headers['Location']
-
-    logger.info(Agent.get(new_resource_url))
-
-    new_object["name"] = "Updated Name"
-    del new_object["@id"]
-    print("esse aq")
-    logger.info(Agent.post(new_resource_url, new_object))
-
-    logger.info(Agent.delete(new_resource_url))
-
-    logger.info(Agent.get("http://localhost:8080/serverapi/DroneCollection/"))
-
-    #logger.info(Agent.get("http://localhost:8080/serverapi/DroneCollection/607cdfee-a1d4-4476-8bb5-93cc5955a408"))
-
-
-    # logger.info(Agent.delete("http://localhost:8080/serverapi/DroneCollection/fd1e4cc5-6223-4e8a-b544-6dc9b2e60cf7"))
+    pass
