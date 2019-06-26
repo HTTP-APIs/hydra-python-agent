@@ -1,3 +1,4 @@
+import logging
 from redisgraph import Node, Edge, Graph
 from typing import Union, Optional
 from redis.exceptions import ResponseError

@@ -44,6 +44,7 @@ class Agent(Session):
         if response.status_code == 201:
             url = response.headers['Location']
             self.graph_operations.put_processing(url, new_object)
+            return response.json(), response.headers['Location']
 
         return response.json(), None
 
