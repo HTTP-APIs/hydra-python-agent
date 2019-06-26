@@ -78,7 +78,7 @@ To create the graph in Redis memory, use(hydra_graph.py) :
     import redis
     from redisgraph import Graph, Node, Edge
     redis_con = redis.Redis(host='localhost', port=6379)
-    self.redis_graph = Graph("apidoc", redis_con)
+    self.redis_graph = Graph("apigraph", redis_con)
 ```
 
 For querying, URL should be provided first:
@@ -86,7 +86,7 @@ For querying, URL should be provided first:
 ```
     url = input("url>>>")
     
-    return query(apidoc, url) # apidoc is vocab file provided by url.
+    return query(apigraph, url) # apigraph is vocab file provided by url.
 ```
 
 The client takes the query as input, like:
@@ -147,7 +147,9 @@ Entity structure: alias:label {filters}.
 Example of MATCH:
 (a:actor)-[:act]->(m:movie {title:"straight outta compton"})
 
-Hydra Python naming:
+GRAPH.QUERY apigraph "MATCH (p) RETURN p" 
+
+Internal Hydra Python Agent naming:
 
 labels:
 
@@ -161,25 +163,36 @@ Dronea9d6f083-79dc-48e2-9e4b-fd5e9fc849ab - alias for collection member
 
 To get all nodes from the Graph:
 ```
-GRAPH.QUERY apidoc "MATCH (p) RETURN p" 
+GRAPH.QUERY apigraph "MATCH (p) RETURN p" 
 ```
 
-To get all nodes from the Graph:
+Get all nodes and filter by label:
 ```
-GRAPH.QUERY apidoc "MATCH (p:collection) RETURN p" 
-```
-
-To read all the edges connected to a node
-```
-GRAPH.QUERY apidoc "MATCH (p)-[r]->() WHERE p.type = 'DroneCollection' RETURN type(r)"
+GRAPH.QUERY apigraph "MATCH (p:collection) RETURN p" 
 ```
 
 To read all the edges of the graph
 ```
-GRAPH.QUERY apidoc "MATCH ()-[r]->() RETURN type(r)"
+GRAPH.QUERY apigraph "MATCH ()-[r]->() RETURN type(r)"
 ```
 
+To read all the edges connected to a node
+```
+GRAPH.QUERY apigraph "MATCH (p)-[r]->() WHERE p.type = 'DroneCollection' RETURN type(r)"
+```
 
+Creating Edges between existing Nodes(Ref: https://github.com/RedisGraph/redisgraph-py/issues/16):
+*This is not available yet on the oficial doc*
+```
+MATCH (f:%s{%s:'%s'}), (t:%s{%s:'%s'}) CREATE (f)-[:in]->(t)
+GRAPH.QUERY apigraph "MATCH (s:collection {type:'DroneCollection'} ), (d:objectsDrone {id:'/serverapi/DroneCollection/ea7e438e-a93d-436d-a7e9-994c13d49dc0'} ) CREATE (s)-[:has_Drone]->(d)"
+```
+
+To create a node:
+```
+GRAPH.QUERY apigraph "CREATE (Droneea7e438e-a93d-436d-a7e9-994c13d49dc0:objectsDrone {@id: '/serverapi/DroneCollection/a9d6f083-79dc-48e2-9e4b-fd5e9fc849ab', @type: 'Drone', model: 'Ultra Model S')"
+
+```
 
 References
 ----------
