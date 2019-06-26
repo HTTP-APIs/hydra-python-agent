@@ -139,6 +139,48 @@ Query test can be done like this:
 
 For more detail take a look at [wiki file](https://github.com/HTTP-APIs/http-apis.github.io/blob/master/hydra-agent-redis-graph.md)
 
+#### Agent package 
+To use the Agent as a package you can simply do something like:
+
+```
+from hydra_agent.agent import Agent 
+
+agent = Agent("http://localhost:8080/serverapi")
+agent.get("http://localhost:8080/serverapi/DroneCollection/123-123-123-123")
+```
+
+The agent supports GET, PUT, POST or DELETE:
+
+- GET - used to READ resources or collections
+- PUT - used to CREATE new resources in the Server
+- POST - used to UPDATE resources in the Server
+- DELETE - used to DELETE resources in the Server
+
+To GET a existing resource you should:
+```
+agent.get("http://localhost:8080/serverapi/<CollectionType>/<Resource-ID>")
+agent.get("http://localhost:8080/serverapi/<CollectionType>/")
+```
+
+To PUT a new resource you should:
+```
+new_resource = {"@type": "Drone", "name": "Drone 1", "model": "Model S", ...}
+agent.put("http://localhost:8080/serverapi/<CollectionType>/", new_resource)
+```
+
+To UPDATE a resource you should:
+```
+existing_resource["name"] = "Updated Name"
+agent.post("http://localhost:8080/serverapi/<CollectionType>/<Resource-ID>", existing_resource)
+```
+
+To DELETE a resource you should:
+```
+agent.delete("http://localhost:8080/serverapi/<CollectionType>/<Resource-ID>")
+```
+
+More than that, Agent extends Session from https://2.python-requests.org/en/master/api/#request-sessions, so all methods like auth, cookies, headers and so on can also be used.
+
 #### Querying Redis
 Reference can be found here: https://oss.redislabs.com/redisgraph/commands/
 
