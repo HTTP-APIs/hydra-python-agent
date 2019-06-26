@@ -27,19 +27,13 @@ class GraphUtils:
             query += " WHERE(p.{})".format(where)
         query += " RETURN p{}".format(ret)
 
-        query_result = self.redis_connection.execute_command("GRAPH.QUERY",
-                                                             self.graph_name,
-                                                             query)
+        query_result = self.redis_graph.query(query)
 
-        try:
-            # This specific index is used to ignore headers returned by Redis
-            # With its Redis-set response
-            query_result = query_result[0][1]
-        except IndexError as e:
-            logger.info("Index Error: ", e)
-            query_result = None
-        except AttributeError as e:
-            logger.info("Attribute Error: ", e)
+
+        # Processing Redis-set response format
+        query_result = self.process_result(query_result)
+        
+        if not query_result:
             query_result = None
 
         return query_result
@@ -105,31 +99,31 @@ class GraphUtils:
         """Commit the changes made to the Graph to Redis"""
         self.redis_graph.commit()
 
-    def process_output(self, get_data: list) -> list:
+    def process_result(self, result: list) -> list:
         """
-        Partial data processing for redis-sets
-        Count is using for avoid stuffs like query internal execution time.
+        Partial data processing for results redis-sets
         :param get_data: data get from the Redis memory.
         """
-        count = 0
-        all_property_lists = []
-        for objects in get_data:
-            count += 1
-            # Show data only for odd value of count.
-            # because for even value it contains stuffs like time and etc.
-            # ex: Redis provide data like if we query class endpoint
-            # output like:
-            # [[endpoints in byte object form],[query execution time:0.5ms]]
-            # So with the help of count, byte object convert to string
-            # and also show only useful strings not the query execution time.
-            if count % 2 != 0:
-                for obj1 in objects:
-                    for obj in obj1:
-                        string = obj.decode('utf-8')
-                        map_string = map(str.strip, string.split(','))
-                        property_list = list(map_string)
-                        check = property_list.pop()
-                        property_list.append(check.replace("\x00", ""))
-                        if property_list[0] != "NULL":
-                            all_property_lists.append(property_list)
-        return all_property_lists
+        response_json_list = []
+
+        for record in result.result_set[1:]:
+            new_record = {}
+            for j, property_x in enumerate(record):
+                if property_x is None:
+                    pass
+                else:
+                    property_name = result.result_set[0][j].decode()
+                    try:
+                        node_alias, property_name = property_name.split(".")
+                        new_record[property_name] = property_x.decode()
+                    except ValueError as e:
+                        logger.info("Graph property with no dot/wrong format")
+            if new_record:
+                response_json_list.append(new_record)
+
+        return response_json_list
+
+
+if __name__ == "__main__":
+    pass
+ 

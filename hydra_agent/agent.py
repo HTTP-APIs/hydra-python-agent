@@ -36,7 +36,7 @@ class Agent(Session):
         if response.status_code == 200:
             self.graph_operations.get_processing(url, response.json())
 
-        return response
+        return response.json()
 
     def put(self, url, new_object):
         response = super().put(url, json=new_object)
@@ -45,7 +45,7 @@ class Agent(Session):
             url = response.headers['Location']
             self.graph_operations.put_processing(url, new_object)
 
-        return response
+        return response.json(), None
 
     def post(self, url, updated_object):
         response = super().post(url, json=updated_object)
@@ -53,7 +53,7 @@ class Agent(Session):
         if response.status_code == 200:
             self.graph_operations.post_processing(url, updated_object)
 
-        return response
+        return response.json()
 
     def delete(self, url):
         response = super().delete(url)
@@ -61,7 +61,7 @@ class Agent(Session):
         if response.status_code == 200:
             self.graph_operations.delete_processing(url)
 
-        return response
+        return response.json()
 
 if __name__ == "__main__":
     pass

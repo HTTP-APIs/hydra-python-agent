@@ -42,15 +42,11 @@ class GraphOperations():
                 where="id='{}'".format(redis_collection_id),
                 ret=".members")
 
-            # Acessing the members from the first node returned
-            # Here we are sure it's the only one
-            collection_members = collection_members[0]
-
             # Checking if it's the first member to be loaded
             if collection_members is None:
                 collection_members = []
             else:
-                collection_members = eval(collection_members.decode())
+                collection_members = eval(collection_members[0]['members'])
 
             collection_members.append({'@id': resource['@id'],
                                        '@type': resource['@type']})
@@ -143,7 +139,7 @@ class GraphOperations():
         if collection_members is None:
             return
         else:
-            collection_members = eval(collection_members[0].decode())
+            collection_members = eval(collection_members[0]['members'])
 
         for member in collection_members:
             if resource_id in member['@id']:
@@ -180,6 +176,9 @@ class GraphOperations():
                             match="",
                             where="id='{}'".format(object_id),
                             ret="")
+        # If having only one object/querying by id return only dict
+        if resource is not None and len(resource) == 1:
+            return resource[0]
 
         return resource
 
