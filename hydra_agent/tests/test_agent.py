@@ -16,7 +16,7 @@ class TestAgent(unittest.TestCase):
         :param get_session_mock: MagicMock object for patching session.get
                                  it's used to Mock Hydrus response to ApiDoc
         """
-
+        # Mocking get for ApiDoc to Server, so hydrus doesn't need to be up
         get_session_mock.return_value.json.return_value = drone_doc
 
         self.agent = Agent("http://localhost:8080/serverapi")
@@ -25,11 +25,14 @@ class TestAgent(unittest.TestCase):
     @patch('hydra_agent.agent.GraphOperations.get_processing')
     def test_get(self, get_processing_mock, get_session_mock):
         """Tests get method from the Agent
+        :param get_processing_mock: MagicMock object to patch graphoperations
         :param get_mock: MagicMock object for patching session.get
         """
         mock_dict = {"@type": "Drone", "DroneState": "Simplified state",
                      "name": "Smart Drone", "model": "Hydra Drone",
                      "MaxSpeed": "999", "Sensor": "Wind"}
+
+        # Mock server request to the Server
         get_session_mock.return_value.status_code = 200
         get_session_mock.return_value.json.return_value = mock_dict
         response = self.agent.get("http://localhost:8080/serverapi/" +
@@ -40,12 +43,10 @@ class TestAgent(unittest.TestCase):
                                                mock_dict)
         self.assertEqual(response, mock_dict)
 
-    # THIS IS STILL FAILLING BECAUSE OF SOME HYDRUS MOCKING THAT I'M WORKING ON
     @patch('hydra_agent.agent.Session.put')
-    @patch('hydra_agent.agent.GraphOperations.put_processing')
-    def test_put(self, put_processing_mock, put_session_mock):
-        """Tests get method from the Agent
-        :param get_mock: MagicMock object for patching session.get
+    def test_put(self, put_session_mock):
+        """Tests put method from the Agent
+        :param put_session_mock: MagicMock object for patching session.put
         """
         new_object = {"@type": "Drone", "DroneState": "Simplified state",
                       "name": "Smart Drone", "model": "Hydra Drone",
@@ -54,9 +55,14 @@ class TestAgent(unittest.TestCase):
         collection_url = "http://localhost:8080/serverapi/DroneCollection/"
         new_object_url = collection_url + "1"
 
-        mock = MagicMock()
-        mock.headers['Location'] = new_object_url
+        put_session_mock.return_value.status_code = 201
+        put_session_mock.return_value.json.return_value = new_object
+        put_session_mock.return_value.headers = {'Location': new_object_url}
+        response, new_object_url = self.agent.put(collection_url, new_object)
 
+        # Assert if object was inserted queried and inserted successfully
+        get_new_object = self.agent.get(new_object_url)
+        self.assertEqual(get_new_object, new_object)
         put_session_mock.return_value.status_code = 201
         put_session_mock.return_value.json.return_value = new_object
         put_session_mock.return_value['headers']['Location'] = new_object_url
