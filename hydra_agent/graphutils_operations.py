@@ -114,6 +114,7 @@ class GraphOperations():
         updated_object["@id"] = '/' + url_list[-1]
 
         # Simply call sync_get to add the resource to the collection at Redis
+        self.delete_processing(url)
         self.get_processing(url, updated_object)
         return
 
@@ -122,6 +123,13 @@ class GraphOperations():
         :param url: URL for the resource deleted.
         :return: None.
         """
+        # MEMBER NODE Deleting from Redis Graph
+        url_list = url.split('/', 3)
+        object_id = '/' + url_list[-1]
+
+        self.graph_utils.delete(where="id='{}'".format(object_id))
+
+        # COLLECTION Property members update
         url = url.rstrip('/').replace(self.entrypoint_url, "EntryPoint")
         entrypoint, resource_endpoint, resource_id = url.split('/')
 
@@ -149,6 +157,7 @@ class GraphOperations():
             match="collection",
             where="id='{}'".format(redis_collection_id),
             set="members = \"{}\"".format(str(collection_members)))
+
         return
 
     def get_resource(self, url: str) -> dict:

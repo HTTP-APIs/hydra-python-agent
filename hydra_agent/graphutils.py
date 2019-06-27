@@ -56,6 +56,23 @@ class GraphUtils:
                                                      self.graph_name,
                                                      query)
 
+    def delete(self, where: str, match: str = "") -> list:
+        """
+        Run query to update nodes in Redis and return the result
+        :param match: Relationship between queried entities.
+        :param set: The property to be updated.
+        :param where: Used to filter results, not mandatory.
+        :return: Query results
+        """
+        query = "MATCH(p{})".format(match)
+        if where is not None:
+            query += " WHERE(p.{})".format(where)
+        query += " DELETE p"
+
+        return self.redis_connection.execute_command("GRAPH.QUERY",
+                                                     self.graph_name,
+                                                     query)
+
     def create_relation(self, label_source: str, where_source: str,
                         relation_type: str, label_dest: str,
                         where_dest: str) -> list:
