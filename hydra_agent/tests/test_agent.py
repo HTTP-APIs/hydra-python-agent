@@ -63,13 +63,32 @@ class TestAgent(unittest.TestCase):
         # Assert if object was inserted queried and inserted successfully
         get_new_object = self.agent.get(new_object_url)
         self.assertEqual(get_new_object, new_object)
+
+    @patch('hydra_agent.agent.Session.post')
+    @patch('hydra_agent.agent.Session.put')
+    def test_post(self, put_session_mock, post_session_mock):
+        """Tests post method from the Agent
+        :param put_session_mock: MagicMock object for patching session.put
+        :param post_session_mock: MagicMock object for patching session.post
+        """
+        new_object = {"@type": "Drone", "DroneState": "Simplified state",
+                      "name": "Smart Drone", "model": "Hydra Drone",
+                      "MaxSpeed": "999", "Sensor": "Wind"}
+
+        collection_url = "http://localhost:8080/serverapi/DroneCollection/"
+        new_object_url = collection_url + "2"
+
         put_session_mock.return_value.status_code = 201
         put_session_mock.return_value.json.return_value = new_object
-        put_session_mock.return_value['headers']['Location'] = new_object_url
+        put_session_mock.return_value.headers = {'Location': new_object_url}
         response, new_object_url = self.agent.put(collection_url, new_object)
 
-        put_processing_mock.assert_called_with(new_object_url, new_object)
+        post_session_mock.return_value.status_code = 200
+        post_session_mock.return_value.json.return_value = {"msg": "success"}
+        new_object['name'] = "Updated Name"
+        response = self.agent.post(new_object_url, new_object)
 
+        # Assert if object was updated successfully as intended
         get_new_object = self.agent.get(new_object_url)
         self.assertEqual(get_new_object, new_object)
 
