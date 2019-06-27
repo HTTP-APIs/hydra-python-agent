@@ -92,5 +92,36 @@ class TestAgent(unittest.TestCase):
         get_new_object = self.agent.get(new_object_url)
         self.assertEqual(get_new_object, new_object)
 
+    @patch('hydra_agent.agent.Session.get')
+    @patch('hydra_agent.agent.Session.delete')
+    @patch('hydra_agent.agent.Session.put')
+    def test_delete(self, put_session_mock, delete_session_mock,
+                    get_session_mock):
+        """Tests post method from the Agent
+        :param put_session_mock: MagicMock object for patching session.put
+        :param post_session_mock: MagicMock object for patching session.post
+        """
+        new_object = {"@type": "Drone", "DroneState": "Simplified state",
+                      "name": "Smart Drone", "model": "Hydra Drone",
+                      "MaxSpeed": "999", "Sensor": "Wind"}
+
+        collection_url = "http://localhost:8080/serverapi/DroneCollection/"
+        new_object_url = collection_url + "3"
+
+        put_session_mock.return_value.status_code = 201
+        put_session_mock.return_value.json.return_value = new_object
+        put_session_mock.return_value.headers = {'Location': new_object_url}
+        response, new_object_url = self.agent.put(collection_url, new_object)
+
+        delete_session_mock.return_value.status_code = 200
+        delete_session_mock.return_value.json.return_value = {"msg": "success"}
+        response = self.agent.delete(new_object_url)
+
+        get_session_mock.return_value.json.return_value = {"msg": "success"}
+        get_new_object = self.agent.get(new_object_url)
+
+        # Assert if nothing different was returned by Redis
+        self.assertEqual(get_new_object, {"msg": "success"})
+
 if __name__ == "__main__":
     unittest.main()
