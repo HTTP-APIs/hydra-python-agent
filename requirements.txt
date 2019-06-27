@@ -6,4 +6,4 @@ redis==2.10.6
 redisgraph
 graphviz
 requests
--e git+https://github.com/HTTP-APIs/hydra-python-core.git#egg=hydra_python_core
+-e git+https://github.com/HTTP-APIs/hydra-python-core@v0.1#egg=hydra_python_core
