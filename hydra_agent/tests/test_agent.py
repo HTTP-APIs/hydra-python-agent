@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch, MagicMock, call
 from hydra_agent.agent import Agent
 from hydra_agent.graphutils_operations import GraphOperations
+from hydra_agent.tests.test_examples.hydra_doc_sample import doc as drone_doc
 
 
 class TestAgent(unittest.TestCase):
@@ -9,10 +10,16 @@ class TestAgent(unittest.TestCase):
     TestCase for Agent Class
     """
 
-    def setUp(self):
-        """Setting up Agent object"""
-        self.agent = Agent("http://localhost:8080/serverapi")
+    @patch('hydra_agent.agent.Session.get')
+    def setUp(self, get_session_mock):
+        """Setting up Agent object
+        :param get_session_mock: MagicMock object for patching session.get
+                                 it's used to Mock Hydrus response to ApiDoc
+        """
 
+        get_session_mock.return_value.json.return_value = drone_doc
+
+        self.agent = Agent("http://localhost:8080/serverapi")
 
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.GraphOperations.get_processing')
