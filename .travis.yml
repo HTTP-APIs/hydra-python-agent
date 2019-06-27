@@ -3,7 +3,7 @@ services:
   - docker
   
 before_script:
-  - docker run -d -p 6379:6379 -it --rm --name redisgraph redislabs/redisgraph
+  - docker run -d -p 6379:6379 -it --rm --name redisgraph redislabs/redisgraph:1.2.2
 
 python:
   - "3.5"
