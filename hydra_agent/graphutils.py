@@ -120,6 +120,9 @@ class GraphUtils:
                     except ValueError as e:
                         logger.info("Graph property with no dot/wrong format")
             if new_record:
+                if 'id' in new_record:
+                    new_record['@id'] = new_record.pop('id')
+                    new_record['@type'] = new_record.pop('type')
                 response_json_list.append(new_record)
 
         return response_json_list
