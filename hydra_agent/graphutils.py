@@ -10,6 +10,11 @@ logger = logging.getLogger(__file__)
 class GraphUtils:
 
     def __init__(self, redis_proxy: RedisProxy, graph_name="apigraph") -> None:
+        """Initialize Graph Utils module
+        :param redis_proxy: RedisProxy object created from redis_proxy module
+        :param graph_name: Graph Key name to be created in Redis
+        :return: None
+        """
         self.redis_proxy = redis_proxy
         self.redis_connection = redis_proxy.get_connection()
         self.graph_name = graph_name
@@ -30,7 +35,6 @@ class GraphUtils:
         query += " RETURN p{}".format(ret)
 
         query_result = self.redis_graph.query(query)
-
 
         # Processing Redis-set response format
         query_result = self.process_result(query_result)
@@ -149,4 +153,3 @@ class GraphUtils:
 
 if __name__ == "__main__":
     pass
-
