@@ -193,15 +193,21 @@ GRAPH.QUERY apigraph "MATCH (p) RETURN p"
 
 Internal Hydra Python Agent naming:
 
-labels:
+Labels:
 
-- collection, classes - 
-- objectsDrone - for members
+- collection, classes - macro labels
+- objects<ObjectType> - for members
+- object<ObjectID> - for resources
 
-alias:
+Aliases:
 
-DroneCollection - alias for collection example
-Dronea9d6f083-79dc-48e2-9e4b-fd5e9fc849ab - alias for collection member
+Alias for collection example:
+<ObjectType>Collection
+DroneCollection
+
+Alias for collection member:
+<ObjectType><ObjectID>
+Dronea9d6f083-79dc-48e2-9e4b-fd5e9fc849ab
 
 To get all nodes from the Graph:
 ```
@@ -233,6 +239,12 @@ GRAPH.QUERY apigraph "MATCH (s:collection {type:'DroneCollection'} ), (d:objects
 To create a node:
 ```
 GRAPH.QUERY apigraph "CREATE (Droneea7e438e-a93d-436d-a7e9-994c13d49dc0:objectsDrone {@id: '/serverapi/DroneCollection/a9d6f083-79dc-48e2-9e4b-fd5e9fc849ab', @type: 'Drone', model: 'Ultra Model S')"
+
+```
+
+To delete a node:
+```
+GRAPH.QUERY apigraph "MATCH (p) WHERE (p.id = '/serverapi/DroneCollection/2') DELETE p"
 
 ```
 
