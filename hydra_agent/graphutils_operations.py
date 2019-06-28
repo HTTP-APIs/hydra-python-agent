@@ -11,7 +11,7 @@ logger = logging.getLogger(__file__)
 
 class GraphOperations():
 
-    def __init__(self, entrypoint_url, redis_proxy):
+    def __init__(self, entrypoint_url: str, redis_proxy: RedisProxy):
         self.entrypoint_url = entrypoint_url
         self.redis_proxy = redis_proxy
         self.redis_connection = redis_proxy.get_connection()
@@ -92,7 +92,7 @@ class GraphOperations():
             logger.info("No modification to Redis was made")
             return
 
-    def put_processing(self, url, new_object) -> None:
+    def put_processing(self, url: str, new_object: dict) -> None:
         """Synchronize Redis upon new PUT operations
         :param url: URL for the resource to be created.
         :return: None.
@@ -104,7 +104,7 @@ class GraphOperations():
         self.get_processing(url, new_object)
         return
 
-    def post_processing(self, url, updated_object) -> None:
+    def post_processing(self, url: str, updated_object: dict) -> None:
         """Synchronize Redis upon new POST operations
         :param url: URL for the resource to be updated.
         :return: None.
@@ -118,7 +118,7 @@ class GraphOperations():
         self.get_processing(url, updated_object)
         return
 
-    def delete_processing(self, url) -> None:
+    def delete_processing(self, url: str) -> None:
         """Synchronize Redis upon new DELETE operations
         :param url: URL for the resource deleted.
         :return: None.
@@ -166,7 +166,7 @@ class GraphOperations():
         :return: Object with resource found.
         """
         # This is the first step to interact with Redis properly
-        # This method should eventually accept a type, a id or an url 
+        # This method should eventually accept a type, a id or an url
         # do the proper checking and then return the cached info
         url_aux = url.rstrip('/').replace(self.entrypoint_url, "EntryPoint")
         url_list = url_aux.split('/')

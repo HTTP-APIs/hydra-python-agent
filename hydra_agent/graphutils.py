@@ -1,4 +1,5 @@
 import logging
+from hydra_agent.redis_proxy import RedisProxy
 from redisgraph import Node, Edge, Graph
 from typing import Union, Optional
 from redis.exceptions import ResponseError
@@ -8,7 +9,7 @@ logger = logging.getLogger(__file__)
 
 class GraphUtils:
 
-    def __init__(self, redis_proxy, graph_name="apigraph"):
+    def __init__(self, redis_proxy: RedisProxy, graph_name="apigraph") -> None:
         self.redis_proxy = redis_proxy
         self.redis_connection = redis_proxy.get_connection()
         self.graph_name = graph_name
@@ -33,7 +34,7 @@ class GraphUtils:
 
         # Processing Redis-set response format
         query_result = self.process_result(query_result)
-        
+
         if not query_result:
             query_result = None
 
@@ -109,6 +110,7 @@ class GraphUtils:
         :param source_node: source node of the edge.
         :param predicate: relationship between the source and destination node
         :param dest_node: destination node of the edge.
+        :return: None
         """
         edge = Edge(source_node, predicate, dest_node)
         self.redis_graph.add_edge(edge)
@@ -147,4 +149,4 @@ class GraphUtils:
 
 if __name__ == "__main__":
     pass
- 
+
