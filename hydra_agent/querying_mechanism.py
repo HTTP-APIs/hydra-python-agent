@@ -1,7 +1,7 @@
 import random
 import string
 import logging
-from hydra_agent.hydra_graph import InitialGraph
+from hydra_agent.graph_init import InitialGraph
 import urllib.request
 from urllib.parse import urljoin
 import json
