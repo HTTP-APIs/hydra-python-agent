@@ -3,7 +3,7 @@ import json
 import re
 import logging
 from urllib.error import URLError, HTTPError
-from hydra_agent.classes_objects import ClassEndpoints, RequestError
+from hydra_agent.redis_core.classes_objects import ClassEndpoints, RequestError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

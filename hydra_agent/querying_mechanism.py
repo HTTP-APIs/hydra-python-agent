@@ -1,15 +1,15 @@
 import random
 import string
 import logging
-from hydra_agent.graph_init import InitialGraph
+from hydra_agent.redis_core.graph_init import InitialGraph
 import urllib.request
 from urllib.parse import urljoin
 import json
 from hydra_python_core import doc_maker
 from urllib.error import URLError, HTTPError
-from hydra_agent.collections_endpoint import CollectionEndpoints
-from hydra_agent.classes_objects import ClassEndpoints, RequestError
-from hydra_agent.redis_proxy import RedisProxy
+from hydra_agent.redis_core.collections_endpoint import CollectionEndpoints
+from hydra_agent.redis_core.classes_objects import ClassEndpoints, RequestError
+from hydra_agent.redis_core.redis_proxy import RedisProxy
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
