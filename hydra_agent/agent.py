@@ -1,7 +1,7 @@
 import logging
-from hydra_agent.redis_proxy import RedisProxy
-from hydra_agent.graphutils_operations import GraphOperations
-from hydra_agent.hydra_graph import InitialGraph
+from hydra_agent.redis_core.redis_proxy import RedisProxy
+from hydra_agent.redis_core.graphutils_operations import GraphOperations
+from hydra_agent.redis_core.graph_init import InitialGraph
 from hydra_python_core import doc_maker
 from typing import Union, Tuple
 from requests import Session

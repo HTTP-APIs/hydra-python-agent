@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock, call
 from hydra_agent.agent import Agent
-from hydra_agent.graphutils_operations import GraphOperations
+from hydra_agent.redis_core.graphutils_operations import GraphOperations
 from hydra_agent.tests.test_examples.hydra_doc_sample import doc as drone_doc
 
 

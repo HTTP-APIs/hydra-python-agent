@@ -1,5 +1,5 @@
 import logging
-from hydra_agent.redis_proxy import RedisProxy
+from hydra_agent.redis_core.redis_proxy import RedisProxy
 from redisgraph import Node, Edge, Graph
 from typing import Union, Optional
 from redis.exceptions import ResponseError

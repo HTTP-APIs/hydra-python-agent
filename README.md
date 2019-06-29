@@ -73,7 +73,7 @@ After setup the environment. You can query or run the client.
 
 #### Code simplification
 
-To create the graph in Redis memory, use(hydra_graph.py) :
+To create the graph in Redis memory, use(graph_init.py) :
 ```
     import redis
     from redisgraph import Graph, Node, Edge
