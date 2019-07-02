@@ -219,6 +219,11 @@ Get all nodes and filter by label:
 GRAPH.QUERY apigraph "MATCH (p:collection) RETURN p" 
 ```
 
+Get all nodes and filter by label:
+```'
+GRAPH.QUERY apigraph "MATCH (p) WHERE(p.id = '/serverapi/DroneCollection/72b53615-a480-4920-b126-4d1e1e107dc6') RETURN p" 
+```
+
 To read all the edges of the graph
 ```
 GRAPH.QUERY apigraph "MATCH ()-[r]->() RETURN type(r)"

@@ -2,10 +2,11 @@ import urllib.request
 import json
 import logging
 from urllib.error import URLError, HTTPError
-from hydra_agent.redis_core.redis_proxy import RedisProxy
-from hydra_agent.redis_core.graphutils import GraphUtils
+from redis_core.redis_proxy import RedisProxy
+from redis_core.graphutils import GraphUtils
 from redisgraph import Graph, Node
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
 
 

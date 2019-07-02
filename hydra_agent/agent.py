@@ -1,11 +1,12 @@
 import logging
-from hydra_agent.redis_core.redis_proxy import RedisProxy
-from hydra_agent.redis_core.graphutils_operations import GraphOperations
-from hydra_agent.redis_core.graph_init import InitialGraph
+from redis_core.redis_proxy import RedisProxy
+from redis_core.graphutils_operations import GraphOperations
+from redis_core.graph_init import InitialGraph
 from hydra_python_core import doc_maker
 from typing import Union, Tuple
 from requests import Session
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
 
 
@@ -92,4 +93,29 @@ class Agent(Session):
         return response.json()
 
 if __name__ == "__main__":
+    # GRAPH.QUERY apigraph "MATCH (p:collection {id:'vocab:EntryPoint/DroneCollection'}) RETURN p.members"
+    # GRAPH.QUERY apigraph "MATCH(p) WHERE(p.id='/serverapi/DroneCollection/d4a8106e-87ab-4f27-ad36-ecae3bca075c') RETURN p"
+    agent = Agent("http://localhost:8080/serverapi")
+    logger.info(agent.get("http://localhost:8080/serverapi/DroneCollection/"))
+    #input(">>>")
+
+    new_object = {"@type": "Drone", "DroneState": "Simplified state",
+                  "name": "Smart Drone", "model": "Hydra Drone",
+                  "MaxSpeed": "999", "Sensor": "Wind"}
+    print("----PUT-----")
+    response, new_resource_url = agent.put("http://localhost:8080/serverapi/DroneCollection/", new_object)
+    print("----GET RESOURCE-----")
+    logger.info(agent.get(new_resource_url))
+
+    new_object["name"] = "Updated Name"
+    del new_object["@id"]
+    
+    print("----POST-----")
+    logger.info(agent.post(new_resource_url, new_object))
+
+    print("----DELETE-----")
+    logger.info(agent.delete(new_resource_url))
+
+    print("----GET COLLECTION-----")
+    logger.info(agent.get("http://localhost:8080/serverapi/DroneCollection/"))
     pass

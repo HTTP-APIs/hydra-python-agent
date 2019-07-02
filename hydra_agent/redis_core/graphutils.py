@@ -1,9 +1,10 @@
 import logging
-from hydra_agent.redis_core.redis_proxy import RedisProxy
+from redis_core.redis_proxy import RedisProxy
 from redisgraph import Node, Edge, Graph
 from typing import Union, Optional
 from redis.exceptions import ResponseError
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
 
 
@@ -130,18 +131,21 @@ class GraphUtils:
         """
         response_json_list = []
 
-        for record in result.result_set[1:]:
+        for record in result.result_set[0][:]:
             new_record = {}
-            for j, property_x in enumerate(record):
+            if record is None:
+                return
+            properties = record.properties
+            #properties = {y.replace("b'", "")[:-1]: properties.get(y).replace("b'", "")[:-1] for y in properties.keys() }
+            properties = {y.replace("b'", ""): properties.get(y) for y in properties.keys() }  
+            string.encode(encoding='UTF-8',errors='strict')
+            for j, property_x in enumerate(record.properties):
                 if property_x is None:
                     pass
                 else:
-                    property_name = result.result_set[0][j].decode()
-                    try:
-                        node_alias, property_name = property_name.split(".")
-                        new_record[property_name] = property_x.decode()
-                    except ValueError as e:
-                        logger.info("Graph property with no dot/wrong format")
+                    property_name = property_x.decode()
+                    new_record[property_name] = record.properties[j].decode()
+
             if new_record:
                 if 'id' in new_record:
                     new_record['@id'] = new_record.pop('id')
