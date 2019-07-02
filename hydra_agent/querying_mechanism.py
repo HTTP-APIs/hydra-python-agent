@@ -62,6 +62,8 @@ class HandleData:
             if count % 2 != 0:
                 for obj1 in objects:
                     for obj in obj1:
+                        if obj is None:
+                            continue
                         string = obj.decode('utf-8')
                         map_string = map(str.strip, string.split(','))
                         property_list = list(map_string)
