@@ -60,7 +60,8 @@ class GraphOperations():
             self.graph_utils.add_node("objects" + resource['@type'],
                                       resource['@type'] + resource_id,
                                       resource)
-            self.graph_utils.commit()
+            # Commits the graph
+            self.graph_utils.flush()
 
             # Creating relation between collection node and member
             self.graph_utils.create_relation(label_source="collection",
