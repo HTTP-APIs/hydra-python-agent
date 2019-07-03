@@ -42,9 +42,9 @@ class TestAgent(unittest.TestCase):
                                                "api/DroneCollection/1",
                                                mock_dict)
         self.assertEqual(response, mock_dict)
-
+    @patch('hydra_agent.redis_core.graphutils_operations.Session.get')
     @patch('hydra_agent.agent.Session.put')
-    def test_put(self, put_session_mock):
+    def test_put(self, put_session_mock, embedded_get_mock):
         """Tests put method from the Agent
         :param put_session_mock: MagicMock object for patching session.put
         """
@@ -58,15 +58,22 @@ class TestAgent(unittest.TestCase):
         put_session_mock.return_value.status_code = 201
         put_session_mock.return_value.json.return_value = new_object
         put_session_mock.return_value.headers = {'Location': new_object_url}
+
+        # Mocking an object to be used for a property that has an embedded link
+        embedded_get_mock.return_value.status_code = 200
+        embedded_get_mock.return_value.json.return_value = new_object
+
         response, new_object_url = self.agent.put(collection_url, new_object)
 
         # Assert if object was inserted queried and inserted successfully
         get_new_object = self.agent.get(new_object_url)
         self.assertEqual(get_new_object, new_object)
 
+    @patch('hydra_agent.redis_core.graphutils_operations.Session.get')
     @patch('hydra_agent.agent.Session.post')
     @patch('hydra_agent.agent.Session.put')
-    def test_post(self, put_session_mock, post_session_mock):
+    def test_post(self, put_session_mock, post_session_mock,
+                  embedded_get_mock):
         """Tests post method from the Agent
         :param put_session_mock: MagicMock object for patching session.put
         :param post_session_mock: MagicMock object for patching session.post
@@ -86,6 +93,11 @@ class TestAgent(unittest.TestCase):
         post_session_mock.return_value.status_code = 200
         post_session_mock.return_value.json.return_value = {"msg": "success"}
         new_object['name'] = "Updated Name"
+
+        # Mocking an object to be used for a property that has an embedded link
+        embedded_get_mock.return_value.status_code = 200
+        embedded_get_mock.return_value.json.return_value = new_object
+
         response = self.agent.post(new_object_url, new_object)
 
         # Assert if object was updated successfully as intended
