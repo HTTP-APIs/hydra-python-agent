@@ -5,6 +5,7 @@ from urllib.error import URLError, HTTPError
 from hydra_agent.redis_core.redis_proxy import RedisProxy
 from hydra_agent.redis_core.graphutils import GraphUtils
 from redisgraph import Graph, Node
+from requests import Session
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
@@ -21,6 +22,7 @@ class GraphOperations():
         self.vocabulary = 'vocab'
         self.graph_utils = GraphUtils(redis_proxy)
         self.redis_graph = Graph("apigraph", self.redis_connection)
+        self.session = Session()
 
     def get_processing(self, url: str, resource: dict) -> None:
         """Synchronize Redis upon new GET operations
@@ -194,6 +196,37 @@ class GraphOperations():
             return resource[0]
 
         return resource
+
+    def embedded_resource(self, parent_id: str, parent_type: str,
+                          discovered_url: str) -> str:
+        """Checks for existance of discovered resource and creates links
+        for embedded resources inside other resources properties
+        :parent_id: Resource ID for the parent node that had this reference
+        :parent_type: Resource Type for the parent node that had this reference
+        :discovered_url: URL Reference for resource found inside a property
+        """
+        resource = self.get_resource(discovered_url)
+        if resource is None:
+            response = self.session.get(discovered_url)
+            if response.status_code == 200:
+                resource = response.json()
+                self.get_processing(discovered_url, resource)
+            else:
+                logger.info("Embedded link for resource cannot be fetched")
+                return
+
+        # Creating relation between collection node and member
+        response = self.graph_utils.create_relation(label_source="objects" +
+                                                    parent_type,
+                                                    where_source="id : \'" +
+                                                    parent_id + "\'",
+                                                    relation_type="has_" +
+                                                    resource['@type'],
+                                                    label_dest="objects" +
+                                                    resource['@type'],
+                                                    where_dest="id : \'" +
+                                                    resource['@id'] + "\'")
+        return str(response)
 
 if __name__ == "__main__":
     pass
