@@ -78,6 +78,21 @@ class GraphOperations():
                                              resource['@type'],
                                              where_dest="id : \'" +
                                              resource['@id'] + "\'")
+
+            # Checking for embedded resources in the properties of resource
+            class_doc = self.api_doc.parsed_classes[resource['@type']]['class']
+            supported_properties = class_doc.supportedProperty
+            for supported_prop in supported_properties:
+                    if (self.vocabulary + ":") in str(supported_prop.prop):
+                        if resource[supported_prop.title]:
+                            discovered_url = self.entrypoint_url.replace(
+                                self.api_doc.entrypoint.api, "").rstrip("/")
+                            discovered_url = discovered_url + \
+                                resource[supported_prop.title]                   
+                            self.embedded_resource(resource['@id'],
+                                                   resource['@type'],
+                                                   discovered_url)
+
             return
         # Second Case - When processing a GET for a Collection
         elif len(url_list) == 2:
