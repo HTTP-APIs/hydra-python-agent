@@ -119,9 +119,10 @@ class GraphUtils:
         edge = Edge(source_node, predicate, dest_node)
         self.redis_graph.add_edge(edge)
 
-    def commit(self) -> None:
-        """Commit the changes made to the Graph to Redis"""
-        self.redis_graph.commit()
+    def flush(self) -> None:
+        """Commit the changes made to the Graph to Redis and reset/flush
+        the Nodes and Edges to be added in the next commit"""
+        self.redis_graph.flush()
 
     def process_result(self, result: list) -> list:
         """
