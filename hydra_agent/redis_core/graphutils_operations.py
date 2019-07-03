@@ -30,12 +30,12 @@ class GraphOperations():
         :param resource: Resource object fetched from server.
         :return: None.
         """
-        url = url.rstrip('/').replace(self.entrypoint_url, "EntryPoint")
-        url_list = url.split('/')
+        url_list = url.rstrip('/').replace(self.entrypoint_url, "EntryPoint")
+        url_list = url_list.split('/')
         # Updating Redis
         # First case - When processing a GET for a resource
         if len(url_list) == 3:
-            entrypoint, resource_endpoint, resource_id = url.split('/')
+            entrypoint, resource_endpoint, resource_id = url_list
 
             # Building the the collection id, i.e. vocab:Entrypoint/Collection
             redis_collection_id = self.vocabulary + \
@@ -81,7 +81,7 @@ class GraphOperations():
             return
         # Second Case - When processing a GET for a Collection
         elif len(url_list) == 2:
-            entrypoint, resource_endpoint = url.split('/')
+            entrypoint, resource_endpoint = url_list
             redis_collection_id = self.vocabulary + \
                 ":" + entrypoint + \
                 "/" + resource_endpoint
