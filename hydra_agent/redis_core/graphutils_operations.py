@@ -12,8 +12,10 @@ logger = logging.getLogger(__file__)
 
 class GraphOperations():
 
-    def __init__(self, entrypoint_url: str, redis_proxy: RedisProxy):
+    def __init__(self, entrypoint_url: str, api_doc: dict,
+                 redis_proxy: RedisProxy):
         self.entrypoint_url = entrypoint_url
+        self.api_doc = api_doc
         self.redis_proxy = redis_proxy
         self.redis_connection = redis_proxy.get_connection()
         self.vocabulary = 'vocab'
