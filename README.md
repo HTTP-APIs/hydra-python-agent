@@ -64,7 +64,7 @@ After setup the environment. You can query or run the client.
         docker-compose run client
 
 
-    and provide a valid URL and then you can query in querying format.
+    and provide a valid URL(of a hydrus updated server) and then you can query in querying format.
 
         `>>>url` #here url should be a valid link, for testing you can use http://35.224.198.158:8080/api
         `>>>help` # it will provide the querying format
@@ -148,7 +148,7 @@ from hydra_agent.agent import Agent
 agent = Agent("http://localhost:8080/serverapi")
 agent.get("http://localhost:8080/serverapi/DroneCollection/123-123-123-123")
 ```
-
+**Remember that it's important you use the an updated hydrus version, currently the one under the develop branch**
 The agent supports GET, PUT, POST or DELETE:
 
 - GET - used to READ resources or collections
