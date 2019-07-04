@@ -5,5 +5,5 @@ httplib2
 redis
 graphviz
 requests
--e git+https://github.com/RedisGraph/redisgraph-py#egg=redisgraph
+-e git+https://github.com/RedisGraph/redisgraph-py@62c591da4ec54d268f3abde3561d378de1763746#egg=redisgraph
 -e git+https://github.com/HTTP-APIs/hydra-python-core#egg=hydra_python_core
