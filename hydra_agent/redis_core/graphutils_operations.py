@@ -2,8 +2,8 @@ import urllib.request
 import json
 import logging
 from urllib.error import URLError, HTTPError
-from redis_core.redis_proxy import RedisProxy
-from redis_core.graphutils import GraphUtils
+from hydra_agent.redis_core.redis_proxy import RedisProxy
+from hydra_agent.redis_core.graphutils import GraphUtils
 from redisgraph import Graph, Node
 
 logging.basicConfig(level=logging.INFO)
@@ -41,13 +41,13 @@ class GraphOperations():
             collection_members = self.graph_utils.read(
                 match=":collection",
                 where="id='{}'".format(redis_collection_id),
-                ret=".members")
+                ret="")
 
             # Checking if it's the first member to be loaded
-            if collection_members is None:
+            if not 'members' in collection_members:
                 collection_members = []
             else:
-                collection_members = eval(collection_members[0]['members'])
+                collection_members = eval(collection_members['members'])
 
             collection_members.append({'@id': resource['@id'],
                                        '@type': resource['@type']})
@@ -142,13 +142,13 @@ class GraphOperations():
         collection_members = self.graph_utils.read(
             match=":collection",
             where="id='{}'".format(redis_collection_id),
-            ret=".members")
+            ret="")
 
         # Checking if it's the first member to be loaded
-        if collection_members is None:
-            return
+        if not 'members' in collection_members:
+            collection_members = []
         else:
-            collection_members = eval(collection_members[0]['members'])
+            collection_members = eval(collection_members['members'])
 
         for member in collection_members:
             if resource_id in member['@id']:
