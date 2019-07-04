@@ -49,7 +49,17 @@ class Agent(Session):
         response = super().get(url)
 
         if response.status_code == 200:
-            self.graph_operations.get_processing(url, response.json())
+            # Graph operations returns embedded resources if finding any
+            embedded_resources = \
+                self.graph_operations.get_processing(url, response.json())
+            # Embedded resources are fetched and then properly linked
+            for embedded_resource in embedded_resources:
+                self.get(embedded_resource['embedded_url'])
+                self.graph_operations.embedded_resource(
+                    embedded_resource['parent_id'],
+                    embedded_resource['parent_type'],
+                    embedded_resource['embedded_url']
+                )
             return response.json()
         else:
             return response.text

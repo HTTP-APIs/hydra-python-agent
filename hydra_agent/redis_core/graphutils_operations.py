@@ -24,11 +24,11 @@ class GraphOperations():
         self.redis_graph = Graph("apigraph", self.redis_connection)
         self.session = Session()
 
-    def get_processing(self, url: str, resource: dict) -> None:
+    def get_processing(self, url: str, resource: dict) -> list:
         """Synchronize Redis upon new GET operations
         :param url: Resource URL to be updated in Redis.
         :param resource: Resource object fetched from server.
-        :return: None.
+        :return: list of embedded resources to be fetched.
         """
         url_list = url.rstrip('/').replace(self.entrypoint_url, "EntryPoint")
         url_list = url_list.split('/')
@@ -82,18 +82,21 @@ class GraphOperations():
             # Checking for embedded resources in the properties of resource
             class_doc = self.api_doc.parsed_classes[resource['@type']]['class']
             supported_properties = class_doc.supportedProperty
+            embedded_resources = []
             for supported_prop in supported_properties:
                     if (self.vocabulary + ":") in str(supported_prop.prop):
                         if resource[supported_prop.title]:
+                            new_resource = {}
                             discovered_url = self.entrypoint_url.replace(
                                 self.api_doc.entrypoint.api, "").rstrip("/")
                             discovered_url = discovered_url + \
-                                resource[supported_prop.title]                   
-                            self.embedded_resource(resource['@id'],
-                                                   resource['@type'],
-                                                   discovered_url)
+                                resource[supported_prop.title]
+                            new_resource['parent_id'] = resource['@id']
+                            new_resource['parent_type'] = resource['@type']
+                            new_resource['embedded_url'] = discovered_url
+                            embedded_resources.append(new_resource)
 
-            return
+            return embedded_resources
         # Second Case - When processing a GET for a Collection
         elif len(url_list) == 2:
             entrypoint, resource_endpoint = url_list
@@ -222,13 +225,10 @@ class GraphOperations():
         """
         resource = self.get_resource(discovered_url)
         if resource is None:
-            response = self.session.get(discovered_url)
-            if response.status_code == 200:
-                resource = response.json()
-                self.get_processing(discovered_url, resource)
-            else:
-                logger.info("Embedded link for resource cannot be fetched")
-                return
+            logger.info("\n Embedded link {}".format(discovered_url) +
+                        "cannot be fetched")
+            return "\n Embedded link {}".format(discovered_url) + \
+                   "cannot be fetched"
 
         # Creating relation between collection node and member
         response = self.graph_utils.create_relation(label_source="objects" +
