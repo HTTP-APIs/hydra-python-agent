@@ -49,8 +49,9 @@ class Agent(Session):
 
         if response.status_code == 200:
             self.graph_operations.get_processing(url, response.json())
-
-        return response.json()
+            return response.json()
+        else:
+            return response.text
 
     def put(self, url: str, new_object: dict) -> Tuple[dict, str]:
         """CREATE resource in the Server/cache it on Redis
@@ -64,8 +65,8 @@ class Agent(Session):
             url = response.headers['Location']
             self.graph_operations.put_processing(url, new_object)
             return response.json(), url
-
-        return response.json(), ""
+        else:
+            return response.text, ""
 
     def post(self, url: str, updated_object: dict) -> dict:
         """UPDATE resource in the Server/cache it on Redis
@@ -77,8 +78,9 @@ class Agent(Session):
 
         if response.status_code == 200:
             self.graph_operations.post_processing(url, updated_object)
-
-        return response.json()
+            return response.json()
+        else:
+            return response.text
 
     def delete(self, url: str) -> dict:
         """DELETE resource in the Server/delete it on Redis
@@ -89,33 +91,10 @@ class Agent(Session):
 
         if response.status_code == 200:
             self.graph_operations.delete_processing(url)
-
-        return response.json()
+            return response.json()
+        else:
+            return response.text
+        
 
 if __name__ == "__main__":
-    # GRAPH.QUERY apigraph "MATCH (p:collection {id:'vocab:EntryPoint/DroneCollection'}) RETURN p.members"
-    # GRAPH.QUERY apigraph "MATCH(p) WHERE(p.id='/serverapi/DroneCollection/d4a8106e-87ab-4f27-ad36-ecae3bca075c') RETURN p"
-    agent = Agent("http://localhost:8080/serverapi")
-    logger.info(agent.get("http://localhost:8080/serverapi/DroneCollection/"))
-    #input(">>>")
-
-    new_object = {"@type": "Drone", "DroneState": "Simplified state",
-                  "name": "Smart Drone", "model": "Hydra Drone",
-                  "MaxSpeed": "999", "Sensor": "Wind"}
-    print("----PUT-----")
-    response, new_resource_url = agent.put("http://localhost:8080/serverapi/DroneCollection/", new_object)
-    print("----GET RESOURCE-----")
-    logger.info(agent.get(new_resource_url))
-
-    new_object["name"] = "Updated Name"
-    del new_object["@id"]
-    
-    print("----POST-----")
-    logger.info(agent.post(new_resource_url, new_object))
-
-    print("----DELETE-----")
-    logger.info(agent.delete(new_resource_url))
-
-    print("----GET COLLECTION-----")
-    logger.info(agent.get("http://localhost:8080/serverapi/DroneCollection/"))
     pass

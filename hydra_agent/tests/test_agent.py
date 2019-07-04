@@ -117,11 +117,11 @@ class TestAgent(unittest.TestCase):
         delete_session_mock.return_value.json.return_value = {"msg": "success"}
         response = self.agent.delete(new_object_url)
 
-        get_session_mock.return_value.json.return_value = {"msg": "success"}
+        get_session_mock.return_value.text = {"msg": "resource doesn't exist"}
         get_new_object = self.agent.get(new_object_url)
 
         # Assert if nothing different was returned by Redis
-        self.assertEqual(get_new_object, {"msg": "success"})
+        self.assertEqual(get_new_object, {"msg": "resource doesn't exist"})
 
 if __name__ == "__main__":
     unittest.main()
