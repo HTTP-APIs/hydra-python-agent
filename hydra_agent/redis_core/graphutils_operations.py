@@ -125,8 +125,9 @@ class GraphOperations():
         url_list = url.split('/', 3)
         new_object["@id"] = '/' + url_list[-1]
         # Simply call sync_get to add the resource to the collection at Redis
-        self.get_processing(url, new_object)
-        return
+        embedded_resources = self.get_processing(url, new_object)
+ 
+        return embedded_resources
 
     def post_processing(self, url: str, updated_object: dict) -> None:
         """Synchronize Redis upon new POST operations
@@ -139,8 +140,8 @@ class GraphOperations():
 
         # Simply call sync_get to add the resource to the collection at Redis
         self.delete_processing(url)
-        self.get_processing(url, updated_object)
-        return
+        embedded_resources = self.get_processing(url, updated_object)
+        return embedded_resources
 
     def delete_processing(self, url: str) -> None:
         """Synchronize Redis upon new DELETE operations
@@ -215,19 +216,19 @@ class GraphOperations():
 
         return resource
 
-    def embedded_resource(self, parent_id: str, parent_type: str,
-                          discovered_url: str) -> str:
+    def link_resources(self, parent_id: str, parent_type: str,
+                       node_url: str) -> str:
         """Checks for existance of discovered resource and creates links
         for embedded resources inside other resources properties
         :parent_id: Resource ID for the parent node that had this reference
         :parent_type: Resource Type for the parent node that had this reference
-        :discovered_url: URL Reference for resource found inside a property
+        :node_url: URL Reference for resource found inside a property
         """
-        resource = self.get_resource(discovered_url)
+        resource = self.get_resource(node_url)
         if resource is None:
-            logger.info("\n Embedded link {}".format(discovered_url) +
+            logger.info("\n Embedded link {}".format(node_url) +
                         "cannot be fetched")
-            return "\n Embedded link {}".format(discovered_url) + \
+            return "\n Embedded link {}".format(node_url) + \
                    "cannot be fetched"
 
         # Creating relation between collection node and member

@@ -55,11 +55,10 @@ class Agent(Session):
             # Embedded resources are fetched and then properly linked
             for embedded_resource in embedded_resources:
                 self.get(embedded_resource['embedded_url'])
-                self.graph_operations.embedded_resource(
+                self.graph_operations.link_resources(
                     embedded_resource['parent_id'],
                     embedded_resource['parent_type'],
-                    embedded_resource['embedded_url']
-                )
+                    embedded_resource['embedded_url'])
             return response.json()
         else:
             return response.text
@@ -74,7 +73,16 @@ class Agent(Session):
 
         if response.status_code == 201:
             url = response.headers['Location']
-            self.graph_operations.put_processing(url, new_object)
+            # Graph operations returns embedded resources if finding any
+            embedded_resources = \
+                self.graph_operations.put_processing(url, new_object)
+            # Embedded resources are fetched and then properly linked
+            for embedded_resource in embedded_resources:
+                self.get(embedded_resource['embedded_url'])
+                self.graph_operations.link_resources(
+                    embedded_resource['parent_id'],
+                    embedded_resource['parent_type'],
+                    embedded_resource['embedded_url'])
             return response.json(), url
         else:
             return response.text, ""
@@ -88,7 +96,16 @@ class Agent(Session):
         response = super().post(url, json=updated_object)
 
         if response.status_code == 200:
-            self.graph_operations.post_processing(url, updated_object)
+            # Graph operations returns embedded resources if finding any
+            embedded_resources = \
+                self.graph_operations.post_processing(url, updated_object)
+            # Embedded resources are fetched and then properly linked
+            for embedded_resource in embedded_resources:
+                self.get(embedded_resource['embedded_url'])
+                self.graph_operations.link_resources(
+                    embedded_resource['parent_id'],
+                    embedded_resource['parent_type'],
+                    embedded_resource['embedded_url'])
             return response.json()
         else:
             return response.text
