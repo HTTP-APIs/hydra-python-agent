@@ -12,9 +12,16 @@ logger = logging.getLogger(__file__)
 
 
 class GraphOperations():
-
+    """Responsible to process the requests received by the Agent
+    inside Redis Graph, making sure it a synchronized cached layer"""
     def __init__(self, entrypoint_url: str, api_doc: dict,
                  redis_proxy: RedisProxy):
+        """Initialize GraphOperations
+        :param entrypoint_url: Entrypoint URL for the hydrus server
+        :param api_doc: ApiDoc object that contains the documentation
+        :param redis_proxy: RedisProxy object created from redis_proxy module
+        :return: None
+        """
         self.entrypoint_url = entrypoint_url
         self.api_doc = api_doc
         self.redis_proxy = redis_proxy

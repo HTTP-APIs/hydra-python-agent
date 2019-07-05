@@ -11,6 +11,9 @@ logger = logging.getLogger(__file__)
 
 
 class Agent(Session):
+    """Provides a straightforward GET, PUT, POST, DELETE -
+    CRUD interface - to query hydrus
+    """
     def __init__(self, entrypoint_url: str) -> None:
         """Initialize the Agent
         :param entrypoint_url: Entrypoint URL for the hydrus server

@@ -9,7 +9,7 @@ logger = logging.getLogger(__file__)
 
 
 class GraphUtils:
-
+    """Provides low level functions to interact with Redis Graph"""
     def __init__(self, redis_proxy: RedisProxy, graph_name="apigraph") -> None:
         """Initialize Graph Utils module
         :param redis_proxy: RedisProxy object created from redis_proxy module
