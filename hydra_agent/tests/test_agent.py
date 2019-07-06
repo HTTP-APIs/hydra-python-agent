@@ -22,26 +22,44 @@ class TestAgent(unittest.TestCase):
         self.agent = Agent("http://localhost:8080/api")
 
     @patch('hydra_agent.agent.Session.get')
-    @patch('hydra_agent.agent.GraphOperations.get_processing')
-    def test_get(self, get_processing_mock, get_session_mock):
+    def test_get_url(self, get_session_mock):
         """Tests get method from the Agent
-        :param get_processing_mock: MagicMock object to patch graphoperations
-        :param get_mock: MagicMock object for patching session.get
+        :param get_session_mock: MagicMock object for patching session.get
         """
-        mock_dict = {"@type": "Drone", "DroneState": "/api/StateCollection/1",
-                     "name": "Smart Drone", "model": "Hydra Drone",
-                     "MaxSpeed": "999", "Sensor": "Wind"}
+        state_object = {"@id": "/api/StateCollection/1", "@type": "State",
+                        "Battery": "sensor Ex", "Direction": "speed Ex",
+                        "DroneID": "sensor Ex", "Position": "model Ex",
+                        "SensorStatus": "sensor Ex", "Speed": "2",
+                        "@context": "/api/contexts/StateCollection.jsonld"}
 
-        # Mock server request to the Server
         get_session_mock.return_value.status_code = 200
-        get_session_mock.return_value.json.return_value = mock_dict
+        get_session_mock.return_value.json.return_value = state_object
         response = self.agent.get("http://localhost:8080/api/" +
-                                  "DroneCollection/1")
+                                  "StateCollection/1")
 
-        get_processing_mock.assert_called_with("http://localhost:8080/api" +
-                                               "/DroneCollection/1",
-                                               mock_dict)
-        self.assertEqual(response, mock_dict)
+        self.assertEqual(response, state_object)
+
+    @patch('hydra_agent.agent.Session.get')
+    def test_get_class_properties(self, get_session_mock):
+        """Tests get method from the Agent
+        :param get_session_mock: MagicMock object for patching session.get
+        """
+        state_object = {"@id": "/api/StateCollection/1", "@type": "State",
+                        "Battery": "sensor Ex", "Direction": "North",
+                        "DroneID": "sensor Ex", "Position": "model Ex",
+                        "SensorStatus": "sensor Ex", "Speed": "2",
+                        "@context": "/api/contexts/StateCollection.jsonld",}
+
+        get_session_mock.return_value.status_code = 200
+        get_session_mock.return_value.json.return_value = state_object
+        response_url = self.agent.get("http://localhost:8080/api/" + \
+                                      "StateCollection/1")
+
+        responses_graph = self.agent.get(resource_type="State",
+                                         filters={"Direction": "North"})
+        responses_graph = responses_graph[0]
+        self.assertEqual(response_url, responses_graph)
+
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.put')
     def test_put(self, put_session_mock, embedded_get_mock):

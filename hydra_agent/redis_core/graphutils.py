@@ -144,6 +144,8 @@ class GraphUtils:
                 if 'id' in new_record:
                     new_record['@id'] = new_record.pop('id')
                     new_record['@type'] = new_record.pop('type')
+                if 'context' in new_record:
+                    new_record['@context'] = new_record.pop('context')
                 response_json_list.append(new_record)
 
         return response_json_list
