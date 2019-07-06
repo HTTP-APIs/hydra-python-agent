@@ -55,7 +55,7 @@ class GraphOperations():
                 ret="")
 
             # Checking if it's the first member to be loaded
-            if not 'members' in collection_members:
+            if 'members' not in collection_members:
                 collection_members = []
             else:
                 collection_members = eval(collection_members['members'])
@@ -133,7 +133,7 @@ class GraphOperations():
         new_object["@id"] = '/' + url_list[-1]
         # Simply call sync_get to add the resource to the collection at Redis
         embedded_resources = self.get_processing(url, new_object)
- 
+
         return embedded_resources
 
     def post_processing(self, url: str, updated_object: dict) -> None:
@@ -176,7 +176,7 @@ class GraphOperations():
             ret="")
 
         # Checking if it's the first member to be loaded
-        if not 'members' in collection_members:
+        if 'members' not in collection_members:
             collection_members = []
         else:
             collection_members = eval(collection_members['members'])
@@ -205,7 +205,8 @@ class GraphOperations():
             raise Exception("ERR: You should set at least" +
                             "url OR resource_type")
         if url:
-            url_aux = url.rstrip('/').replace(self.entrypoint_url, "EntryPoint")
+            url_aux = url.rstrip('/').replace(self.entrypoint_url,
+                                              "EntryPoint")
             url_list = url_aux.split('/')
 
             # Checking if querying for cached Collection or Member
@@ -230,7 +231,8 @@ class GraphOperations():
         elif resource_type:
             where_filter = ""
             for filter_key, filter_value in filters.items():
-                where_filter += " AND p." + filter_key + "=" + "'{}'".format(filter_value) 
+                where_filter += " AND p." + filter_key + "=" + \
+                                "'{}'".format(filter_value)
             if where_filter:
                 where_filter = where_filter.replace(" AND p.", "", 1)
 
@@ -241,7 +243,7 @@ class GraphOperations():
                     ret="")
             return resource
         else:
-            logger.info("get_resource failed and couldn't fetch Redis") 
+            logger.info("get_resource failed and couldn't fetch Redis")
 
     def link_resources(self, parent_id: str, parent_type: str,
                        node_url: str) -> str:

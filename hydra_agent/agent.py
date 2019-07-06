@@ -25,10 +25,10 @@ class Agent(Session):
         super().__init__()
         jsonld_api_doc = super().get(self.entrypoint_url + '/vocab').json()
         self.api_doc = doc_maker.create_doc(jsonld_api_doc)
+        self.initialize_graph()
         self.graph_operations = GraphOperations(entrypoint_url,
                                                 self.api_doc,
                                                 self.redis_proxy)
-        self.initialize_graph()
 
     def initialize_graph(self) -> None:
         """Initialize the Graph on Redis based on ApiDoc
