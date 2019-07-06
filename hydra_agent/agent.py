@@ -40,14 +40,18 @@ class Agent(Session):
         self.graph.main(self.entrypoint_url, self.api_doc, True)
         self.redis_connection.sadd("fs:url", self.entrypoint_url)
 
-    def get(self, url: str) -> Union[dict, list]:
+    def get(self, url: str = None, resource_type: str = None,
+            filters: dict = {}) -> Union[dict, list]:
         """READ Resource from Server/cached Redis
         :param url: Resource URL to be fetched
         :return: Dict when one object or a list when multiple targerted objects
         """
-        response = self.graph_operations.get_resource(url)
-        if response is not None:
+        response = self.graph_operations.get_resource(url, resource_type,
+                                                      filters)
+        if response:
             return response
+        elif url is None:
+            return []
 
         response = super().get(url)
 
