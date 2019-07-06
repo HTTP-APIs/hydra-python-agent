@@ -55,13 +55,7 @@ class Agent(Session):
             # Graph_operations returns the embedded resources if finding any
             embedded_resources = \
                 self.graph_operations.get_processing(url, response.json())
-            # Embedded resources are fetched and then properly linked
-            for embedded_resource in embedded_resources:
-                self.get(embedded_resource['embedded_url'])
-                self.graph_operations.link_resources(
-                    embedded_resource['parent_id'],
-                    embedded_resource['parent_type'],
-                    embedded_resource['embedded_url'])
+            self.process_embedded(embedded_resources)
             return response.json()
         else:
             return response.text
@@ -79,13 +73,7 @@ class Agent(Session):
             # Graph_operations returns the embedded resources if finding any
             embedded_resources = \
                 self.graph_operations.put_processing(url, new_object)
-            # Embedded resources are fetched and then properly linked
-            for embedded_resource in embedded_resources:
-                self.get(embedded_resource['embedded_url'])
-                self.graph_operations.link_resources(
-                    embedded_resource['parent_id'],
-                    embedded_resource['parent_type'],
-                    embedded_resource['embedded_url'])
+            self.process_embedded(embedded_resources)
             return response.json(), url
         else:
             return response.text, ""
@@ -102,13 +90,7 @@ class Agent(Session):
             # Graph_operations returns the embedded resources if finding any
             embedded_resources = \
                 self.graph_operations.post_processing(url, updated_object)
-            # Embedded resources are fetched and then properly linked
-            for embedded_resource in embedded_resources:
-                self.get(embedded_resource['embedded_url'])
-                self.graph_operations.link_resources(
-                    embedded_resource['parent_id'],
-                    embedded_resource['parent_type'],
-                    embedded_resource['embedded_url'])
+            self.process_embedded(embedded_resources)
             return response.json()
         else:
             return response.text
@@ -125,7 +107,19 @@ class Agent(Session):
             return response.json()
         else:
             return response.text
-        
+
+    def process_embedded(self, embedded_resources: list) -> None:
+        """Helper function to process a list of embedded resources
+        fetching and linking them to their parent Nodes
+        :param embedded_resources: List of dicts containing resources
+        """
+        # Embedded resources are fetched and then properly linked
+        for embedded_resource in embedded_resources:
+            self.get(embedded_resource['embedded_url'])
+            self.graph_operations.link_resources(
+                embedded_resource['parent_id'],
+                embedded_resource['parent_type'],
+                embedded_resource['embedded_url'])
 
 if __name__ == "__main__":
     pass
