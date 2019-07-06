@@ -148,7 +148,7 @@ from hydra_agent.agent import Agent
 agent = Agent("http://localhost:8080/serverapi")
 agent.get("http://localhost:8080/serverapi/DroneCollection/123-123-123-123")
 ```
-**Remember that it's important you use the an updated hydrus version, currently the one under the develop branch**
+**Remember that it's important you use an hydrus updated version, currently the one under the develop branch**
 The agent supports GET, PUT, POST or DELETE:
 
 - GET - used to READ resources or collections

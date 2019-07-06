@@ -52,7 +52,7 @@ class Agent(Session):
         response = super().get(url)
 
         if response.status_code == 200:
-            # Graph operations returns embedded resources if finding any
+            # Graph_operations returns the embedded resources if finding any
             embedded_resources = \
                 self.graph_operations.get_processing(url, response.json())
             # Embedded resources are fetched and then properly linked
@@ -76,7 +76,7 @@ class Agent(Session):
 
         if response.status_code == 201:
             url = response.headers['Location']
-            # Graph operations returns embedded resources if finding any
+            # Graph_operations returns the embedded resources if finding any
             embedded_resources = \
                 self.graph_operations.put_processing(url, new_object)
             # Embedded resources are fetched and then properly linked
@@ -99,7 +99,7 @@ class Agent(Session):
         response = super().post(url, json=updated_object)
 
         if response.status_code == 200:
-            # Graph operations returns embedded resources if finding any
+            # Graph_operations returns the embedded resources if finding any
             embedded_resources = \
                 self.graph_operations.post_processing(url, updated_object)
             # Embedded resources are fetched and then properly linked

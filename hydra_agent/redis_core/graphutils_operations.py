@@ -230,6 +230,7 @@ class GraphOperations():
         :parent_id: Resource ID for the parent node that had this reference
         :parent_type: Resource Type for the parent node that had this reference
         :node_url: URL Reference for resource found inside a property
+        "return: Default Redis response with amount of relations created 
         """
         resource = self.get_resource(node_url)
         if resource is None:
