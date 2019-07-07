@@ -4,11 +4,12 @@ from redisgraph import Node, Edge, Graph
 from typing import Union, Optional
 from redis.exceptions import ResponseError
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
 
 
 class GraphUtils:
-
+    """Provides low level functions to interact with Redis Graph"""
     def __init__(self, redis_proxy: RedisProxy, graph_name="apigraph") -> None:
         """Initialize Graph Utils module
         :param redis_proxy: RedisProxy object created from redis_proxy module
@@ -131,18 +132,14 @@ class GraphUtils:
         """
         response_json_list = []
 
-        for record in result.result_set[1:]:
+        if not result.result_set:
+            return []
+
+        for record in result.result_set[0][:]:
             new_record = {}
-            for j, property_x in enumerate(record):
-                if property_x is None:
-                    pass
-                else:
-                    property_name = result.result_set[0][j].decode()
-                    try:
-                        node_alias, property_name = property_name.split(".")
-                        new_record[property_name] = property_x.decode()
-                    except ValueError as e:
-                        logger.info("Graph property with no dot/wrong format")
+            if record is None:
+                return
+            new_record = record.properties
             if new_record:
                 if 'id' in new_record:
                     new_record['@id'] = new_record.pop('id')

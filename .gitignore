@@ -89,6 +89,7 @@ ENV/
 share
 include
 bin
+restart_script
 
 # pipenv generated filespip 
 Pipfile

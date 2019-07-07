@@ -6,10 +6,14 @@ from hydra_python_core import doc_maker
 from typing import Union, Tuple
 from requests import Session
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
 
 
 class Agent(Session):
+    """Provides a straightforward GET, PUT, POST, DELETE -
+    CRUD interface - to query hydrus
+    """
     def __init__(self, entrypoint_url: str) -> None:
         """Initialize the Agent
         :param entrypoint_url: Entrypoint URL for the hydrus server
@@ -18,11 +22,12 @@ class Agent(Session):
         self.entrypoint_url = entrypoint_url.strip().rstrip('/')
         self.redis_proxy = RedisProxy()
         self.redis_connection = self.redis_proxy.get_connection()
-        self.graph_operations = GraphOperations(entrypoint_url,
-                                                self.redis_proxy)
         super().__init__()
         jsonld_api_doc = super().get(self.entrypoint_url + '/vocab').json()
         self.api_doc = doc_maker.create_doc(jsonld_api_doc)
+        self.graph_operations = GraphOperations(entrypoint_url,
+                                                self.api_doc,
+                                                self.redis_proxy)
         self.initialize_graph()
 
     def initialize_graph(self) -> None:
@@ -47,9 +52,13 @@ class Agent(Session):
         response = super().get(url)
 
         if response.status_code == 200:
-            self.graph_operations.get_processing(url, response.json())
-
-        return response.json()
+            # Graph_operations returns the embedded resources if finding any
+            embedded_resources = \
+                self.graph_operations.get_processing(url, response.json())
+            self.process_embedded(embedded_resources)
+            return response.json()
+        else:
+            return response.text
 
     def put(self, url: str, new_object: dict) -> Tuple[dict, str]:
         """CREATE resource in the Server/cache it on Redis
@@ -61,10 +70,13 @@ class Agent(Session):
 
         if response.status_code == 201:
             url = response.headers['Location']
-            self.graph_operations.put_processing(url, new_object)
+            # Graph_operations returns the embedded resources if finding any
+            embedded_resources = \
+                self.graph_operations.put_processing(url, new_object)
+            self.process_embedded(embedded_resources)
             return response.json(), url
-
-        return response.json(), ""
+        else:
+            return response.text, ""
 
     def post(self, url: str, updated_object: dict) -> dict:
         """UPDATE resource in the Server/cache it on Redis
@@ -75,9 +87,13 @@ class Agent(Session):
         response = super().post(url, json=updated_object)
 
         if response.status_code == 200:
-            self.graph_operations.post_processing(url, updated_object)
-
-        return response.json()
+            # Graph_operations returns the embedded resources if finding any
+            embedded_resources = \
+                self.graph_operations.post_processing(url, updated_object)
+            self.process_embedded(embedded_resources)
+            return response.json()
+        else:
+            return response.text
 
     def delete(self, url: str) -> dict:
         """DELETE resource in the Server/delete it on Redis
@@ -88,8 +104,22 @@ class Agent(Session):
 
         if response.status_code == 200:
             self.graph_operations.delete_processing(url)
+            return response.json()
+        else:
+            return response.text
 
-        return response.json()
+    def process_embedded(self, embedded_resources: list) -> None:
+        """Helper function to process a list of embedded resources
+        fetching and linking them to their parent Nodes
+        :param embedded_resources: List of dicts containing resources
+        """
+        # Embedded resources are fetched and then properly linked
+        for embedded_resource in embedded_resources:
+            self.get(embedded_resource['embedded_url'])
+            self.graph_operations.link_resources(
+                embedded_resource['parent_id'],
+                embedded_resource['parent_type'],
+                embedded_resource['embedded_url'])
 
 if __name__ == "__main__":
     pass
