@@ -62,6 +62,40 @@ class TestAgent(unittest.TestCase):
 
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.put')
+    def test_get_collection(self, put_session_mock, embedded_get_mock):
+        """Tests get method from the Agent
+        :param get_processing_mock: MagicMock object to patch graphoperations
+        :param get_mock: MagicMock object for patching session.get
+        """
+        new_object = {"@type": "Drone", "DroneState": "/api/StateCollection/1",
+                      "name": "Smart Drone", "model": "Hydra Drone",
+                      "MaxSpeed": "999", "Sensor": "Wind"}
+
+        collection_url = "http://localhost:8080/api/DroneCollection/"
+        new_object_url = collection_url + "1"
+
+        put_session_mock.return_value.status_code = 201
+        put_session_mock.return_value.json.return_value = new_object
+        put_session_mock.return_value.headers = {'Location': new_object_url}
+
+        state_object = {"@context": "/api/contexts/StateCollection.jsonld",
+                        "@id": "/api/StateCollection/1", "@type": "State",
+                        "Battery": "sensor Ex", "Direction": "speed Ex",
+                        "DroneID": "sensor Ex", "Position": "model Ex",
+                        "SensorStatus": "sensor Ex", "Speed": "2"}
+
+        # Mocking an object to be used for a property that has an embedded link
+        embedded_get_mock.return_value.status_code = 200
+        embedded_get_mock.return_value.json.return_value = state_object
+
+        response, new_object_url = self.agent.put(collection_url, new_object)
+
+        get_collection = self.agent.get(collection_url)
+        get_collection = eval(get_collection["members"])
+        self.assertEqual(get_collection[0]["@id"], "/api/DroneCollection/1")
+
+    @patch('hydra_agent.agent.Session.get')
+    @patch('hydra_agent.agent.Session.put')
     def test_put(self, put_session_mock, embedded_get_mock):
         """Tests put method from the Agent
         :param put_session_mock: MagicMock object for patching session.put
