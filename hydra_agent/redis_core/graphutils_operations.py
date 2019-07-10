@@ -55,7 +55,7 @@ class GraphOperations():
                 ret="")
 
             # Checking if it's the first member to be loaded
-            if not 'members' in collection_members:
+            if 'members' not in collection_members:
                 collection_members = []
             else:
                 collection_members = eval(collection_members['members'])
@@ -133,7 +133,7 @@ class GraphOperations():
         new_object["@id"] = '/' + url_list[-1]
         # Simply call sync_get to add the resource to the collection at Redis
         embedded_resources = self.get_processing(url, new_object)
- 
+
         return embedded_resources
 
     def post_processing(self, url: str, updated_object: dict) -> None:
@@ -176,7 +176,7 @@ class GraphOperations():
             ret="")
 
         # Checking if it's the first member to be loaded
-        if not 'members' in collection_members:
+        if 'members' not in collection_members:
             collection_members = []
         else:
             collection_members = eval(collection_members['members'])
@@ -192,7 +192,8 @@ class GraphOperations():
 
         return
 
-    def get_resource(self, url: str) -> dict:
+    def get_resource(self, url: str = None, resource_type: str = None,
+                     filters: dict = {}) -> dict:
         """Get resources already stored on Redis and return
         :param url: URL for the resource to fetch.
         :return: Object with resource found.
@@ -200,28 +201,49 @@ class GraphOperations():
         # This is the first step to interact with Redis properly
         # This method should eventually accept a type, a id or an url
         # do the proper checking and then return the cached info
-        url_aux = url.rstrip('/').replace(self.entrypoint_url, "EntryPoint")
-        url_list = url_aux.split('/')
+        if not url and not resource_type:
+            raise Exception("ERR: You should set at least" +
+                            "url OR resource_type")
+        if url:
+            url_aux = url.rstrip('/').replace(self.entrypoint_url,
+                                              "EntryPoint")
+            url_list = url_aux.split('/')
 
-        # Checking if querying for cached Collection or Member
-        if len(url_list) == 2:
-            entrypoint, resource_endpoint = url_aux.split('/')
-            object_id = self.vocabulary + \
-                ":" + entrypoint + \
-                "/" + resource_endpoint
+            # Checking if querying for cached Collection or Member
+            if len(url_list) == 2:
+                entrypoint, resource_endpoint = url_aux.split('/')
+                object_id = self.vocabulary + \
+                    ":" + entrypoint + \
+                    "/" + resource_endpoint
+            else:
+                url_list = url.split('/', 3)
+                object_id = '/' + url_list[-1]
+
+            resource = self.graph_utils.read(
+                                match="",
+                                where="id='{}'".format(object_id),
+                                ret="")
+            # If having only one object/querying by id return only dict
+            if resource is not None and len(resource) == 1:
+                return resource[0]
+
+            return resource
+        elif resource_type:
+            where_filter = ""
+            for filter_key, filter_value in filters.items():
+                where_filter += " AND p." + filter_key + "=" + \
+                                "'{}'".format(filter_value)
+            if where_filter:
+                where_filter = where_filter.replace(" AND p.", "", 1)
+
+            resource = self.graph_utils.read(
+                    match=":objects" +
+                    resource_type,
+                    where=where_filter,
+                    ret="")
+            return resource
         else:
-            url_list = url.split('/', 3)
-            object_id = '/' + url_list[-1]
-
-        resource = self.graph_utils.read(
-                            match="",
-                            where="id='{}'".format(object_id),
-                            ret="")
-        # If having only one object/querying by id return only dict
-        if resource is not None and len(resource) == 1:
-            return resource[0]
-
-        return resource
+            logger.info("get_resource failed and couldn't fetch Redis")
 
     def link_resources(self, parent_id: str, parent_type: str,
                        node_url: str) -> str:
