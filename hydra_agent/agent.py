@@ -1,4 +1,4 @@
-import logging
+import logging, sys
 from hydra_agent.redis_core.redis_proxy import RedisProxy
 from hydra_agent.redis_core.graphutils_operations import GraphOperations
 from hydra_agent.redis_core.graph_init import InitialGraph
@@ -41,7 +41,8 @@ class Agent(Session):
         self.redis_connection.sadd("fs:url", self.entrypoint_url)
 
     def get(self, url: str = None, resource_type: str = None,
-            filters: dict = {}, cached_limit: int = 10) -> Union[dict, list]:
+            filters: dict = {},
+            cached_limit: int = sys.maxsize) -> Union[dict, list]:
         """READ Resource from Server/cached Redis
         :param url: Resource URL to be fetched
         :param resource_type: Resource object type
