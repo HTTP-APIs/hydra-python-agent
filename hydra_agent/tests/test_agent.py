@@ -56,7 +56,8 @@ class TestAgent(unittest.TestCase):
                                       "StateCollection/1")
 
         responses_graph = self.agent.get(resource_type="State",
-                                         filters={"Direction": "North"})
+                                         filters={"Direction": "North"},
+                                         cached_limit=1)
         responses_graph = responses_graph[0]
         self.assertEqual(response_url, responses_graph)
 
@@ -90,9 +91,27 @@ class TestAgent(unittest.TestCase):
 
         response, new_object_url = self.agent.put(collection_url, new_object)
 
+        simplified_collection = \
+            {
+                "@context": "/serverapi/contexts/DroneCollection.jsonld",
+                "@id": "/serverapi/DroneCollection/",
+                "@type": "DroneCollection",
+                "members": [
+                    {
+                        "@id": "/serverapi/DroneCollection/1",
+                        "@type": "Drone"
+                    },
+                    {
+                        "@id": "/serverapi/DroneCollection/2",
+                        "@type": "Drone"
+                    }
+                ],
+            }
+
+        embedded_get_mock.return_value.json.return_value = \
+            simplified_collection
         get_collection = self.agent.get(collection_url)
-        get_collection = eval(get_collection["members"])
-        self.assertEqual(get_collection[0]["@id"], "/api/DroneCollection/1")
+        self.assertEqual(type(get_collection), list)
 
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.put')
