@@ -48,7 +48,7 @@ class TestAgent(unittest.TestCase):
                         "Battery": "sensor Ex", "Direction": "North",
                         "DroneID": "sensor Ex", "Position": "model Ex",
                         "SensorStatus": "sensor Ex", "Speed": "2",
-                        "@context": "/api/contexts/StateCollection.jsonld",}
+                        "@context": "/api/contexts/StateCollection.jsonld"}
 
         get_session_mock.return_value.status_code = 200
         get_session_mock.return_value.json.return_value = state_object
@@ -93,16 +93,12 @@ class TestAgent(unittest.TestCase):
 
         simplified_collection = \
             {
-                "@context": "/serverapi/contexts/DroneCollection.jsonld",
-                "@id": "/serverapi/DroneCollection/",
+                "@context": "/api/contexts/DroneCollection.jsonld",
+                "@id": "/api/DroneCollection/",
                 "@type": "DroneCollection",
                 "members": [
                     {
-                        "@id": "/serverapi/DroneCollection/1",
-                        "@type": "Drone"
-                    },
-                    {
-                        "@id": "/serverapi/DroneCollection/2",
+                        "@id": "/api/DroneCollection/1",
                         "@type": "Drone"
                     }
                 ],
@@ -110,8 +106,17 @@ class TestAgent(unittest.TestCase):
 
         embedded_get_mock.return_value.json.return_value = \
             simplified_collection
-        get_collection = self.agent.get(collection_url)
-        self.assertEqual(type(get_collection), list)
+        get_collection_url = self.agent.get(collection_url)
+        get_collection_resource_type = self.agent.get(resource_type="Drone")
+        self.assertEqual(type(get_collection_url), list)
+        self.assertEqual(type(get_collection_resource_type), list)
+        self.assertEqual(get_collection_resource_type, get_collection_url)
+
+        get_collection_cached = self.agent.get(resource_type="Drone",
+                                               cached_limit=1)
+
+        self.assertEqual(get_collection_cached[0]["@id"],
+                         get_collection_url[0]["@id"])
 
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.put')
@@ -143,8 +148,8 @@ class TestAgent(unittest.TestCase):
         response, new_object_url = self.agent.put(collection_url, new_object)
 
         # Assert if object was inserted queried and inserted successfully
-        get_new_object = self.agent.get(new_object_url)
-        self.assertEqual(get_new_object, new_object)
+        get_new_object_url = self.agent.get(new_object_url)
+        self.assertEqual(get_new_object_url, new_object)
 
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.post')
