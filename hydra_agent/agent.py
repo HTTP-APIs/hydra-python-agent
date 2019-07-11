@@ -41,26 +41,40 @@ class Agent(Session):
         self.redis_connection.sadd("fs:url", self.entrypoint_url)
 
     def get(self, url: str = None, resource_type: str = None,
-            filters: dict = {}) -> Union[dict, list]:
+            filters: dict = {}, cached_limit: int = 10) -> Union[dict, list]:
         """READ Resource from Server/cached Redis
         :param url: Resource URL to be fetched
+        :param resource_type: Resource object type
+        :param filters: filters to apply when searching, resources properties
+        :param cached_limit : Minimum amount of resources to be fetched
         :return: Dict when one object or a list when multiple targerted objects
         """
-        response = self.graph_operations.get_resource(url, resource_type,
-                                                      filters)
-        if response:
-            return response
-        elif url is None:
-            return []
+        redis_response = self.graph_operations.get_resource(url, resource_type,
+                                                            filters)
+        if redis_response:
+            if type(redis_response) is dict:
+                return redis_response
+            elif len(redis_response) >= cached_limit:
+                return redis_response
 
-        response = super().get(url)
+        # If querying with resource type build url
+        # This can be more stable when adding Manages Block
+        # More on: https://www.hydra-cg.com/spec/latest/core/#manages-block
+        if resource_type:
+            url = self.entrypoint_url + "/" + resource_type + "Collection"
+            response = super().get(url, params=filters)
+        else:
+            response = super().get(url)
 
         if response.status_code == 200:
             # Graph_operations returns the embedded resources if finding any
             embedded_resources = \
                 self.graph_operations.get_processing(url, response.json())
             self.process_embedded(embedded_resources)
-            return response.json()
+            if response.json()['@type'] in self.api_doc.parsed_classes:
+                return response.json()
+            else:
+                return response.json()['members']
         else:
             return response.text
 

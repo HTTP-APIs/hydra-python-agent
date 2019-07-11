@@ -31,7 +31,7 @@ class GraphUtils:
         :return: Corresponding Nodes
         """
         query = "MATCH(p{})".format(match)
-        if where is not None:
+        if where:
             query += " WHERE(p.{})".format(where)
         query += " RETURN p{}".format(ret)
 
