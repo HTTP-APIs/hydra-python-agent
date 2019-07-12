@@ -156,6 +156,11 @@ class TestAgent(unittest.TestCase):
         get_new_object_url = self.agent.get(new_object_url)
         self.assertEqual(get_new_object_url, new_object)
 
+        get_new_object_type = self.agent.get(resource_type="Drone",
+                                             filters={'name': "Smart Drone"},
+                                             cached_limit=1)
+        self.assertEqual(get_new_object_url, get_new_object_type[0])
+
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.post')
     @patch('hydra_agent.agent.Session.put')
