@@ -135,18 +135,19 @@ class GraphUtils:
         if not result.result_set:
             return []
 
-        for record in result.result_set[0][:]:
-            new_record = {}
-            if record is None:
-                return
-            new_record = record.properties
-            if new_record:
-                if 'id' in new_record:
-                    new_record['@id'] = new_record.pop('id')
-                    new_record['@type'] = new_record.pop('type')
-                if 'context' in new_record:
-                    new_record['@context'] = new_record.pop('context')
-                response_json_list.append(new_record)
+        for return_alias in result.result_set:
+            for record in return_alias[:]:
+                new_record = {}
+                if record is None:
+                    return
+                new_record = record.properties
+                if new_record:
+                    if 'id' in new_record:
+                        new_record['@id'] = new_record.pop('id')
+                        new_record['@type'] = new_record.pop('type')
+                    if 'context' in new_record:
+                        new_record['@context'] = new_record.pop('context')
+                    response_json_list.append(new_record)
 
         return response_json_list
 
