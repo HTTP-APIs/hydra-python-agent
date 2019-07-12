@@ -52,14 +52,19 @@ class TestAgent(unittest.TestCase):
 
         get_session_mock.return_value.status_code = 200
         get_session_mock.return_value.json.return_value = state_object
-        response_url = self.agent.get("http://localhost:8080/api/" + \
+        response_url = self.agent.get("http://localhost:8080/api/" +
                                       "StateCollection/1")
 
-        responses_graph = self.agent.get(resource_type="State",
+        response_cached = self.agent.get(resource_type="State",
                                          filters={"Direction": "North"},
                                          cached_limit=1)
-        responses_graph = responses_graph[0]
-        self.assertEqual(response_url, responses_graph)
+
+        response_cached = response_cached[0]
+        self.assertEqual(response_url, response_cached)
+
+        response_not_cached = self.agent.get("http://localhost:8080/api/" +
+                                             "StateCollection/1")
+        self.assertEqual(response_not_cached, response_cached)
 
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.put')
