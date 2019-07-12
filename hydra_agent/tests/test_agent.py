@@ -28,7 +28,7 @@ class TestAgent(unittest.TestCase):
 
     @patch('hydra_agent.agent.Session.get')
     def test_get_url(self, get_session_mock):
-        """Tests get method from the Agent 
+        """Tests get method from the Agent with URL
         :param get_session_mock: MagicMock object for patching session.get
         """
         state_object = {"@id": "/api/StateCollection/1", "@type": "State",
@@ -46,7 +46,7 @@ class TestAgent(unittest.TestCase):
 
     @patch('hydra_agent.agent.Session.get')
     def test_get_class_properties(self, get_session_mock):
-        """Tests get method from the Agent
+        """Tests get method from the Agent by class name and properties
         :param get_session_mock: MagicMock object for patching session.get
         """
         state_object = {"@id": "/api/StateCollection/1", "@type": "State",
@@ -74,9 +74,9 @@ class TestAgent(unittest.TestCase):
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.put')
     def test_get_collection(self, put_session_mock, embedded_get_mock):
-        """Tests get method from the Agent
-        :param get_processing_mock: MagicMock object to patch graphoperations
-        :param get_mock: MagicMock object for patching session.get
+        """Tests get method from the Agent when fetching collections
+        :param put_session_mock: MagicMock object for patching session.put
+        :param embedded_get_mock: MagicMock object for patching session.get
         """
         new_object = {"@type": "Drone", "DroneState": "/api/StateCollection/1",
                       "name": "Smart Drone", "model": "Hydra Drone",
@@ -133,6 +133,7 @@ class TestAgent(unittest.TestCase):
     def test_put(self, put_session_mock, embedded_get_mock):
         """Tests put method from the Agent
         :param put_session_mock: MagicMock object for patching session.put
+        :param embedded_get_mock: MagicMock object for patching session.get
         """
         new_object = {"@type": "Drone", "DroneState": "/api/StateCollection/1",
                       "name": "Smart Drone", "model": "Hydra Drone",
@@ -213,7 +214,8 @@ class TestAgent(unittest.TestCase):
                     get_session_mock):
         """Tests post method from the Agent
         :param put_session_mock: MagicMock object for patching session.put
-        :param post_session_mock: MagicMock object for patching session.post
+        :param delete_session_mock: MagicMock object to patch session.delete
+        :param get_session_mock: MagicMock object for patching session.get
         """
         new_object = {"@type": "Drone", "DroneState": "/api/StateCollection/1",
                       "name": "Smart Drone", "model": "Hydra Drone",
@@ -240,8 +242,9 @@ class TestAgent(unittest.TestCase):
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.put')
     def test_edges(self, put_session_mock, embedded_get_mock):
-        """Tests put method from the Agent
+        """Tests to check if all edges are being created properly
         :param put_session_mock: MagicMock object for patching session.put
+        :param embedded_get_mock: MagicMock object for patching session.get
         """
         new_object = {"@type": "Drone", "DroneState": "/api/StateCollection/1",
                       "name": "Smart Drone", "model": "Hydra Drone",
