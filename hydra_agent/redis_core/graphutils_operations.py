@@ -115,7 +115,7 @@ class GraphOperations():
                 match="collection",
                 where="id='{}'".format(redis_collection_id),
                 set="members = \"{}\"".format(str(resource["members"])))
-            return
+            return []
 
         # Third Case - When processing a valid GET that is not compatible-
         # with the Redis Hydra structure, only returns response
@@ -198,9 +198,7 @@ class GraphOperations():
         :param url: URL for the resource to fetch.
         :return: Object with resource found.
         """
-        # This is the first step to interact with Redis properly
-        # This method should eventually accept a type, a id or an url
-        # do the proper checking and then return the cached info
+        # Checking which kind of query, by URL or type
         if not url and not resource_type:
             raise Exception("ERR: You should set at least" +
                             "url OR resource_type")
@@ -211,10 +209,8 @@ class GraphOperations():
 
             # Checking if querying for cached Collection or Member
             if len(url_list) == 2:
-                entrypoint, resource_endpoint = url_aux.split('/')
-                object_id = self.vocabulary + \
-                    ":" + entrypoint + \
-                    "/" + resource_endpoint
+                # When checking for collections we will always fetch the server
+                return None
             else:
                 url_list = url.split('/', 3)
                 object_id = '/' + url_list[-1]
@@ -252,7 +248,7 @@ class GraphOperations():
         :parent_id: Resource ID for the parent node that had this reference
         :parent_type: Resource Type for the parent node that had this reference
         :node_url: URL Reference for resource found inside a property
-        "return: Default Redis response with amount of relations created 
+        "return: Default Redis response with amount of relations created
         """
         resource = self.get_resource(node_url)
         if resource is None:
