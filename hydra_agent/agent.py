@@ -42,7 +42,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         self.entrypoint_url_temp = 'http://localhost:5000'
         socketio.Client.connect(self, self.entrypoint_url_temp,
                                 namespaces=namespace)
-        self.last_job_id = -1
+        self.last_job_id = ""
         self.modification_table = []
 
     def initialize_graph(self) -> None:
@@ -159,7 +159,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
     def on_connect(self):
         logger.info('Socket Connection Established - Synchronization ON')
         self.modification_table = super().get(self.entrypoint_url_temp +
-                                              '/modification-table').json()
+                                              '/modification-table-diff').json()
         if self.modification_table:
             self.last_job_id = self.modification_table[0]['job_id']
 
@@ -169,8 +169,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
     def on_update(self, data):
         new_rows = super().get(self.entrypoint_url_temp +
                                '/modification-table-diff?agent_job_id=' +
-                               self.last_job_id)
-        new_rows = new_rows.json()
+                               self.last_job_id).json()
 
         for row in new_rows:
             # falta restart se o resource n tiver na tabela
