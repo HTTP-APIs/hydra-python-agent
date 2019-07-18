@@ -1,4 +1,6 @@
 import logging, sys
+import socketio
+import urllib.request
 from hydra_agent.redis_core.redis_proxy import RedisProxy
 from hydra_agent.redis_core.graphutils_operations import GraphOperations
 from hydra_agent.redis_core.graph_init import InitialGraph
@@ -10,25 +12,38 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
 
 
-class Agent(Session):
+class Agent(Session, socketio.ClientNamespace, socketio.Client):
     """Provides a straightforward GET, PUT, POST, DELETE -
     CRUD interface - to query hydrus
     """
-    def __init__(self, entrypoint_url: str) -> None:
+
+    def __init__(self, entrypoint_url: str, namespace: str='/sync') -> None:
         """Initialize the Agent
         :param entrypoint_url: Entrypoint URL for the hydrus server
+        :param namespace: Namespace endpoint to listen for updates
         :return: None
         """
         self.entrypoint_url = entrypoint_url.strip().rstrip('/')
         self.redis_proxy = RedisProxy()
         self.redis_connection = self.redis_proxy.get_connection()
-        super().__init__()
+        Session.__init__(self)
         jsonld_api_doc = super().get(self.entrypoint_url + '/vocab').json()
         self.api_doc = doc_maker.create_doc(jsonld_api_doc)
         self.initialize_graph()
         self.graph_operations = GraphOperations(self.entrypoint_url,
                                                 self.api_doc,
                                                 self.redis_proxy)
+
+        # Declaring Socket Rules and instaciating Synchronization Socket
+        socketio.ClientNamespace.__init__(self, namespace)
+        socketio.Client.__init__(self, logger=True)
+        socketio.Client.register_namespace(self, self)
+        # After hydrus implementation connect directly to the sv, self.entrypoint
+        self.entrypoint_url_temp = 'http://localhost:5000'
+        socketio.Client.connect(self, self.entrypoint_url_temp,
+                                namespaces=namespace)
+        self.last_job_id = -1
+        self.modification_table = []
 
     def initialize_graph(self) -> None:
         """Initialize the Graph on Redis based on ApiDoc
@@ -140,5 +155,37 @@ class Agent(Session):
                 embedded_resource['parent_type'],
                 embedded_resource['embedded_url'])
 
+    # Below are the functions that are reponsible to process Socket Events
+    def on_connect(self):
+        logger.info('Socket Connection Established - Synchronization ON')
+        self.modification_table = super().get(self.entrypoint_url_temp +
+                                              '/modification-table').json()
+        if self.modification_table:
+            self.last_job_id = self.modification_table[0]['job_id']
+
+    def on_disconnect(self):
+        pass
+
+    def on_update(self, data):
+        new_rows = super().get(self.entrypoint_url_temp +
+                               '/modification-table-diff?agent_job_id=' +
+                               self.last_job_id)
+        new_rows = new_rows.json()
+
+        for row in new_rows:
+            # falta restart se o resource n tiver na tabela
+            if self.graph_operations.get_resource(row['resource_url']):
+                if row['method'] == 'POST':
+                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.get(row['resource_url'])
+                elif row['method'] == 'DELETE':
+                    self.graph_operations.delete_processing(row['resource_url'])
+
+        # Deleting older rows since they won't be used again
+        self.modification_table = new_rows
+        self.last_job_id = self.modification_table[0]['job_id']
+
+    def on_broadcast_event(self, data):
+        pass
 if __name__ == "__main__":
     pass
