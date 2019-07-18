@@ -131,7 +131,7 @@ class GraphOperations():
         # Manually add the id that will be on the server for the object added
         url_list = url.split('/', 3)
         new_object["@id"] = '/' + url_list[-1]
-        # Simply call sync_get to add the resource to the collection at Redis
+        # Simply call self.get_processing to add the resource to the collection at Redis
         embedded_resources = self.get_processing(url, new_object)
 
         return embedded_resources
@@ -145,7 +145,7 @@ class GraphOperations():
         url_list = url.split('/', 3)
         updated_object["@id"] = '/' + url_list[-1]
 
-        # Simply call sync_get to add the resource to the collection at Redis
+        # Simply call self.get_processing to add the resource to the collection at Redis
         self.delete_processing(url)
         embedded_resources = self.get_processing(url, updated_object)
         return embedded_resources
