@@ -1,6 +1,5 @@
 import logging, sys
 import socketio
-import urllib.request
 from hydra_agent.redis_core.redis_proxy import RedisProxy
 from hydra_agent.redis_core.graphutils_operations import GraphOperations
 from hydra_agent.redis_core.graph_init import InitialGraph
@@ -172,7 +171,6 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                                self.last_job_id).json()
 
         for row in new_rows:
-            # falta restart se o resource n tiver na tabela
             if self.graph_operations.get_resource(row['resource_url']):
                 if row['method'] == 'POST':
                     self.graph_operations.delete_processing(row['resource_url'])
