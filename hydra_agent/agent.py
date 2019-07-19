@@ -1,4 +1,5 @@
-import logging, sys
+import logging
+import sys
 import socketio
 from hydra_agent.redis_core.redis_proxy import RedisProxy
 from hydra_agent.redis_core.graphutils_operations import GraphOperations
@@ -42,7 +43,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         socketio.Client.connect(self, self.entrypoint_url_temp,
                                 namespaces=namespace)
         self.last_job_id = ""
-        self.modification_table = []
+        self.modifications_table = []
 
     def initialize_graph(self) -> None:
         """Initialize the Graph on Redis based on ApiDoc
@@ -159,10 +160,10 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         """Method executed when the Agent is successfuly connected to the Server
         """
         logger.info('Socket Connection Established - Synchronization ON')
-        self.modification_table = super().get(self.entrypoint_url_temp +
+        self.modifications_table = super().get(self.entrypoint_url_temp +
                                               '/modification-table-diff').json()
-        if self.modification_table:
-            self.last_job_id = self.modification_table[0]['job_id']
+        if self.modifications_table:
+            self.last_job_id = self.modifications_table[0]['job_id']
 
     def on_disconnect(self):
         """Method executed when the Agent is disconnected
@@ -180,10 +181,10 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         if not new_rows:
             logger.info('Server Restarting - Automatic Sync not possible')
             self.initialize_graph()
-            self.modification_table = super().get(self.entrypoint_url_temp +
+            self.modifications_table = super().get(self.entrypoint_url_temp +
                                                   '/modification-table-diff').json()
-            if self.modification_table:
-                self.last_job_id = self.modification_table[0]['job_id']
+            if self.modifications_table:
+                self.last_job_id = self.modifications_table[0]['job_id']
             return None
 
         # Checking if the Agent is too outdated and can't be synced
@@ -196,8 +197,8 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                     self.graph_operations.delete_processing(row['resource_url'])
 
         # Deleting old modifications table since they won't be used again
-        self.modification_table = new_rows
-        self.last_job_id = self.modification_table[0]['job_id']
+        self.modifications_table = new_rows
+        self.last_job_id = self.modifications_table[0]['job_id']
 
     def on_broadcast_event(self, data):
         """Method executed when the Agent receives a broadcast event
