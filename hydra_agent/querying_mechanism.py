@@ -1,15 +1,15 @@
 import random
 import string
 import logging
-from hydra_agent.hydra_graph import InitialGraph
+from hydra_agent.redis_core.graph_init import InitialGraph
 import urllib.request
 from urllib.parse import urljoin
 import json
 from hydra_python_core import doc_maker
 from urllib.error import URLError, HTTPError
-from hydra_agent.collections_endpoint import CollectionEndpoints
-from hydra_agent.classes_objects import ClassEndpoints,RequestError
-from hydra_agent.redis_proxy import RedisProxy
+from hydra_agent.redis_core.collections_endpoint import CollectionEndpoints
+from hydra_agent.redis_core.classes_objects import ClassEndpoints, RequestError
+from hydra_agent.redis_core.redis_proxy import RedisProxy
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -62,6 +62,8 @@ class HandleData:
             if count % 2 != 0:
                 for obj1 in objects:
                     for obj in obj1:
+                        if obj is None:
+                            continue
                         string = obj.decode('utf-8')
                         map_string = map(str.strip, string.split(','))
                         property_list = list(map_string)
@@ -92,10 +94,10 @@ class EndpointQuery:
         """
         get_data = self.connection.execute_command(
             'GRAPH.QUERY',
-            'apidoc',
+            'apigraph',
             "MATCH (p:classes) RETURN p") + self.connection.execute_command(
             'GRAPH.QUERY',
-            'apidoc',
+            'apigraph',
             "MATCH (p:collection) RETURN p")
         print("classEndpoints + CollectionEndpoints")
 
@@ -108,7 +110,7 @@ class EndpointQuery:
         :return: get data from the Redis memory.
         """
         get_data = self.connection.execute_command(
-            'GRAPH.QUERY', 'apidoc', "MATCH (p:classes) RETURN p")
+            'GRAPH.QUERY', 'apigraph', "MATCH (p:classes) RETURN p")
 
         print("classEndpoints")
 
@@ -121,7 +123,7 @@ class EndpointQuery:
         :return: get data from the Redis memory.
         """
         get_data = self.connection.execute_command(
-            'GRAPH.QUERY', 'apidoc', "MATCH (p:collection) RETURN p")
+            'GRAPH.QUERY', 'apigraph', "MATCH (p:collection) RETURN p")
 
         print("collectoinEndpoints")
 
@@ -161,7 +163,7 @@ class CollectionmembersQuery:
 
         get_data = self.connection.execute_command(
             'GRAPH.QUERY',
-            'apidoc',
+            'apigraph',
             'MATCH(p:collection) WHERE(p.type="{}") RETURN p.members'.format(
                 endpoint))
         print(endpoint, " members")
@@ -179,7 +181,7 @@ class CollectionmembersQuery:
                                                    "fs:endpoints")):
             get_data = self.connection.execute_command(
                 'GRAPH.QUERY',
-                'apidoc',
+                'apigraph',
                 """MATCH(p:collection)
                    WHERE(p.type='{}')
                    RETURN p.members""".format(
@@ -215,7 +217,7 @@ class PropertiesQuery:
         endpoint, query = query.split(" ")
         get_data = self.connection.execute_command(
             'GRAPH.QUERY',
-            'apidoc',
+            'apigraph',
             'MATCH ( p:classes ) WHERE (p.type="{}") RETURN p.{}'.format(
                 endpoint,
                 query))
@@ -232,7 +234,7 @@ class PropertiesQuery:
 
         get_data = self.connection.execute_command(
             'GRAPH.QUERY',
-            'apidoc',
+            'apigraph',
             'MATCH ( p:collection ) WHERE (p.type="{}") RETURN p.{}'.format(
                 endpoint,
                 query))
@@ -249,7 +251,7 @@ class PropertiesQuery:
         endpoint, query = query.split(" ")
         get_data = self.connection.execute_command(
             'GRAPH.QUERY',
-            'apidoc',
+            'apigraph',
             'MATCH ( p:{} ) RETURN p.id,p.{}'.format(
                 endpoint,
                 query))
@@ -269,7 +271,7 @@ class PropertiesQuery:
         id_ = "object" + endpoint[5:index]
         get_data = self.connection.execute_command(
             'GRAPH.QUERY',
-            'apidoc',
+            'apigraph',
             'MATCH ( p:{}) WHERE (p.parent_id = "{}") RETURN p.{}'.format(
                 id_,
                 endpoint,
@@ -309,7 +311,7 @@ class ClassPropertiesValue:
 
         get_data = self.connection.execute_command(
             'GRAPH.QUERY',
-            'apidoc',
+            'apigraph',
             """MATCH(p:classes)
                WHERE(p.type='{}')
                RETURN p.property_value""".format(
@@ -331,7 +333,7 @@ class ClassPropertiesValue:
                                                    "fs:endpoints")):
             get_data = self.connection.execute_command(
                 'GRAPH.QUERY',
-                'apidoc',
+                'apigraph',
                 """MATCH (p:classes)
                    WHERE (p.type = '{}')
                    RETURN p.property_value""".format(
@@ -672,22 +674,20 @@ def main():
     Take URL as an input and make graph using initilize function.
     :return: call query function for more query.
     """
-    url = input("url>>>").strip()
+    url = input("url>>>").strip().rstrip('/')
     if url == "exit":
         print("exit...")
         return 0
     handle_data = HandleData()
     apidoc = handle_data.load_data(url + "/vocab")
     while True:
-        if isinstance (apidoc, RequestError):
+        if isinstance(apidoc, RequestError):
             print("enter right url")
-            url = input("url>>>").strip()
+            url = input("url>>>").strip().rstrip('/')
             if url == "exit":
                 print("exit...")
                 return 0
-            url = url.rstrip('/') + '/'
-            url = urljoin(url, 'vocab')
-            apidoc = handle_data.load_data(url)
+            apidoc = handle_data.load_data(url + "/vocab")
         else:
             break
     return query(apidoc, url)

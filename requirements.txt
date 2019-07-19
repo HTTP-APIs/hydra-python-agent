@@ -2,7 +2,8 @@ rdflib
 rdflib-jsonld
 uritemplate
 httplib2
-redis==2.10.6
-redisgraph
+redis
 graphviz
--e git+https://github.com/HTTP-APIs/hydra-python-core.git#egg=hydra_python_core
+requests
+-e git+https://github.com/RedisGraph/redisgraph-py#egg=redisgraph
+-e git+https://github.com/HTTP-APIs/hydra-python-core#egg=hydra_python_core

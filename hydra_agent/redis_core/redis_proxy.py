@@ -12,7 +12,8 @@ class RedisProxy:
 
     def __init__(self):
         host = os.getenv("REDIS_HOST", "localhost")
-        self.connection = redis.StrictRedis(host=host, port=6379, db=0)
+        self.connection = redis.StrictRedis(host=host, port=6379, db=0,
+                                            decode_responses=True)
 
     def get_connection(self):
         return self.connection
