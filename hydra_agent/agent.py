@@ -169,6 +169,15 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         new_rows = super().get(self.entrypoint_url_temp +
                                '/modification-table-diff?agent_job_id=' +
                                self.last_job_id).json()
+        # Checking if the Agent is too outdated and can't be synced
+        if not new_rows:
+            logger.info('Server Restarting - Automatic Sync not possible')
+            self.initialize_graph()
+            self.modification_table = super().get(self.entrypoint_url_temp +
+                                                  '/modification-table-diff').json()
+            if self.modification_table:
+                self.last_job_id = self.modification_table[0]['job_id']
+            return None
 
         for row in new_rows:
             if self.graph_operations.get_resource(row['resource_url']):
