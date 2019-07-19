@@ -155,7 +155,9 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                 embedded_resource['embedded_url'])
 
     # Below are the functions that are reponsible to process Socket Events
-    def on_connect(self):
+    def on_connect(self) -> None:
+        """Method executed when the Agent is successfuly connected to the Server
+        """
         logger.info('Socket Connection Established - Synchronization ON')
         self.modification_table = super().get(self.entrypoint_url_temp +
                                               '/modification-table-diff').json()
@@ -163,9 +165,14 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             self.last_job_id = self.modification_table[0]['job_id']
 
     def on_disconnect(self):
+        """Method executed when the Agent is disconnected
+        """
         pass
 
-    def on_update(self, data):
+    def on_update(self, data) -> None:
+        """Method executed when the Agent receives an event named 'update'
+        This is sent to all clients connected the server under the designed Namespace
+        """
         new_rows = super().get(self.entrypoint_url_temp +
                                '/modification-table-diff?agent_job_id=' +
                                self.last_job_id).json()
@@ -179,6 +186,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                 self.last_job_id = self.modification_table[0]['job_id']
             return None
 
+        # Checking if the Agent is too outdated and can't be synced
         for row in new_rows:
             if self.graph_operations.get_resource(row['resource_url']):
                 if row['method'] == 'POST':
@@ -187,11 +195,14 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                 elif row['method'] == 'DELETE':
                     self.graph_operations.delete_processing(row['resource_url'])
 
-        # Deleting older rows since they won't be used again
+        # Deleting old modifications table since they won't be used again
         self.modification_table = new_rows
         self.last_job_id = self.modification_table[0]['job_id']
 
     def on_broadcast_event(self, data):
+        """Method executed when the Agent receives a broadcast event
+        """
         pass
+
 if __name__ == "__main__":
     pass
