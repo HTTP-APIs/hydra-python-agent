@@ -174,9 +174,12 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         """Method executed when the Agent receives an event named 'update'
         This is sent to all clients connected the server under the designed Namespace
         """
-        new_rows = super().get(self.entrypoint_url_temp +
-                               '/modification-table-diff?agent_job_id=' +
-                               self.last_job_id).json()
+        if data['last_job_id'] == self.last_job_id:
+            new_rows = [data]
+        else:
+            new_rows = super().get(self.entrypoint_url_temp +
+                                   '/modification-table-diff?agent_job_id=' +
+                                   self.last_job_id).json()
         # Checking if the Agent is too outdated and can't be synced
         if not new_rows:
             logger.info('Server Restarting - Automatic Sync not possible')
