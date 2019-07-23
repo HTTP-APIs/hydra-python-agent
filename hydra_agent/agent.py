@@ -38,9 +38,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         socketio.ClientNamespace.__init__(self, namespace)
         socketio.Client.__init__(self, logger=True)
         socketio.Client.register_namespace(self, self)
-        # After hydrus implementation connect directly to the sv, self.entrypoint
-        self.entrypoint_url_temp = 'http://localhost:5000'
-        socketio.Client.connect(self, self.entrypoint_url_temp,
+        socketio.Client.connect(self, self.entrypoint_url,
                                 namespaces=namespace)
         self.last_job_id = ""
         self.modifications_table = []
