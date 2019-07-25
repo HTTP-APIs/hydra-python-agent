@@ -158,7 +158,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         """Method executed when the Agent is successfuly connected to the Server
         """
         logger.info('Socket Connection Established - Synchronization ON')
-        self.modifications_table = super().get(self.entrypoint_url_temp +
+        self.modifications_table = super().get(self.entrypoint_url +
                                               '/modification-table-diff').json()
         if self.modifications_table:
             self.last_job_id = self.modifications_table[0]['job_id']
@@ -171,11 +171,12 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
     def on_update(self, data) -> None:
         """Method executed when the Agent receives an event named 'update'
         This is sent to all clients connected the server under the designed Namespace
+        :param data: Dict object with the last inserted row of modification's table
         """
         if data['last_job_id'] == self.last_job_id:
             new_rows = [data]
         else:
-            new_rows = super().get(self.entrypoint_url_temp +
+            new_rows = super().get(self.entrypoint_url +
                                    '/modification-table-diff?agent_job_id=' +
                                    self.last_job_id).json()
         # Checking if the Agent is too outdated and can't be synced
@@ -203,6 +204,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
 
     def on_broadcast_event(self, data):
         """Method executed when the Agent receives a broadcast event
+        :param data: Object with the data broadcasted
         """
         pass
 
