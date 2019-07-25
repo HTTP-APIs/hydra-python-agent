@@ -179,15 +179,15 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             new_rows = super().get(self.entrypoint_url +
                                    '/modification-table-diff?agent_job_id=' +
                                    self.last_job_id).json()
-        # Checking if the Agent is too outdated and can't be synced
-        if not new_rows:
-            logger.info('Server Restarting - Automatic Sync not possible')
-            self.initialize_graph()
-            self.modifications_table = super().get(self.entrypoint_url_temp +
-                                                  '/modification-table-diff').json()
-            if self.modifications_table:
-                self.last_job_id = self.modifications_table[0]['job_id']
-            return None
+            # Checking if the Agent is too outdated and can't be synced
+            if new_rows.status_code == 204:
+                logger.info('Server Restarting - Automatic Sync not possible')
+                self.initialize_graph()
+                self.modifications_table = super().get(self.entrypoint_url_temp +
+                                                    '/modification-table-diff').json()
+                if self.modifications_table:
+                    self.last_job_id = self.modifications_table[0]['job_id']
+                return None
 
         # Checking if the Agent is too outdated and can't be synced
         for row in new_rows:
@@ -197,6 +197,8 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                     self.get(row['resource_url'])
                 elif row['method'] == 'DELETE':
                     self.graph_operations.delete_processing(row['resource_url'])
+                if row['method'] == 'PUT':
+                    pass
 
         # Deleting old modifications table since they won't be used again
         self.modifications_table = new_rows
