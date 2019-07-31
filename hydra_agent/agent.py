@@ -41,7 +41,6 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         socketio.Client.connect(self, self.entrypoint_url,
                                 namespaces=namespace)
         self.last_job_id = ""
-        self.modifications_table = []
 
     def initialize_graph(self) -> None:
         """Initialize the Graph on Redis based on ApiDoc
@@ -173,23 +172,36 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         This is sent to all clients connected the server under the designed Namespace
         :param data: Dict object with the last inserted row of modification's table
         """
-        if data['last_job_id'] == self.last_job_id:
-            new_rows = [data]
-        else:
-            new_rows = super().get(self.entrypoint_url +
-                                   '/modification-table-diff?agent_job_id=' +
-                                   self.last_job_id).json()
-            # Checking if the Agent is too outdated and can't be synced
-            if new_rows.status_code == 204:
-                logger.info('Server Restarting - Automatic Sync not possible')
-                self.initialize_graph()
-                self.modifications_table = super().get(self.entrypoint_url_temp +
-                                                    '/modification-table-diff').json()
-                if self.modifications_table:
-                    self.last_job_id = self.modifications_table[0]['job_id']
-                return None
+        row = data
+        # Checking if the Client is the last job id is up to date with the Server
+        if row['last_job_id'] == self.last_job_id:
+            # Checking if it's an already cached resource, if not it will ignore
+            if self.graph_operations.get_resource(row['resource_url']):
+                if row['method'] == 'POST':
+                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.get(row['resource_url'])
+                elif row['method'] == 'DELETE':
+                    self.graph_operations.delete_processing(row['resource_url'])
+                if row['method'] == 'PUT':
+                    pass
+            # Updating the last job id
+            self.last_job_id = row[0]['job_id']
 
-        # Checking if the Agent is too outdated and can't be synced
+        # If last_job_id is not the same, there's more than one outdated modification
+        # Therefore the Client will try to get the diff of all modifications after his last job
+        else:
+            super().emit('get_modification_table_diff',
+                         {'agent_job_id': self.last_job_id})
+
+        # Updating the last job id
+        self.last_job_id = row[0]['job_id']
+
+    def on_modification_table_diff(self, data) -> None:
+        """Event handler for when the client has to updated multiple rows
+        :param data: List with all modification rows to be updated
+        """
+        new_rows = data
+        # Syncing procedure for every row received by mod table diff
         for row in new_rows:
             if self.graph_operations.get_resource(row['resource_url']):
                 if row['method'] == 'POST':
