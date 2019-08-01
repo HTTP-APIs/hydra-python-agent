@@ -152,15 +152,12 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                 embedded_resource['parent_type'],
                 embedded_resource['embedded_url'])
 
-    # Below are the functions that are reponsible to process Socket Events
-    def on_connect(self) -> None:
-        """Method executed when the Agent is successfuly connected to the Server
+    # Below are the functions that are responsible to process Socket Events
+    def on_connect(self, data) -> None:
+        """Method executed when the Agent is successfully connected to the Server
         """
+        self.last_job_id = self.data['last_job_id']
         logger.info('Socket Connection Established - Synchronization ON')
-        self.modifications_table = super().get(self.entrypoint_url +
-                                              '/modification-table-diff').json()
-        if self.modifications_table:
-            self.last_job_id = self.modifications_table[0]['job_id']
 
     def on_disconnect(self):
         """Method executed when the Agent is disconnected
@@ -212,9 +209,16 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                 if row['method'] == 'PUT':
                     pass
 
-        # Deleting old modifications table since they won't be used again
-        self.modifications_table = new_rows
-        self.last_job_id = self.modifications_table[0]['job_id']
+        # Checking if the Agent is too outdated and can't be synced
+        if not new_rows:
+            logger.info('Server Restarting - Automatic Sync not possible')
+            self.initialize_graph()
+            # Agent should reply with a connect event with the last_job_id
+            super().emit('reconnect')
+            return None
+
+        # Updating the last job id
+        self.last_job_id = new_rows[0]['job_id']
 
     def on_broadcast_event(self, data):
         """Method executed when the Agent receives a broadcast event
