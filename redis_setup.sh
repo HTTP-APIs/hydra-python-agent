@@ -12,12 +12,12 @@ else
 fi
 
 # after getting the docker-ce, check if `redislabs/redisgraph` docker image is not installed then install ii. 
-if [ -z "$(docker images -q redislabs/redisgraph:edge)" ]
+if [ -z "$(docker images -q redislabs/redisgraph:2.0-edge)" ]
 then
-    echo "Docker already have a redislabs/redisgraph:edge image"
+    echo "Docker already have a redislabs/redisgraph:2.0-edge image"
 
 else 
-    sudo docker run -p 6379:6379 -it --rm redislabs/redisgraph:edge
+    sudo docker run -p 6379:6379 -it --rm redislabs/redisgraph:2.0-edge
 fi
 # command for run the server 
 # sudo docker run -p 6379:6379 -it --rm redislabs/redisgraph # uncomment this line if you want to run server without using dockerflie.
