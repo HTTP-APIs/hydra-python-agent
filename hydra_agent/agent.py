@@ -153,11 +153,12 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                 embedded_resource['embedded_url'])
 
     # Below are the functions that are responsible to process Socket Events
-    def on_connect(self, data) -> None:
+    def on_connect(self, data: dict = None) -> None:
         """Method executed when the Agent is successfully connected to the Server
         """
-        self.last_job_id = self.data['last_job_id']
-        logger.info('Socket Connection Established - Synchronization ON')
+        if data:
+            self.last_job_id = data['last_job_id']
+            logger.info('Socket Connection Established - Synchronization ON')
 
     def on_disconnect(self):
         """Method executed when the Agent is disconnected
@@ -182,7 +183,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                 if row['method'] == 'PUT':
                     pass
             # Updating the last job id
-            self.last_job_id = row[0]['job_id']
+            self.last_job_id = row['job_id']
 
         # If last_job_id is not the same, there's more than one outdated modification
         # Therefore the Client will try to get the diff of all modifications after his last job
@@ -191,7 +192,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                          {'agent_job_id': self.last_job_id})
 
         # Updating the last job id
-        self.last_job_id = row[0]['job_id']
+        self.last_job_id = row['job_id']
 
     def on_modification_table_diff(self, data) -> None:
         """Event handler for when the client has to updated multiple rows
