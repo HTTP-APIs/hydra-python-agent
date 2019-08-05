@@ -12,14 +12,16 @@ class TestAgent(unittest.TestCase):
     TestCase for Agent Class
     """
 
+    @patch('hydra_agent.agent.socketio.Client.connect')
     @patch('hydra_agent.agent.Session.get')
-    def setUp(self, get_session_mock):
+    def setUp(self, get_session_mock, socket_client_mock):
         """Setting up Agent object
         :param get_session_mock: MagicMock object for patching session.get
                                  it's used to Mock Hydrus response to ApiDoc
         """
         # Mocking get for ApiDoc to Server, so hydrus doesn't need to be up
         get_session_mock.return_value.json.return_value = drone_doc
+        socket_client_mock.return_value = None
 
         self.agent = Agent("http://localhost:8080/api")
         self.redis_proxy = RedisProxy()
