@@ -112,7 +112,7 @@ Pipfile.lock
 .mypy_cache/
 
 # build packages
-src 
+/src 
 
 # Graphviz generated graph
 hydra_graph.gv
