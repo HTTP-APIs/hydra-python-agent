@@ -5,19 +5,20 @@ import Typography from '@material-ui/core/Typography'
 
 const NavBar = (props) => {
     const toolbar = {
-        background : props.backgroundColor ? props.backgroundColor : 'primary',
-    };
-    
-    const toolbarTitle = {
-        color: props.color ? props.color : 'primary',
+        AppBar: {
+            backgroundColor: props.backgroundColor,
+        },
+        Typography: {
+            fontSize: props.fontSize,
+        }
     };
 
     return (
         <div>
-            <AppBar position="static" style={toolbar}>
-                <Toolbar color="black">
-                    <Typography variant="title" style={toolbarTitle}>
-                        Hydra Agent GUI {props.text}
+            <AppBar position="static" style={toolbar.AppBar} color={props.color}>
+                <Toolbar>
+                    <Typography variant="title" style={toolbar.Typography} color={props.fontColor}>
+                        {props.text}
                     </Typography>
                 </Toolbar>
             </AppBar>
