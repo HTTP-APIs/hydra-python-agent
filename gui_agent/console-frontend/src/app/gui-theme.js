@@ -7,12 +7,13 @@ export default createMuiTheme({
           main: '#212121',
           dark: '#404040',
           light: '#eeeeee',
+          contrastText: '#fff',
         },
         secondary: {
-          main: '#757575',
-          dark: '#000000',
-          light: '#000000',
-          contrastText: '#fff',
+          main: '#FBD20B',
+          dark: '#c3a100',
+          light: '#ffff54',
+          contrastText: '#000',
         },
         contrastThreshold: 3,
         tonalOffset: 0.2,
@@ -27,7 +28,7 @@ export default createMuiTheme({
         },
         text: {
             primary: '#000000',
-
-        }
+            secondary: '#585858',
+        },
     },
 });
