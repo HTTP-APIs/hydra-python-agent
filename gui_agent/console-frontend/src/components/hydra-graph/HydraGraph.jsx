@@ -1,5 +1,6 @@
 import React from 'react'
 import logo from '../../assets/images/logo.svg';
+import GuiTheme from '../../app/gui-theme'
 
 class HydraGraph extends React.Component {
    render() {
@@ -7,12 +8,12 @@ class HydraGraph extends React.Component {
             <header className="app-header">
                 
             <img src={logo} className="app-logo" alt="logo" />
-            <p>
+            <p style={{color: GuiTheme.palette.text.secondary}} >
                 This is the connected Hydra API
             </p>
             <a
             className="app-link"
-            href="https://reactjs.org"
+            href="http://www.hydraecosystem.org/"
             target="_blank"
             rel="noopener noreferrer"
             >
