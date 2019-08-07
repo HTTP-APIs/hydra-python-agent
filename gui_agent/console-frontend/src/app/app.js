@@ -9,18 +9,27 @@ import { ThemeProvider } from '@material-ui/styles';
 
 
 export default function App() {
+  const consoleWidth = 6;
+
+  
   return (
     <ThemeProvider theme={GuiTheme}>
-      <NavBar text="Hydra Agent GUI" fontSize='1.5em' backgroundColor={GuiTheme.palette.primary.main} color='primary'></NavBar>
+      <NavBar 
+        text="Hydra Agent GUI"
+        fontSize='1.5em'
+        backgroundColor={GuiTheme.palette.primary.main}
+        color='primary'
+        onClick={() => window.open("https://www.hydraecosystem.org/")}>
+      </NavBar>
       <Grid container>
-        <Grid item xs={6} > 
+        <Grid item md={6} xs={12} > 
           <NavBar text="Hydra API" fontSize='1.3em'
             backgroundColor={GuiTheme.palette.primary.light}
             fontColor="textSecondary"></NavBar>
           <HydraGraph></HydraGraph>
         </Grid>
 
-        <Grid item xs={6} color='primary'>
+        <Grid item md={consoleWidth} xs={12} color='primary'>
           <NavBar text="Agent Console" fontSize='1.3em'
             backgroundColor={GuiTheme.palette.primary.dark}
           ></NavBar> 
