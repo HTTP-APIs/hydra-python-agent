@@ -2,8 +2,13 @@ import React from 'react';
 import AppBar from '@material-ui/core/AppBar'
 import Toolbar from '@material-ui/core/Toolbar'
 import Typography from '@material-ui/core/Typography'
-import logo from '../../assets/images/hydra_eco_logo.png';
+import Fab from '@material-ui/core/Fab';
+import Icon from '@material-ui/core/Icon';
+import AspectRatioIcon from '@material-ui/icons/AspectRatio';
+
 import { makeStyles } from '@material-ui/core/styles';
+
+import logo from '../../assets/images/hydra_eco_logo.png';
 
 const useStyles = makeStyles(theme => ({
     hydraEcoLogo: {
@@ -22,6 +27,9 @@ const NavBar = (props) => {
         Typography: {
             fontSize: props.fontSize,
             flexGrow: 1,
+        },
+        centeringSpace: {
+            flexGrow: 1.21,
         }
     };
 
@@ -32,8 +40,18 @@ const NavBar = (props) => {
                     <Typography variant="title" style={toolbar.Typography} color={props.fontColor}>
                         {props.text}
                     </Typography>
+
                     {props.onClick && (
-                    <img src={logo} onClick={props.onClick}  className={classes.hydraEcoLogo} alt="logo" />
+                    <Fab color="primary"
+                         onClick={props.onClick}
+                         aria-label="add"
+                         className={classes.fab}>
+                        <AspectRatioIcon />
+                    </Fab>)}
+                    
+                    <div style={toolbar.centeringSpace}></div>
+                    {props.onClick && (
+                    <img src={logo} onClick={ () => window.open('http://www.hydraecosystem.org/')}  className={classes.hydraEcoLogo} alt="logo" />
                     )}
                 </Toolbar>
             </AppBar>
