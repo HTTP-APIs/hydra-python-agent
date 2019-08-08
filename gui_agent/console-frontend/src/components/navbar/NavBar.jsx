@@ -37,7 +37,7 @@ const NavBar = (props) => {
         <div>
             <AppBar position="static" style={toolbar.AppBar} color={props.color}>
                 <Toolbar>
-                    <Typography variant="title" style={toolbar.Typography} color={props.fontColor}>
+                    <Typography style={toolbar.Typography} color={props.fontColor}>
                         {props.text}
                     </Typography>
 

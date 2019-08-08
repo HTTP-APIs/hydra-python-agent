@@ -13,26 +13,26 @@ import { Scrollbars } from 'react-custom-scrollbars';
 
 const CssTextField = withStyles({
     root: {
-      '& label.Mui-focused': {
-        color: GuiTheme.palette.primary.light,
-      },
-      '& .MuiInput-underline:after': {
-        borderBottomColor: GuiTheme.palette.secondary.main,
-      },
-      '& .MuiOutlinedInput-root': {
-        '& fieldset': {
-          borderColor: GuiTheme.palette.primary.light,
-          height: '55px',
+        '& label.Mui-focused': {
+            color: GuiTheme.palette.primary.light,
         },
-        '&:hover fieldset': {
-          borderColor: GuiTheme.palette.secondary.main,
+        '& .MuiInput-underline:after': {
+            borderBottomColor: GuiTheme.palette.secondary.main,
         },
-        '&.Mui-focused fieldset': {
-          borderColor: GuiTheme.palette.primary.light,
+        '& .MuiOutlinedInput-root': {
+            '& fieldset': {
+                borderColor: GuiTheme.palette.primary.light,
+                height: '55px',
+            },
+            '&:hover fieldset': {
+                borderColor: GuiTheme.palette.secondary.main,
+            },
+            '&.Mui-focused fieldset': {
+                borderColor: GuiTheme.palette.primary.light,
+            },
         },
-      },
     },
-  })(TextField);
+})(TextField);
 
 const styles = theme => ({
     outContainer: {
@@ -91,21 +91,52 @@ const styles = theme => ({
         boxShadow: '0 3px 5px 2px rgba(255, 255, 255, .3)',
         height: 48,
         width: '22%',
-      },
-  });
+    },
+    collectionButton: {
+        width: '80%',
+    },
+    collectionSelectedButton: {
+        
+    }
+});
 
 class HydraConsole extends React.Component {
     constructor(props) {
         super(props);
-        this.classes = {
-            button: {
-              margin: '2px',
-            },
-        }
     }
 
-   render() {
+    selectCollection(collectionName) {
+        console.log(collectionName);
+        
+    }
+
+    render() {
         const { classes } = this.props;
+
+        const items = []
+
+        for (var property in this.props.collections) {
+            items.push(
+                <Button
+                    variant="contained"
+                    //color="secondary"
+                    className={classes.collectionButton}
+                    onClick={() => { var collectionName = (' ' + property).slice(1); this.selectCollection( collectionName )}} >
+
+                    {property}
+                </Button>)
+            
+
+        }
+        //   debugger
+        // for(var i=0; i<Object.keys(this.props.collections).length; i++){
+        //     items.push(<div> this.props.collections[i] </div>)
+        // }
+        // debugger
+        // for (const [index, value] of this.props.collections) {
+        //     items.push(<div key={index}> {value} </div>)
+        // }
+
         var outputText = '{ \n \
                 "@id": "/serverapi/DroneCollection/eb37280c-2c65-4c85-a3dc-cfc10be91ac2", \n \
                 "@type": "Drone" \n \
@@ -140,48 +171,41 @@ class HydraConsole extends React.Component {
             }, \n \
         { \n \
                 "@id": "/serverapi/DroneCollection/15ba987b-ddd6-4084-af52-7167fb1fc8ab", '
-        
+
         return (
             <Grid container className={classes.outContainer}>
                 <Grid item md={4} xs={12} container
                     direction="column"
                     justify="space-evenly"
-                    alignItems="center"> 
-                    <Button variant="contained" color="secondary" className={classes.collectionButton} >
-                        Drone Collection
-                    </Button>
-                    <Button variant="contained" className={this.classes.button}>
-                        State Collection
-                    </Button>
-                    <Button variant="contained" className={this.classes.button}>
-                        State Collection
-                    </Button>
-                    
+                    alignItems="center">
+
+                    {items}
+
                 </Grid>
-                <Grid 
+                <Grid
                     item md={2} xs={12} container
                     direction="column"
                     justify="space-evenly"
-                    alignItems="center">  
+                    alignItems="center">
                     <Fab color="secondary" aria-label="add" className={classes.margin}>
-                    GET
+                        GET
                     </Fab>
                     <Fab aria-label="add" className={classes.margin}>
-                    POST
+                        POST
                     </Fab>
                 </Grid>
-                <Grid 
+                <Grid
                     item md={6} xs={12} container
                     direction="column"
                     justify="center"
-                    alignItems="center">  
-                    <Grid className={classes.propertiesContainer} 
-                    container
-                    direction="row"
-                    justify="flex-start"
                     alignItems="center">
+                    <Grid className={classes.propertiesContainer}
+                        container
+                        direction="row"
+                        justify="flex-start"
+                        alignItems="center">
                         <label> {"{"} </label>
-                        <Grid 
+                        <Grid
                             className={classes.propertyContainer}
                             container
                             direction="row"
@@ -189,14 +213,14 @@ class HydraConsole extends React.Component {
                             alignItems="center">
                             <label className={classes.propertyInput}>label: </label>
                             <Input
-                            placeholder=" default value"
-                            className={classes.input}
-                            inputProps={{
-                            'aria-label': 'description',
-                            }}
+                                placeholder=" default value"
+                                className={classes.input}
+                                inputProps={{
+                                    'aria-label': 'description',
+                                }}
                             />
                         </Grid>
-                        <Grid 
+                        <Grid
                             className={classes.propertyContainer}
                             container
                             direction="row"
@@ -204,14 +228,14 @@ class HydraConsole extends React.Component {
                             alignItems="center">
                             <label className={classes.propertyInput}>label: </label>
                             <Input
-                            placeholder=" default value"
-                            className={classes.input}
-                            inputProps={{
-                            'aria-label': 'description',
-                            }}
+                                placeholder=" default value"
+                                className={classes.input}
+                                inputProps={{
+                                    'aria-label': 'description',
+                                }}
                             />
                         </Grid>
-                        <Grid 
+                        <Grid
                             className={classes.propertyContainer}
                             container
                             direction="row"
@@ -219,14 +243,14 @@ class HydraConsole extends React.Component {
                             alignItems="center">
                             <label className={classes.propertyInput}>label: </label>
                             <Input
-                            placeholder=" default value"
-                            className={classes.input}
-                            inputProps={{
-                            'aria-label': 'description',
-                            }}
+                                placeholder=" default value"
+                                className={classes.input}
+                                inputProps={{
+                                    'aria-label': 'description',
+                                }}
                             />
                         </Grid>
-                        <Grid 
+                        <Grid
                             className={classes.propertyContainer}
                             container
                             direction="row"
@@ -234,14 +258,14 @@ class HydraConsole extends React.Component {
                             alignItems="center">
                             <label className={classes.propertyInput}>label: </label>
                             <Input
-                            placeholder=" default value"
-                            className={classes.input}
-                            inputProps={{
-                            'aria-label': 'description',
-                            }}
+                                placeholder=" default value"
+                                className={classes.input}
+                                inputProps={{
+                                    'aria-label': 'description',
+                                }}
                             />
                         </Grid>
-                        <Grid 
+                        <Grid
                             className={classes.propertyContainer}
                             container
                             direction="row"
@@ -249,11 +273,11 @@ class HydraConsole extends React.Component {
                             alignItems="center">
                             <label className={classes.propertyInput}>label: </label>
                             <Input
-                            placeholder=" default value"
-                            className={classes.input}
-                            inputProps={{
-                            'aria-label': 'description',
-                            }}
+                                placeholder=" default value"
+                                className={classes.input}
+                                inputProps={{
+                                    'aria-label': 'description',
+                                }}
                             />
                         </Grid>
                         <label> {"}"} </label>
@@ -264,34 +288,34 @@ class HydraConsole extends React.Component {
                     direction="row"
                     justify="center"
                     alignItems="center">
-                        <CssTextField
-                            id="outlined-name"
-                            label="Raw Command"
-                            inputProps={{
-                                style: { color: GuiTheme.palette.primary.light },
-                            }}
-                            InputLabelProps={{
-                                style: { color: GuiTheme.palette.primary.light },
-                            }}
-                            className={classes.textField}
-                            onChange={ () => {} }
-                            margin="normal"
-                            variant="outlined"
-                        />
+                    <CssTextField
+                        id="outlined-name"
+                        label="Raw Command"
+                        inputProps={{
+                            style: { color: GuiTheme.palette.primary.light },
+                        }}
+                        InputLabelProps={{
+                            style: { color: GuiTheme.palette.primary.light },
+                        }}
+                        className={classes.textField}
+                        onChange={() => { }}
+                        margin="normal"
+                        variant="outlined"
+                    />
                     <Button variant="contained" color="secondary" href="#contained-buttons" className={classes.sendRequest}>
                         Send Request
                     </Button>
                 </Grid>
                 <Grid item xs={12}
-                      container
-                      direction="column"
-                      justify="center"
-                      alignItems="center">
+                    container
+                    direction="column"
+                    justify="center"
+                    alignItems="center">
                     <span className={classes.outputContainerHeader} > Output</span>
                     <div className={classes.outputContainer}>
-                    <Scrollbars>
-                        {outputText}
-                    </Scrollbars> 
+                        <Scrollbars>
+                            {outputText}
+                        </Scrollbars>
                     </div>
                 </Grid>
             </Grid>
