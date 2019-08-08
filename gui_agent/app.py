@@ -36,6 +36,19 @@ def hydra_doc():
     apidoc = agent.fetch_apidoc()
     return jsons.dump(apidoc)
 
+# Send Formatted ApiDoc Graph to Frontend
+@app.route("/apidoc-graph", methods=['POST'])
+def apidoc_graph():
+    nodes = [{id: 1, shape: 'hexagon', size: 15, label: 'Entrypoint'},
+            {id: 2, shape: 'box', font: {size: 12}, label: 'Drone Collection'},
+            {id: 3, shape: 'box', font: {size: 12}, size: 10, label: 'State Collection'}]
+
+    edges = [{'from': 1, to: 2 },
+             {'from': 1, to: 3}]
+
+    # This is not really working, just created a crude representation to demo the functionality
+    return nodes, edges
+
 # Send Command to Agent
 @app.route("/send-command", methods=['POST'])
 def send_command():
