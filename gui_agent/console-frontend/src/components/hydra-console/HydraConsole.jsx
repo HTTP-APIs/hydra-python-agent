@@ -64,10 +64,22 @@ class HydraConsole extends React.Component {
                     <Button variant="contained" color="secondary" href="#contained-buttons" className={this.classes.button}>
                         Send Request
                     </Button>
-                </Grid>   
+                </Grid>
+                <Grid item xs={12}
+                      container
+                      direction="column"
+                      justify="center"
+                      alignItems="center">
+                    <span className={classes.outputContainerHeader} > Output</span>
+                    <div className={classes.outputContainer}>
+                    <Scrollbars>
+                        {outputText}
+                    </Scrollbars> 
+                    </div>
+                </Grid>
             </Grid>
         )
     }
 }
 
-export default HydraConsole;
+export default withStyles(styles)(HydraConsole);
