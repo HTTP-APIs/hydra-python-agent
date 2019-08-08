@@ -27,13 +27,11 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         self.redis_proxy = RedisProxy()
         self.redis_connection = self.redis_proxy.get_connection()
         Session.__init__(self)
-        jsonld_api_doc = super().get(self.entrypoint_url + '/vocab').json()
-        self.api_doc = doc_maker.create_doc(jsonld_api_doc)
+        self.fetch_apidoc()
         self.initialize_graph()
         self.graph_operations = GraphOperations(self.entrypoint_url,
                                                 self.api_doc,
                                                 self.redis_proxy)
-
         # Declaring Socket Rules and instaciating Synchronization Socket
         socketio.ClientNamespace.__init__(self, namespace)
         socketio.Client.__init__(self, logger=True)
@@ -41,6 +39,14 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         socketio.Client.connect(self, self.entrypoint_url,
                                 namespaces=namespace)
         self.last_job_id = ""
+
+    def fetch_apidoc(self) -> dict:
+        if hasattr(self, 'api_doc'):
+            return self.api_doc 
+        else:
+            jsonld_api_doc = super().get(self.entrypoint_url + '/vocab').json()
+            self.api_doc = doc_maker.create_doc(jsonld_api_doc)
+            return self.api_doc 
 
     def initialize_graph(self) -> None:
         """Initialize the Graph on Redis based on ApiDoc
