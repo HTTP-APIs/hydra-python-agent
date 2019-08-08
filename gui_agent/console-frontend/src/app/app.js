@@ -7,35 +7,61 @@ import './app.scss';
 import GuiTheme from './gui-theme'
 import { ThemeProvider } from '@material-ui/styles';
 
-
-export default function App() {
-  const consoleWidth = 6;
-
+class AgentGUI extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      consoleWidth: 6, //6
+      hidden: false //false
+    }
+  }
   
-  return (
-    <ThemeProvider theme={GuiTheme}>
-      <NavBar 
-        text="Hydra Agent GUI"
-        fontSize='1.5em'
-        backgroundColor={GuiTheme.palette.primary.main}
-        color='primary'
-        onClick={() => window.open("https://www.hydraecosystem.org/")}>
-      </NavBar>
-      <Grid container>
-        <Grid item md={6} xs={12} > 
-          <NavBar text="Hydra API" fontSize='1.3em'
-            backgroundColor={GuiTheme.palette.primary.light}
-            fontColor="textSecondary"></NavBar>
-          <HydraGraph></HydraGraph>
-        </Grid>
+  toggleGraph(){
+    if(this.state.hidden){
+      this.setState({
+        consoleWidth: 6,
+        hidden: false
+      })
+    }else{
+      this.setState({
+        consoleWidth: 12,
+        hidden: true
+      })
+    }
+    
+  }
 
-        <Grid item md={consoleWidth} xs={12} color='primary'>
-          <NavBar text="Agent Console" fontSize='1.3em'
-            backgroundColor={GuiTheme.palette.primary.dark}
-          ></NavBar> 
-          <HydraConsole  color='primary' ></HydraConsole>
+  render() {
+    
+
+    return (
+      <ThemeProvider theme={GuiTheme}>
+        <NavBar 
+          text="Hydra Agent GUI"
+          fontSize='1.5em'
+          backgroundColor={GuiTheme.palette.primary.main}
+          color='primary'
+          onClick={() => this.toggleGraph()}>
+        </NavBar>
+        <Grid container>
+          <Grid item hidden={this.state.hidden} md={12 - this.state.consoleWidth} xs={12} > 
+            <NavBar text="Hydra API" fontSize='1.3em'
+              backgroundColor={GuiTheme.palette.primary.light}
+              fontColor="textSecondary"></NavBar>
+            <HydraGraph></HydraGraph>
+          </Grid>
+  
+          <Grid item md={this.state.consoleWidth} xs={12} color='primary'>
+            <NavBar text="Agent Console" fontSize='1.3em'
+              backgroundColor={GuiTheme.palette.primary.dark}
+            ></NavBar> 
+            <HydraConsole  color='primary' ></HydraConsole>
+          </Grid>
         </Grid>
-      </Grid>
-    </ThemeProvider>
-  );
+      </ThemeProvider>
+    );
+  }
 }
+
+export default AgentGUI;
+
