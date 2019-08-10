@@ -9,6 +9,8 @@ import { withStyles } from '@material-ui/styles';
 
 import { Scrollbars } from 'react-custom-scrollbars';
 
+import CollectionButtons from './collection-buttons/CollectionButtons'
+
 const CssTextField = withStyles({
     root: {
         '& label.Mui-focused': {
@@ -101,39 +103,30 @@ const styles = theme => ({
 class HydraConsole extends React.Component {
     constructor(props) {
         super(props);
+
+        this.state = {
+            collections: this.props.collections,
+            selectedCollection: 'DroneCollection',
+        };
+
+        for (var currProperty in this.state.collections) {
+            this.state.collections[currProperty].class = 'collectionButton'
+        }
     }
 
     selectCollection(collectionName) {
-        console.log(collectionName);
-        
+        this.setState(
+            {selectedCollection: collectionName}, () => { console.log("done")}
+        )        
+        // this.setState(prevState => {
+        //     let collections = Object.assign({}, prevState.collections);  // creating copy of state variable jasper
+        //     collections[collectionName].class = 'collectionSelectedButton';                     // update the name property, assign a new value                 
+        //     return { collections };                                 // return new object jasper object
+        // })
     }
 
     render() {
         const { classes } = this.props;
-
-        const items = []
-
-        for (var property in this.props.collections) {
-            items.push(
-                <Button
-                    variant="contained"
-                    //color="secondary"
-                    className={classes.collectionButton}
-                    onClick={() => { var collectionName = (' ' + property).slice(1); this.selectCollection( collectionName )}} >
-
-                    {property}
-                </Button>)
-            
-
-        }
-        //   debugger
-        // for(var i=0; i<Object.keys(this.props.collections).length; i++){
-        //     items.push(<div> this.props.collections[i] </div>)
-        // }
-        // debugger
-        // for (const [index, value] of this.props.collections) {
-        //     items.push(<div key={index}> {value} </div>)
-        // }
 
         var outputText = '{ \n \
                 "@id": "/serverapi/DroneCollection/eb37280c-2c65-4c85-a3dc-cfc10be91ac2", \n \
@@ -177,7 +170,7 @@ class HydraConsole extends React.Component {
                     justify="space-evenly"
                     alignItems="center">
 
-                    {items}
+                    <CollectionButtons selectCollection={ (currProperty) => this.selectCollection(currProperty) } collections={this.props.collections}> </CollectionButtons>
 
                 </Grid>
                 <Grid
@@ -299,8 +292,10 @@ class HydraConsole extends React.Component {
                         onChange={() => { }}
                         margin="normal"
                         variant="outlined"
+                        value={"agent.get(\"" + this.state.selectedCollection + "\")"}
                     />
-                    <Button variant="contained" color="secondary" href="#contained-buttons" className={classes.sendRequest}>
+                    <Button variant="contained" color="secondary"
+                            className={classes.sendRequest}> 
                         Send Request
                     </Button>
                 </Grid>
