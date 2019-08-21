@@ -28,11 +28,22 @@ The starting objective is to create a querying layer that is able to reach data 
 
 ## Installation
 
-**NOTE:** You'll need to use python3.
+**NOTE:** You'll need to use python3 and using venv(virtual environment) is recommended.
 
-To install only requirements:
+Setup a virtual environment:
    
+    python3 -m venv venv
+    source venv/bin/activate
+
+Install dependencies and setup Agent:
+
     pip3 install -r requirements.txt
+    pip3 install --upgrade pip
+    python3 setup.py install
+
+Setup Redis which is used as caching layer(might be necessary to use `sudo`):
+
+    ./redis_setup.sh
 
 or,
 
