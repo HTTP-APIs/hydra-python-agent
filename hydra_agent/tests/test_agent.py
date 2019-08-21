@@ -80,7 +80,7 @@ class TestAgent(unittest.TestCase):
         :param put_session_mock: MagicMock object for patching session.put
         :param embedded_get_mock: MagicMock object for patching session.get
         """
-        new_object = {"@type": "Drone", "DroneState": "/api/StateCollection/1",
+        new_object = {"@type": "Drone", "DroneState": "1",
                       "name": "Smart Drone", "model": "Hydra Drone",
                       "MaxSpeed": "999", "Sensor": "Wind"}
 
@@ -137,7 +137,7 @@ class TestAgent(unittest.TestCase):
         :param put_session_mock: MagicMock object for patching session.put
         :param embedded_get_mock: MagicMock object for patching session.get
         """
-        new_object = {"@type": "Drone", "DroneState": "/api/StateCollection/1",
+        new_object = {"@type": "Drone", "DroneState": "1",
                       "name": "Smart Drone", "model": "Hydra Drone",
                       "MaxSpeed": "999", "Sensor": "Wind"}
 
@@ -178,7 +178,7 @@ class TestAgent(unittest.TestCase):
         :param put_session_mock: MagicMock object for patching session.put
         :param post_session_mock: MagicMock object for patching session.post
         """
-        new_object = {"@type": "Drone", "DroneState": "/api/StateCollection/1",
+        new_object = {"@type": "Drone", "DroneState": "1",
                       "name": "Smart Drone", "model": "Hydra Drone",
                       "MaxSpeed": "999", "Sensor": "Wind"}
 
@@ -248,7 +248,7 @@ class TestAgent(unittest.TestCase):
         :param put_session_mock: MagicMock object for patching session.put
         :param embedded_get_mock: MagicMock object for patching session.get
         """
-        new_object = {"@type": "Drone", "DroneState": "/api/StateCollection/1",
+        new_object = {"@type": "Drone", "DroneState": "1",
                       "name": "Smart Drone", "model": "Hydra Drone",
                       "MaxSpeed": "999", "Sensor": "Wind"}
 
