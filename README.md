@@ -4,6 +4,13 @@ For a general introduction to Hydra Ecosystem, see [hydraecosystem.org](http://h
 
 `hydra-python-agent` is a smart Hydra client implemented in Python which works with [hydrus](https://github.com/HTTP-APIs/hydrus). Reference implementation is [Heracles.ts](https://github.com/HydraCG/Heracles.ts). Smart clients are generic automated clients that establish resilient connected data networks leveraging knowledge graphs.
 
+## Getting Started
+Our Hydra Agent has different interfaces that you can try it:
+
+- [A Web-based GUI](https://github.com/HTTP-APIs/hydra-python-agent-gui/tree/agent-gui-1.0/console-frontend) - which shows how Hydra APIs are connected and how the Smart Agent is generic and can automatically build requests.  
+- [A Python package](https://github.com/HTTP-APIs/hydra-python-agent/#user-content-agent-package) - so you can use to communicate with a Hydra API in your code/software. 
+- [Natural-language-like command line tool](https://github.com/HTTP-APIs/hydra-python-agent/#user-content-natural-language-like-command-line-tool)
+
 ## General characteristics
 
 The client is designed to:
