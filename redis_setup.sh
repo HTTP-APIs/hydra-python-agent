@@ -1,5 +1,5 @@
 
-#It will check, if docker is not installed then install it.
+# It will check if docker is not installed, if not it will install it.
 docker -v
 if [ "$?" = "127" ]
 then
@@ -19,5 +19,6 @@ then
 else 
     sudo docker run -p 6379:6379 -it --rm redislabs/redisgraph:2.0-edge
 fi
-# command for run the server 
-# sudo docker run -p 6379:6379 -it --rm redislabs/redisgraph # uncomment this line if you want to run server without using dockerflie.
+
+# Command to run the Redis directly 
+# sudo docker run -p 6379:6379 -it --rm redislabs/redisgraph:2.0-edge
