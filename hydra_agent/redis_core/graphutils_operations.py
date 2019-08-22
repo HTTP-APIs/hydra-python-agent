@@ -94,10 +94,12 @@ class GraphOperations():
                     if (self.vocabulary + ":") in str(supported_prop.prop):
                         if resource[supported_prop.title]:
                             new_resource = {}
-                            discovered_url = self.entrypoint_url.replace(
-                                self.api_doc.entrypoint.api, "").rstrip("/")
-                            discovered_url = discovered_url + \
-                                resource[supported_prop.title]
+                            collection_name = supported_prop.prop.replace(
+                                self.vocabulary + ":", "") + "Collection"
+                            discovered_url = (self.api_doc.entrypoint.url 
+                                + self.api_doc.entrypoint.api + "/" + 
+                                collection_name + "/" + 
+                                resource[supported_prop.title])
                             new_resource['parent_id'] = resource['@id']
                             new_resource['parent_type'] = resource['@type']
                             new_resource['embedded_url'] = discovered_url
@@ -131,7 +133,7 @@ class GraphOperations():
         # Manually add the id that will be on the server for the object added
         url_list = url.split('/', 3)
         new_object["@id"] = '/' + url_list[-1]
-        # Simply call sync_get to add the resource to the collection at Redis
+        # Simply call self.get_processing to add the resource to the collection at Redis
         embedded_resources = self.get_processing(url, new_object)
 
         return embedded_resources
@@ -145,7 +147,7 @@ class GraphOperations():
         url_list = url.split('/', 3)
         updated_object["@id"] = '/' + url_list[-1]
 
-        # Simply call sync_get to add the resource to the collection at Redis
+        # Simply call self.get_processing to add the resource to the collection at Redis
         self.delete_processing(url)
         embedded_resources = self.get_processing(url, updated_object)
         return embedded_resources

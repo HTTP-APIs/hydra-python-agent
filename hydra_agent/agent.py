@@ -1,4 +1,6 @@
-import logging, sys
+import logging
+import sys
+import socketio
 from hydra_agent.redis_core.redis_proxy import RedisProxy
 from hydra_agent.redis_core.graphutils_operations import GraphOperations
 from hydra_agent.redis_core.graph_init import InitialGraph
@@ -10,25 +12,41 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
 
 
-class Agent(Session):
+class Agent(Session, socketio.ClientNamespace, socketio.Client):
     """Provides a straightforward GET, PUT, POST, DELETE -
     CRUD interface - to query hydrus
     """
-    def __init__(self, entrypoint_url: str) -> None:
+
+    def __init__(self, entrypoint_url: str, namespace: str='/sync') -> None:
         """Initialize the Agent
         :param entrypoint_url: Entrypoint URL for the hydrus server
+        :param namespace: Namespace endpoint to listen for updates
         :return: None
         """
         self.entrypoint_url = entrypoint_url.strip().rstrip('/')
         self.redis_proxy = RedisProxy()
         self.redis_connection = self.redis_proxy.get_connection()
-        super().__init__()
-        jsonld_api_doc = super().get(self.entrypoint_url + '/vocab').json()
-        self.api_doc = doc_maker.create_doc(jsonld_api_doc)
+        Session.__init__(self)
+        self.fetch_apidoc()
         self.initialize_graph()
         self.graph_operations = GraphOperations(self.entrypoint_url,
                                                 self.api_doc,
                                                 self.redis_proxy)
+        # Declaring Socket Rules and instaciating Synchronization Socket
+        socketio.ClientNamespace.__init__(self, namespace)
+        socketio.Client.__init__(self, logger=True)
+        socketio.Client.register_namespace(self, self)
+        socketio.Client.connect(self, self.entrypoint_url,
+                                namespaces=namespace)
+        self.last_job_id = ""
+
+    def fetch_apidoc(self) -> dict:
+        if hasattr(self, 'api_doc'):
+            return self.api_doc 
+        else:
+            jsonld_api_doc = super().get(self.entrypoint_url + '/vocab').json()
+            self.api_doc = doc_maker.create_doc(jsonld_api_doc)
+            return self.api_doc 
 
     def initialize_graph(self) -> None:
         """Initialize the Graph on Redis based on ApiDoc
@@ -139,6 +157,81 @@ class Agent(Session):
                 embedded_resource['parent_id'],
                 embedded_resource['parent_type'],
                 embedded_resource['embedded_url'])
+
+    # Below are the functions that are responsible to process Socket Events
+    def on_connect(self, data: dict = None) -> None:
+        """Method executed when the Agent is successfully connected to the Server
+        """
+        if data:
+            self.last_job_id = data['last_job_id']
+            logger.info('Socket Connection Established - Synchronization ON')
+
+    def on_disconnect(self):
+        """Method executed when the Agent is disconnected
+        """
+        pass
+
+    def on_update(self, data) -> None:
+        """Method executed when the Agent receives an event named 'update'
+        This is sent to all clients connected the server under the designed Namespace
+        :param data: Dict object with the last inserted row of modification's table
+        """
+        row = data
+        # Checking if the Client is the last job id is up to date with the Server
+        if row['last_job_id'] == self.last_job_id:
+            # Checking if it's an already cached resource, if not it will ignore
+            if self.graph_operations.get_resource(row['resource_url']):
+                if row['method'] == 'POST':
+                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.get(row['resource_url'])
+                elif row['method'] == 'DELETE':
+                    self.graph_operations.delete_processing(row['resource_url'])
+                if row['method'] == 'PUT':
+                    pass
+            # Updating the last job id
+            self.last_job_id = row['job_id']
+
+        # If last_job_id is not the same, there's more than one outdated modification
+        # Therefore the Client will try to get the diff of all modifications after his last job
+        else:
+            super().emit('get_modification_table_diff',
+                         {'agent_job_id': self.last_job_id})
+
+        # Updating the last job id
+        self.last_job_id = row['job_id']
+
+    def on_modification_table_diff(self, data) -> None:
+        """Event handler for when the client has to updated multiple rows
+        :param data: List with all modification rows to be updated
+        """
+        new_rows = data
+        # Syncing procedure for every row received by mod table diff
+        for row in new_rows:
+            if self.graph_operations.get_resource(row['resource_url']):
+                if row['method'] == 'POST':
+                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.get(row['resource_url'])
+                elif row['method'] == 'DELETE':
+                    self.graph_operations.delete_processing(row['resource_url'])
+                if row['method'] == 'PUT':
+                    pass
+
+        # Checking if the Agent is too outdated and can't be synced
+        if not new_rows:
+            logger.info('Server Restarting - Automatic Sync not possible')
+            self.initialize_graph()
+            # Agent should reply with a connect event with the last_job_id
+            super().emit('reconnect')
+            return None
+
+        # Updating the last job id
+        self.last_job_id = new_rows[0]['job_id']
+
+    def on_broadcast_event(self, data):
+        """Method executed when the Agent receives a broadcast event
+        :param data: Object with the data broadcasted
+        """
+        pass
 
 if __name__ == "__main__":
     pass

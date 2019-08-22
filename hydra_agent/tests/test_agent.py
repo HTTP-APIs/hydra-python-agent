@@ -12,14 +12,16 @@ class TestAgent(unittest.TestCase):
     TestCase for Agent Class
     """
 
+    @patch('hydra_agent.agent.socketio.Client.connect')
     @patch('hydra_agent.agent.Session.get')
-    def setUp(self, get_session_mock):
+    def setUp(self, get_session_mock, socket_client_mock):
         """Setting up Agent object
         :param get_session_mock: MagicMock object for patching session.get
                                  it's used to Mock Hydrus response to ApiDoc
         """
         # Mocking get for ApiDoc to Server, so hydrus doesn't need to be up
         get_session_mock.return_value.json.return_value = drone_doc
+        socket_client_mock.return_value = None
 
         self.agent = Agent("http://localhost:8080/api")
         self.redis_proxy = RedisProxy()
@@ -78,7 +80,7 @@ class TestAgent(unittest.TestCase):
         :param put_session_mock: MagicMock object for patching session.put
         :param embedded_get_mock: MagicMock object for patching session.get
         """
-        new_object = {"@type": "Drone", "DroneState": "/api/StateCollection/1",
+        new_object = {"@type": "Drone", "DroneState": "1",
                       "name": "Smart Drone", "model": "Hydra Drone",
                       "MaxSpeed": "999", "Sensor": "Wind"}
 
@@ -135,7 +137,7 @@ class TestAgent(unittest.TestCase):
         :param put_session_mock: MagicMock object for patching session.put
         :param embedded_get_mock: MagicMock object for patching session.get
         """
-        new_object = {"@type": "Drone", "DroneState": "/api/StateCollection/1",
+        new_object = {"@type": "Drone", "DroneState": "1",
                       "name": "Smart Drone", "model": "Hydra Drone",
                       "MaxSpeed": "999", "Sensor": "Wind"}
 
@@ -176,7 +178,7 @@ class TestAgent(unittest.TestCase):
         :param put_session_mock: MagicMock object for patching session.put
         :param post_session_mock: MagicMock object for patching session.post
         """
-        new_object = {"@type": "Drone", "DroneState": "/api/StateCollection/1",
+        new_object = {"@type": "Drone", "DroneState": "1",
                       "name": "Smart Drone", "model": "Hydra Drone",
                       "MaxSpeed": "999", "Sensor": "Wind"}
 
@@ -246,7 +248,7 @@ class TestAgent(unittest.TestCase):
         :param put_session_mock: MagicMock object for patching session.put
         :param embedded_get_mock: MagicMock object for patching session.get
         """
-        new_object = {"@type": "Drone", "DroneState": "/api/StateCollection/1",
+        new_object = {"@type": "Drone", "DroneState": "1",
                       "name": "Smart Drone", "model": "Hydra Drone",
                       "MaxSpeed": "999", "Sensor": "Wind"}
 
