@@ -26,7 +26,9 @@ class GraphOperations():
         self.api_doc = api_doc
         self.redis_proxy = redis_proxy
         self.redis_connection = redis_proxy.get_connection()
-        self.vocabulary = self.api_doc['context']['context']['vocab']
+        self.complete_vocabulary_url = self.api_doc.generate()['@context']['vocab']
+        # extract 'vocab' from 'localhost/api/vocab#'
+        self.vocabulary = self.complete_vocabulary_url.split('/')[-1].split('#')[0]
         self.graph_utils = GraphUtils(redis_proxy)
         self.redis_graph = Graph("apigraph", self.redis_connection)
         self.session = Session()
