@@ -179,6 +179,8 @@ class CollectionEndpoints:
             url + "/" +
             endpoint)
         new_url = url + "/" + endpoint
+
+        endpoint_collection_node = ""
         # url for every collection endpoint
         new_file = self.fetch_data(new_url)
         if isinstance(new_file, RequestError):
