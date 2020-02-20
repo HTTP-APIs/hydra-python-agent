@@ -49,15 +49,15 @@ class HandleData:
         :param get_data: data get from the Redis memory.
         """
         all_property_lists = ""
-        for i in get_data:
+        for objects in get_data:
             try:
-                if isinstance(i[0], list):
-                    for j in i:
-                        all_property_lists+=(str(j)+"\n")
+                if isinstance(objects[0], list):
+                    for object_data in objects:
+                        all_property_lists+=(str(object_data)+"\n")
                 else:
-                    all_property_lists+=(str(i[0])+"\n")
+                    all_property_lists+=(str(objects[0])+"\n")
             except Exception as e:
-                all_property_lists+=(str(i)+"\n")
+                all_property_lists+=(str(objects)+"\n")
         return all_property_lists
 
 
