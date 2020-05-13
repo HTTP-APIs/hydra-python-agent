@@ -6,7 +6,7 @@ from hydra_agent.redis_core.graphutils_operations import GraphOperations
 from hydra_agent.redis_core.graph_init import InitialGraph
 from hydra_python_core import doc_maker
 from typing import Union, Tuple
-from requests import Session
+from requests import Session, utils
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
@@ -17,7 +17,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
     CRUD interface - to query hydrus
     """
 
-    def __init__(self, entrypoint_url: str, namespace: str='/sync') -> None:
+    def __init__(self, entrypoint_url: str, namespace: str = '/sync') -> None:
         """Initialize the Agent
         :param entrypoint_url: Entrypoint URL for the hydrus server
         :param namespace: Namespace endpoint to listen for updates
@@ -41,12 +41,32 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         self.last_job_id = ""
 
     def fetch_apidoc(self) -> dict:
+        """
+        Fetches ApiDocumentation from response Link header
+
+        Returns:
+            API Documentation
+        Raises:
+            KeyError: If Link header is not specified
+            Exception: If no url provided in Link header
+        """
         if hasattr(self, 'api_doc'):
-            return self.api_doc 
+            return self.api_doc
         else:
-            jsonld_api_doc = super().get(self.entrypoint_url + '/vocab').json()
-            self.api_doc = doc_maker.create_doc(jsonld_api_doc)
-            return self.api_doc 
+            req = super().get(self.entrypoint_url)
+            try:
+                links = req.headers['Link']
+                parsed_links = utils.parse_header_links(str(links))
+                api_doc_url = ""
+                # loop through parsed links and find the apiDoc url
+                for parsed_link in parsed_links:
+                    if 'rel' in parsed_link and 'url' in parsed_link and parsed_link['rel'] == "http://www.w3.org/ns/hydra/core#apiDocumentation":
+                        api_doc_url = parsed_link['url']
+                    jsonld_api_doc = super().get(api_doc_url).json()
+                    self.api_doc = doc_maker.create_doc(jsonld_api_doc)
+                    return self.api_doc
+            except:
+                raise Exception("Problem generating API Documentation")
 
     def initialize_graph(self) -> None:
         """Initialize the Graph on Redis based on ApiDoc
@@ -87,8 +107,8 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
 
         if response.status_code == 200:
             # Graph_operations returns the embedded resources if finding any
-            embedded_resources = \
-                self.graph_operations.get_processing(url, response.json())
+            embedded_resources = self.graph_operations.get_processing(
+                url, response.json())
             self.process_embedded(embedded_resources)
             if response.json()['@type'] in self.api_doc.parsed_classes:
                 return response.json()
@@ -108,8 +128,8 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         if response.status_code == 201:
             url = response.headers['Location']
             # Graph_operations returns the embedded resources if finding any
-            embedded_resources = \
-                self.graph_operations.put_processing(url, new_object)
+            embedded_resources = self.graph_operations.put_processing(
+                url, new_object)
             self.process_embedded(embedded_resources)
             return response.json(), url
         else:
@@ -125,8 +145,8 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
 
         if response.status_code == 200:
             # Graph_operations returns the embedded resources if finding any
-            embedded_resources = \
-                self.graph_operations.post_processing(url, updated_object)
+            embedded_resources = self.graph_operations.post_processing(
+                url, updated_object)
             self.process_embedded(embedded_resources)
             return response.json()
         else:
@@ -182,10 +202,12 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             # Checking if it's an already cached resource, if not it will ignore
             if self.graph_operations.get_resource(row['resource_url']):
                 if row['method'] == 'POST':
-                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.graph_operations.delete_processing(
+                        row['resource_url'])
                     self.get(row['resource_url'])
                 elif row['method'] == 'DELETE':
-                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.graph_operations.delete_processing(
+                        row['resource_url'])
                 if row['method'] == 'PUT':
                     pass
             # Updating the last job id
@@ -209,10 +231,12 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         for row in new_rows:
             if self.graph_operations.get_resource(row['resource_url']):
                 if row['method'] == 'POST':
-                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.graph_operations.delete_processing(
+                        row['resource_url'])
                     self.get(row['resource_url'])
                 elif row['method'] == 'DELETE':
-                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.graph_operations.delete_processing(
+                        row['resource_url'])
                 if row['method'] == 'PUT':
                     pass
 
@@ -232,6 +256,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         :param data: Object with the data broadcasted
         """
         pass
+
 
 if __name__ == "__main__":
     pass
