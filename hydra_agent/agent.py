@@ -44,9 +44,15 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         if hasattr(self, 'api_doc'):
             return self.api_doc 
         else:
-            jsonld_api_doc = super().get(self.entrypoint_url + '/vocab').json()
-            self.api_doc = doc_maker.create_doc(jsonld_api_doc)
-            return self.api_doc 
+            try:
+                res = super().get(self.entrypoint_url)
+                api_doc_url = res.links['http://www.w3.org/ns/hydra/core#apiDocumentation']['url']
+                jsonld_api_doc = super().get(api_doc_url).json()
+                self.api_doc = doc_maker.create_doc(jsonld_api_doc)
+                return self.api_doc
+            except:
+                print("Error parsing your API Documentation")
+                raise
 
     def initialize_graph(self) -> None:
         """Initialize the Graph on Redis based on ApiDoc
