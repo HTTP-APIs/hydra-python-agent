@@ -48,30 +48,16 @@ class HandleData:
         Count is using for avoid stuffs like query internal execution time.
         :param get_data: data get from the Redis memory.
         """
-        count = 0
-        all_property_lists = []
+        all_property_lists = ""
         for objects in get_data:
-            count += 1
-            # Show data only for odd value of count.
-            # because for even value it contains stuffs like time and etc.
-            # ex: Redis provide data like if we query class endpoint
-            # output like:
-            # [[endpoints in byte object form],[query execution time:0.5ms]]
-            # So with the help of count, byte object convert to string
-            # and also show only useful strings not the query execution time.
-            if count % 2 != 0:
-                for obj1 in objects:
-                    for obj in obj1:
-                        if obj is None:
-                            continue
-                        string = obj.decode('utf-8')
-                        map_string = map(str.strip, string.split(','))
-                        property_list = list(map_string)
-                        check = property_list.pop()
-                        property_list.append(check.replace("\x00", ""))
-                        if property_list[0] != "NULL":
-    #                        print(property_list)
-                            all_property_lists.append(property_list)
+            try:
+                if isinstance(objects[0], list):
+                    for object_data in objects:
+                        all_property_lists+=(str(object_data)+"\n")
+                else:
+                    all_property_lists+=(str(objects[0])+"\n")
+            except Exception as e:
+                all_property_lists+=(str(objects)+"\n")
         return all_property_lists
 
 
