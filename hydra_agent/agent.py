@@ -17,7 +17,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
     CRUD interface - to query hydrus
     """
 
-    def __init__(self, entrypoint_url: str, namespace: str='/sync') -> None:
+    def __init__(self, entrypoint_url: str, namespace: str = '/sync') -> None:
         """Initialize the Agent
         :param entrypoint_url: Entrypoint URL for the hydrus server
         :param namespace: Namespace endpoint to listen for updates
@@ -41,18 +41,21 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         self.last_job_id = ""
 
     def fetch_apidoc(self) -> dict:
-        if hasattr(self, 'api_doc'):
-            return self.api_doc 
-        else:
-            try:
-                res = super().get(self.entrypoint_url)
-                api_doc_url = res.links['http://www.w3.org/ns/hydra/core#apiDocumentation']['url']
-                jsonld_api_doc = super().get(api_doc_url).json()
-                self.api_doc = doc_maker.create_doc(jsonld_api_doc)
-                return self.api_doc
-            except:
-                print("Error parsing your API Documentation")
-                raise
+        """Fetches API DOC from Link Header by checking the hydra apiDoc 
+        relation and passes the obtained JSON-LD to doc_maker module of 
+        hydra_python_core to return HydraDoc which is used by the agent. 
+        :return HydraDoc created from doc_maker module 
+        """
+        try:
+            res = super().get(self.entrypoint_url)
+            api_doc_url = res.links['http://www.w3.org/ns/hydra/core#apiDocumentation']['url']
+            jsonld_api_doc = super().get(api_doc_url).json()
+            self.api_doc = doc_maker.create_doc(jsonld_api_doc)
+            return self.api_doc
+        except:
+            print("Error parsing your API Documentation. Please make sure Link header \
+                contains the URL of APIDOC with rel http://www.w3.org/ns/hydra/core#apiDocumentation")
+            raise
 
     def initialize_graph(self) -> None:
         """Initialize the Graph on Redis based on ApiDoc
@@ -188,10 +191,12 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             # Checking if it's an already cached resource, if not it will ignore
             if self.graph_operations.get_resource(row['resource_url']):
                 if row['method'] == 'POST':
-                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.graph_operations.delete_processing(
+                        row['resource_url'])
                     self.get(row['resource_url'])
                 elif row['method'] == 'DELETE':
-                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.graph_operations.delete_processing(
+                        row['resource_url'])
                 if row['method'] == 'PUT':
                     pass
             # Updating the last job id
@@ -215,10 +220,12 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         for row in new_rows:
             if self.graph_operations.get_resource(row['resource_url']):
                 if row['method'] == 'POST':
-                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.graph_operations.delete_processing(
+                        row['resource_url'])
                     self.get(row['resource_url'])
                 elif row['method'] == 'DELETE':
-                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.graph_operations.delete_processing(
+                        row['resource_url'])
                 if row['method'] == 'PUT':
                     pass
 
@@ -238,6 +245,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         :param data: Object with the data broadcasted
         """
         pass
+
 
 if __name__ == "__main__":
     pass
