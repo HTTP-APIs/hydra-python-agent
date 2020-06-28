@@ -102,7 +102,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             if response.json()['@type'] in self.api_doc.parsed_classes:
                 return response.json()
             else:
-                return response.json()['members']
+                return response.json()
         else:
             return response.text
 
