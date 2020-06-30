@@ -185,9 +185,9 @@ class TestAgent(unittest.TestCase):
                                              cached_limit=1)
         self.assertEqual(get_new_object_url, get_new_object_type[0])
 
-    @ patch('hydra_agent.agent.Session.get')
-    @ patch('hydra_agent.agent.Session.post')
-    @ patch('hydra_agent.agent.Session.put')
+    @patch('hydra_agent.agent.Session.get')
+    @patch('hydra_agent.agent.Session.post')
+    @patch('hydra_agent.agent.Session.put')
     def test_post(self, put_session_mock, post_session_mock,
                   embedded_get_mock):
         """Tests post method from the Agent
@@ -225,9 +225,9 @@ class TestAgent(unittest.TestCase):
         get_new_object = self.agent.get(new_object_url)
         self.assertEqual(get_new_object, new_object)
 
-    @ patch('hydra_agent.agent.Session.get')
-    @ patch('hydra_agent.agent.Session.delete')
-    @ patch('hydra_agent.agent.Session.put')
+    @patch('hydra_agent.agent.Session.get')
+    @patch('hydra_agent.agent.Session.delete')
+    @patch('hydra_agent.agent.Session.put')
     def test_delete(self, put_session_mock, delete_session_mock,
                     get_session_mock):
         """Tests post method from the Agent
@@ -257,8 +257,8 @@ class TestAgent(unittest.TestCase):
         # Assert if nothing different was returned by Redis
         self.assertEqual(get_new_object, {"msg": "resource doesn't exist"})
 
-    @ patch('hydra_agent.agent.Session.get')
-    @ patch('hydra_agent.agent.Session.put')
+    @patch('hydra_agent.agent.Session.get')
+    @patch('hydra_agent.agent.Session.put')
     def test_edges(self, put_session_mock, embedded_get_mock):
         """Tests to check if all edges are being created properly
         :param put_session_mock: MagicMock object for patching session.put
