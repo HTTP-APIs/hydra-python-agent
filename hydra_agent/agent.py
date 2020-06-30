@@ -92,7 +92,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             url = self.entrypoint_url + "/" + resource_type + "Collection"
             response = super().get(url, params=filters)
         else:
-            response = super().get(url)
+            response = super().get(url, params=filters)
 
         if response.status_code == 200:
             # Graph_operations returns the embedded resources if finding any
@@ -102,7 +102,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             if response.json()['@type'] in self.api_doc.parsed_classes:
                 return response.json()
             else:
-                return response.json()['members']
+                return response.json()
         else:
             return response.text
 

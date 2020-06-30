@@ -114,21 +114,37 @@ class TestAgent(unittest.TestCase):
                         "@type": "Drone"
                     }
                 ],
+                "search": {
+                    "@type": "hydra:IriTemplate",
+                    "hydra:mapping": [{
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "http://auto.schema.org/speed",
+                        "hydra:required": False,
+                        "hydra:variable": "DroneState[Speed]"}
+                    ],
+                    "hydra:template": "/serverapi/Drone(DroneState[Speed])",
+                    "hydra:variableRepresentation": "hydra:BasicRepresentation",
+                },
+                "totalItems": 1,
+                "view": {
+                    "@id": "/serverapi/DroneCollection?page=1",
+                    "@type": "PartialCollectionView",
+                    "first": "/serverapi/DroneCollection?page=1",
+                    "last": "/serverapi/DroneCollection?page=1",
+                    "next": "/serverapi/DroneCollection?page=1"
+                }
             }
 
-        embedded_get_mock.return_value.json.return_value = \
-            simplified_collection
+        embedded_get_mock.return_value.json.return_value = simplified_collection
         get_collection_url = self.agent.get(collection_url)
         get_collection_resource_type = self.agent.get(resource_type="Drone")
-        self.assertEqual(type(get_collection_url), list)
-        self.assertEqual(type(get_collection_resource_type), list)
+        self.assertEqual(type(get_collection_url), dict)
+        self.assertEqual(type(get_collection_resource_type), dict)
         self.assertEqual(get_collection_resource_type, get_collection_url)
-
         get_collection_cached = self.agent.get(resource_type="Drone",
                                                cached_limit=1)
-
         self.assertEqual(get_collection_cached[0]["@id"],
-                         get_collection_url[0]["@id"])
+                         get_collection_url['members'][0]["@id"])
 
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.put')
@@ -287,6 +303,7 @@ class TestAgent(unittest.TestCase):
         query = "MATCH (p)-[r]->() WHERE p.type = 'Drone' RETURN type(r)"
         query_result = self.redis_graph.query(query)
         self.assertEqual(query_result.result_set[0][0], 'has_State')
+
 
 if __name__ == "__main__":
     unittest.main()
