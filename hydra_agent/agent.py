@@ -99,8 +99,8 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             else:
                 response_body = super().get(url)
                 # filtes can be simple dict or a json-ld
-                templated_url = 'http://localhost:8080' + \
-                    expand_template(response_body.json(), filters)
+                templated_url = expand_template(
+                    url, response_body.json(), filters)
                 response = super().get(templated_url)
 
         if response.status_code == 200:

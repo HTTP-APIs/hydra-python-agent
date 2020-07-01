@@ -319,9 +319,9 @@ class TestAgent(unittest.TestCase):
             "offset": "1"
         }
         url = urlparse(expand_template(
-            simplified_response, sample_mapping_object))
+            "http://localhost:8080/serverapi/DroneCollection", simplified_response, sample_mapping_object))
         url_should_be = urlparse(
-            "/serverapi/DroneCollection/?name=Drone1&pageIndex=1&limit=10&offset=1")
+            "http://localhost:8080/serverapi/DroneCollection?name=Drone1&pageIndex=1&limit=10&offset=1")
 
         self.assertEqual(sorted(url.query), sorted(url_should_be.query))
 
@@ -392,9 +392,9 @@ class TestAgent(unittest.TestCase):
             "str_prop": "A simple string"
         }
         url = urlparse(expand_template(
-            simplified_response, sample_mapping_object))
+            "http://localhost:8080/serverapi/DroneCollection", simplified_response, sample_mapping_object))
         url_should_be = urlparse(
-            "/serverapi/DroneCollection/?url_demo=http%3A%2F%2Fwww.hydra-cg.com%2F&prop_with_language=%22A%20simple%20string%22%40en&prop_with_type=%225.5%22%5E%5Ehttp%3A%2F%2Fwww.w3.org%2F2001%2FXMLSchema%23decimal&str_prop=%22A%20simple%20string%22")
+            "http://localhost:8080/serverapi/DroneCollection?url_demo=http%3A%2F%2Fwww.hydra-cg.com%2F&prop_with_language=%22A%20simple%20string%22%40en&prop_with_type=%225.5%22%5E%5Ehttp%3A%2F%2Fwww.w3.org%2F2001%2FXMLSchema%23decimal&str_prop=%22A%20simple%20string%22")
 
         self.assertEqual(sorted(url.query), sorted(url_should_be.query))
 

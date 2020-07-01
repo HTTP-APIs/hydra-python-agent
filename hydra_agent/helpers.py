@@ -5,19 +5,16 @@ Helper functions for the Agent.
 """
 
 
-def expand_on_basis_of_basic_representation(response, mappings):
+def expand_on_basis_of_basic_representation(mappings):
     """ Expansion using Basic Representation
     :param response: Response obtained after hitting the base_url of collection
     :param mappings: Mappings of variables and values provided by the user to expand template 
     :return: Expanded URL on the basis of Basic representation
     """
-    query_string = urlencode(mappings, quote_via=quote, safe='')
-    # append to the end of url
-    url = response['@id'] + '?' + query_string
-    return url
+    return urlencode(mappings, quote_via=quote, safe='')
 
 
-def expand_on_basis_of_explicit_representation(response, mappings):
+def expand_on_basis_of_explicit_representation(mappings):
     """
     Expansion using Explicit Representation.
     Used when used with JSON-LD format so that tagging with "@language", "@type", or an "@id"
@@ -60,12 +57,10 @@ def expand_on_basis_of_explicit_representation(response, mappings):
             modified_mapping[prop] = quote(expand_value, safe='')
             continue
 
-    query_string = urlencode(modified_mapping, safe='%')
-    url = response['@id'] + '?' + query_string
-    return url
+    return urlencode(modified_mapping, safe='%')
 
 
-def expand_template(response, mappings):
+def expand_template(url, response, mappings):
     """
     Expands the template on the basis of the representation, i.e. Basic or Explicit. 
 
@@ -100,7 +95,11 @@ def expand_template(response, mappings):
     # check the type of Representation.
     # Hydra Supports two types of Representations: BasicRepresentation or ExplicitRepresentation.
     if response['search']['hydra:variableRepresentation'] == 'hydra:BasicRepresentation':
-        return expand_on_basis_of_basic_representation(response, mappings)
+        expanded_url = url + '?' + \
+            expand_on_basis_of_basic_representation(mappings)
+        return expanded_url
 
     if response['search']['hydra:variableRepresentation'] == 'hydra:ExplicitRepresentation':
-        return expand_on_basis_of_explicit_representation(response, mappings)
+        expanded_url = url + '?' + \
+            expand_on_basis_of_explicit_representation(mappings)
+        return expanded_url
