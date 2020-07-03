@@ -1,50 +1,62 @@
 from requests import get
+import json
 
 
-class PartialCollectionCrawler:
+class Paginator:
     """
-    Crawler for Crawling Collections. 
+    Paginator for moving through Partial collections. 
     It can move forwards, backwards or can jump to specific page
     """
 
-    def __init__(self, response):
+    def __init__(self, response, base_url='http://localhost:8080'):
         self.response = response
-        self.base_url = 'http://localhost:8080'
+        self.base_url = base_url
 
     def initialize_forward(self):
         """
-        Initializes the crawler to move forwards.
+        Initializes the paginator to move forwards.
         :returns: Iterator
         """
         view = self.response['view']
         present_page = view['@id']
+        yield_page = {"pages_ahead": True}
         while True:
             self.response = get(self.base_url + present_page).json()
-            yield self.response['members']
+            yield_page['members'] = self.response['members']
+            if 'last' in view and view['last'] == present_page:
+                yield_page['pages_ahead'] = False
+            yield yield_page
             view = self.response['view']
-            print('view')
             if 'next' in view:
+                yield_page['pages_ahead'] = True
                 present_page = view['next']
             else:
-                raise StopIteration("No more collection pages")
+                yield_page['members'] = self.response['members']
+                yield yield_page
 
     def initialize_backward(self):
         """
-        Initializes the crawler to move backwards.
+        Initializes the pagintor to move backwards.
         :returns: Iterator
         """
         view = self.response['view']
         present_page = view['@id']
+        yield_page = {"pages_behind": False}
         while True:
             self.response = get(self.base_url+present_page).json()
-            yield self.response['members']
+            yield_page['members'] = self.response['members']
+            if 'first' in view and view['first'] == present_page:
+                yield_page['pages_behind'] = False
+            yield yield_page
             view = self.response['view']
             if 'previous' in view:
+                yield_page['pages_behind'] = True
                 present_page = view['previous']
             else:
-                raise StopIteration("No more collection pages")
+                yield_page['members'] = self.response['members']
+                yield yield_page
 
-    def jumpToPage(self, page):
+    def jump_to_page(self, page):
         """
         Jumps to a specified page. 
         :params page: Page number to jump
@@ -58,7 +70,7 @@ class PartialCollectionCrawler:
             print('No such page exists.')
             raise
 
-    def jumpToLastPage(self):
+    def jump_to_last_page(self):
         """
         Jumps to Last page of Collection
         :returns members of last page of Partial Collection
@@ -71,14 +83,14 @@ class PartialCollectionCrawler:
             print("No last item in view")
             raise
 
-    def totalItems(self):
+    def total_items(self):
         """returns total number of items of collection
         :return: Total number of items in collection
         """
         try:
             return self.response['totalItems']
         except KeyError:
-            print("No totalItem provided")
+            print("No totalItem key provided")
             raise
 
     def total_pages(self):
