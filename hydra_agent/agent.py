@@ -7,6 +7,8 @@ from hydra_agent.redis_core.graph_init import InitialGraph
 from hydra_python_core import doc_maker
 from typing import Union, Tuple
 from requests import Session
+import json
+from hydra_agent.helpers import expand_template
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
@@ -92,7 +94,14 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             url = self.entrypoint_url + "/" + resource_type + "Collection"
             response = super().get(url, params=filters)
         else:
-            response = super().get(url, params=filters)
+            if not bool(filters):
+                response = super().get(url)
+            else:
+                response_body = super().get(url)
+                # filtes can be simple dict or a json-ld
+                templated_url = expand_template(
+                    url, response_body.json(), filters)
+                response = super().get(templated_url)
 
         if response.status_code == 200:
             # Graph_operations returns the embedded resources if finding any

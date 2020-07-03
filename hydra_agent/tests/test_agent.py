@@ -5,6 +5,8 @@ from hydra_agent.redis_core.graphutils_operations import GraphOperations
 from hydra_agent.redis_core.redis_proxy import RedisProxy
 from redisgraph import Graph
 from hydra_agent.tests.test_examples.hydra_doc_sample import doc as drone_doc
+from hydra_agent.helpers import expand_template
+from urllib.parse import urlparse
 
 
 class TestAgent(unittest.TestCase):
@@ -256,6 +258,145 @@ class TestAgent(unittest.TestCase):
 
         # Assert if nothing different was returned by Redis
         self.assertEqual(get_new_object, {"msg": "resource doesn't exist"})
+
+    def test_basic_iri_templates(self):
+        """Tests the URI constructed on the basis of Basic Representation
+        """
+        simplified_response = {
+            "@context": "/serverapi/contexts/DroneCollection.jsonld",
+            "@id": "/serverapi/DroneCollection/",
+            "@type": "DroneCollection",
+            "members": [
+                {
+                    "@id": "/serverapi/DroneCollection/1",
+                    "@type": "Drone"
+                },
+            ],
+            "search": {
+                "@type": "hydra:IriTemplate",
+                "hydra:mapping": [
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "http://schema.org/name",
+                        "hydra:required": False,
+                        "hydra:variable": "name"
+                    },
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "pageIndex",
+                        "hydra:required": False,
+                        "hydra:variable": "pageIndex"
+                    },
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "limit",
+                        "hydra:required": False,
+                        "hydra:variable": "limit"
+                    },
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "offset",
+                        "hydra:required": False,
+                        "hydra:variable": "offset"
+                    }
+                ],
+                "hydra:template": "/serverapi/(pageIndex, limit, offset)",
+                "hydra:variableRepresentation": "hydra:BasicRepresentation"
+            },
+
+            "view": {
+                "@id": "/serverapi/DroneCollection?page=1",
+                "@type": "PartialCollectionView",
+                "first": "/serverapi/DroneCollection?page=1",
+                "last": "/serverapi/DroneCollection?page=1",
+                "next": "/serverapi/DroneCollection?page=1"
+            }
+        }
+        sample_mapping_object = {
+            "name": "Drone1",
+            "pageIndex": "1",
+            "limit": "10",
+            "offset": "1"
+        }
+        url = urlparse(expand_template(
+            "http://localhost:8080/serverapi/DroneCollection", simplified_response, sample_mapping_object))
+        url_should_be = urlparse(
+            "http://localhost:8080/serverapi/DroneCollection?name=Drone1&pageIndex=1&limit=10&offset=1")
+
+        self.assertEqual(sorted(url.query), sorted(url_should_be.query))
+
+    def test_explicit_iri_templates(self):
+        """Tests the URI constructed on the basis of Basic Representation
+        """
+        simplified_response = {
+            "@context": "/serverapi/contexts/DroneCollection.jsonld",
+            "@id": "/serverapi/DroneCollection/",
+            "@type": "DroneCollection",
+            "members": [
+                {
+                    "@id": "/serverapi/DroneCollection/1",
+                    "@type": "Drone"
+                },
+            ],
+            "search": {
+                "@type": "hydra:IriTemplate",
+                "hydra:mapping": [
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "http://schema.org/name",
+                        "hydra:required": False,
+                        "hydra:variable": "name"
+                    },
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "pageIndex",
+                        "hydra:required": False,
+                        "hydra:variable": "pageIndex"
+                    },
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "limit",
+                        "hydra:required": False,
+                        "hydra:variable": "limit"
+                    },
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "offset",
+                        "hydra:required": False,
+                        "hydra:variable": "offset"
+                    }
+                ],
+                "hydra:template": "/serverapi/(pageIndex, limit, offset)",
+                "hydra:variableRepresentation": "hydra:ExplicitRepresentation"
+            },
+            "view": {
+                "@id": "/serverapi/DroneCollection?page=1",
+                "@type": "PartialCollectionView",
+                "first": "/serverapi/DroneCollection?page=1",
+                "last": "/serverapi/DroneCollection?page=1",
+                "next": "/serverapi/DroneCollection?page=1"
+            }
+        }
+        sample_mapping_object = {
+            "url_demo": {
+                "@id": "http://www.hydra-cg.com/"
+            },
+            "prop_with_language": {
+                "@language": "en",
+                "@value": "A simple string"
+            },
+            "prop_with_type": {
+                "@value": "5.5",
+                "@type": "http://www.w3.org/2001/XMLSchema#decimal"
+            },
+            "str_prop": "A simple string"
+        }
+        url = urlparse(expand_template(
+            "http://localhost:8080/serverapi/DroneCollection", simplified_response, sample_mapping_object))
+        url_should_be = urlparse(
+            "http://localhost:8080/serverapi/DroneCollection?url_demo=http%3A%2F%2Fwww.hydra-cg.com%2F&prop_with_language=%22A%20simple%20string%22%40en&prop_with_type=%225.5%22%5E%5Ehttp%3A%2F%2Fwww.w3.org%2F2001%2FXMLSchema%23decimal&str_prop=%22A%20simple%20string%22")
+
+        self.assertEqual(sorted(url.query), sorted(url_should_be.query))
 
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.put')
