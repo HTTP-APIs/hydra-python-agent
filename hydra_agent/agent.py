@@ -9,7 +9,7 @@ from typing import Union, Tuple
 from requests import Session
 import json
 from hydra_agent.helpers import expand_template
-
+from hydra_agent.collection_paginator import Paginator
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
 
@@ -43,10 +43,10 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         self.last_job_id = ""
 
     def fetch_apidoc(self) -> dict:
-        """Fetches API DOC from Link Header by checking the hydra apiDoc 
-        relation and passes the obtained JSON-LD to doc_maker module of 
-        hydra_python_core to return HydraDoc which is used by the agent. 
-        :return HydraDoc created from doc_maker module 
+        """Fetches API DOC from Link Header by checking the hydra apiDoc
+        relation and passes the obtained JSON-LD to doc_maker module of
+        hydra_python_core to return HydraDoc which is used by the agent.
+        :return HydraDoc created from doc_maker module
         """
         try:
             res = super().get(self.entrypoint_url)
@@ -70,6 +70,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         self.redis_connection.sadd("fs:url", self.entrypoint_url)
 
     def get(self, url: str = None, resource_type: str = None,
+            follow_partial_links: bool = False,
             filters: dict = {},
             cached_limit: int = sys.maxsize) -> Union[dict, list]:
         """READ Resource from Server/cached Redis
@@ -77,7 +78,25 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         :param resource_type: Resource object type
         :param filters: filters to apply when searching, resources properties
         :param cached_limit : Minimum amount of resources to be fetched
+        :param follow_partial_links: If set to True, Paginator can go through pages.
         :return: Dict when one object or a list when multiple targerted objects
+        :return: Iterator when param follow_partial_links is set to true
+                    Iterator will be returned.
+                    Usage:
+                    paginator = agent.get('http://localhost:8080/serverapi/DroneCollection', \
+                                        follow_partial_links=True)
+                    To paginate forward:
+                    ford = paginator.initialize_forward()
+                    To get the members of first page:
+                    next(ford)
+                    To get the members of second page:
+                    next(ford)
+                    To paginate Backwards:
+                    back = paginator.initialize_backward()
+                    To get the members of prev page:
+                    next(back)
+                    To Jump:
+                    paginator.jump_to_page(2) 
         """
         redis_response = self.graph_operations.get_resource(url, resource_type,
                                                             filters)
@@ -111,7 +130,10 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             if response.json()['@type'] in self.api_doc.parsed_classes:
                 return response.json()
             else:
-                return response.json()
+                if follow_partial_links:
+                    return Paginator(response=response.json())
+                else:
+                    return response.json()
         else:
             return response.text
 
