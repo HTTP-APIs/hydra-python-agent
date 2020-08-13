@@ -56,7 +56,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             res = super().get(self.entrypoint_url)
             api_doc_url = res.links['http://www.w3.org/ns/hydra/core#apiDocumentation']['url']
             jsonld_api_doc = super().get(api_doc_url).json()
-            self.api_doc = doc_maker.create_doc(jsonld_api_doc)
+            self.api_doc = doc_maker.create_doc(jsonld_api_doc, self.entrypoint_url, 'serverapi')
             return self.api_doc
         except:
             print("Error parsing your API Documentation. Please make sure Link header \
@@ -83,7 +83,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         :param filters: filters to apply when searching, resources properties
         :param cached_limit : Minimum amount of resources to be fetched
         :param follow_partial_links: If set to True, Paginator can go through pages.
-        :return: Dict when one object or a list when multiple targerted objects
+        :return: Dict when one object or a list when multiple targeted objects
         :return: Iterator when param follow_partial_links is set to true
                     Iterator will be returned.
                     Usage:
