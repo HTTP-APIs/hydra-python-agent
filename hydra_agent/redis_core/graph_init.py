@@ -9,12 +9,12 @@ from hydra_agent.redis_core.redis_proxy import RedisProxy
 
 
 class InitialGraph:
-
-
-    def get_apistructure(self,entrypoint_node, api_doc):
-        """ It breaks the endpoint into two parts collection and classes"""
+    def __init__(self):
         self.collection_endpoints = {}
         self.class_endpoints = {}
+
+    def get_apistructure(self, entrypoint_node, api_doc):
+        """ It breaks the endpoint into two parts collection and classes"""
         print("split entrypoint into 2 types of endpoints collection and classes")
         for support_property in api_doc.entrypoint.entrypoint.supportedProperty:
             if isinstance(
@@ -27,11 +27,11 @@ class InitialGraph:
                     doc_writer.EntryPointCollection):
                 self.collection_endpoints[support_property.name] = support_property.id_
 
-        if len(self.class_endpoints.keys())>0:
+        if len(self.class_endpoints.keys()) > 0:
             clas = ClassEndpoints(self.redis_graph, self.class_endpoints)
             clas.endpointclasses(entrypoint_node, api_doc, self.url)
 
-        if len(self.collection_endpoints.keys())>0:
+        if len(self.collection_endpoints.keys()) > 0:
             coll = CollectionEndpoints(self.redis_graph, self.class_endpoints)
             coll.endpointCollection(
                 self.collection_endpoints,
@@ -54,8 +54,6 @@ class InitialGraph:
             properties=entrypoint_properties)
         self.redis_graph.add_node(entrypoint_node)
         return self.get_apistructure(entrypoint_node, api_doc)
-
-
 
     def main(self,new_url,api_doc,check_commit):
         redis_connection = RedisProxy()

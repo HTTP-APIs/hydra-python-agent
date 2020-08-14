@@ -2,10 +2,13 @@ import urllib.request
 import json
 import logging
 from urllib.error import URLError, HTTPError
+from hydra_python_core.doc_writer import HydraDoc
 from hydra_agent.redis_core.redis_proxy import RedisProxy
 from hydra_agent.redis_core.graphutils import GraphUtils
+from hydra_agent.redis_core.graph_init import InitialGraph
 from redisgraph import Graph, Node
 from requests import Session
+from typing import Union, Optional
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
@@ -14,7 +17,7 @@ logger = logging.getLogger(__file__)
 class GraphOperations():
     """Responsible to process the requests received by the Agent
     inside Redis Graph, making sure it a synchronized cached layer"""
-    def __init__(self, entrypoint_url: str, api_doc: dict,
+    def __init__(self, entrypoint_url: str, api_doc: HydraDoc,
                  redis_proxy: RedisProxy):
         """Initialize GraphOperations
         :param entrypoint_url: Entrypoint URL for the hydrus server
@@ -26,9 +29,8 @@ class GraphOperations():
         self.api_doc = api_doc
         self.redis_proxy = redis_proxy
         self.redis_connection = redis_proxy.get_connection()
-        self.complete_vocabulary_url = self.api_doc.generate()['@context']['vocab']
-        # extract 'vocab' from 'localhost/api/vocab#'
-        self.vocabulary = self.complete_vocabulary_url.split('/')[-1].split('#')[0]
+        self.complete_vocabulary_url = self.api_doc.doc_url
+        self.vocabulary = self.api_doc.doc_name
         self.graph_utils = GraphUtils(redis_proxy)
         self.redis_graph = Graph("apigraph", self.redis_connection)
         self.session = Session()
@@ -196,10 +198,13 @@ class GraphOperations():
 
         return
 
-    def get_resource(self, url: str = None, resource_type: str = None,
-                     filters: dict = {}) -> dict:
+    def get_resource(self, url: str = None, initial_graph: InitialGraph = None, resource_type: str = None,
+                     filters: dict = {}) -> Union[dict, Optional[list]]:
         """Get resources already stored on Redis and return
         :param url: URL for the resource to fetch.
+        :param initial_graph: The Initial Redis graph
+        :param resource_type: Type of the resource
+        :param filters: filters to apply when searching, resources properties
         :return: Object with resource found.
         """
         # Checking which kind of query, by URL or type
@@ -207,22 +212,19 @@ class GraphOperations():
             raise Exception("ERR: You should set at least" +
                             "url OR resource_type")
         if url:
-            url_aux = url.rstrip('/').replace(self.entrypoint_url,
-                                              "EntryPoint")
+            url_aux = url.rstrip('/')
             url_list = url_aux.split('/')
-
             # Checking if querying for cached Collection or Member
-            if len(url_list) == 2:
+            if url_list[-1] in initial_graph.collection_endpoints or url_list[-2] in initial_graph.collection_endpoints:
                 # When checking for collections we will always fetch the server
                 return None
-            else:
-                url_list = url.split('/', 3)
+            # since class endpoints will always in the form of /class/<id>
+            elif url_list[-2] in initial_graph.class_endpoints:
                 object_id = '/' + url_list[-1]
-
-            resource = self.graph_utils.read(
-                                match="",
-                                where="id='{}'".format(object_id),
-                                ret="")
+                resource = self.graph_utils.read(
+                                    match="",
+                                    where="id='{}'".format(object_id),
+                                    ret="")
             # If having only one object/querying by id return only dict
             if resource is not None and len(resource) == 1:
                 return resource[0]
@@ -247,7 +249,7 @@ class GraphOperations():
 
     def link_resources(self, parent_id: str, parent_type: str,
                        node_url: str) -> str:
-        """Checks for existance of discovered resource and creates links
+        """Checks for existence of discovered resource and creates links
         for embedded resources inside other resources properties
         :parent_id: Resource ID for the parent node that had this reference
         :parent_type: Resource Type for the parent node that had this reference
