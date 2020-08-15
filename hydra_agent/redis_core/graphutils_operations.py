@@ -226,10 +226,8 @@ class GraphOperations():
                                     where="id='{}'".format(object_id),
                                     ret="")
             # If having only one object/querying by id return only dict
-            if resource is not None and len(resource) == 1:
-                return resource[0]
-
-            return resource
+                if resource is not None and len(resource) == 1:
+                    return resource[0]
         elif resource_type:
             where_filter = ""
             for filter_key, filter_value in filters.items():
