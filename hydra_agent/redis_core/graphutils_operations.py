@@ -45,10 +45,12 @@ class GraphOperations():
         url_list = url_list.split('/')
         # Updating Redis
         # First case - When processing a GET for a resource
+
         if len(url_list) == 3:
             entrypoint, resource_endpoint, resource_id = url_list
-
             # Building the the collection id, i.e. vocab:Entrypoint/Collection
+            # TODO build the correct collection id from the resource
+            # Earlier it used to come as collection/<id> now it comes as class/<id>
             redis_collection_id = self.vocabulary + \
                 ":" + entrypoint + \
                 "/" + resource_endpoint
@@ -72,7 +74,7 @@ class GraphOperations():
                 where="id='{}'".format(redis_collection_id),
                 set="members = \"{}\"".format(str(collection_members)))
 
-            # Creating node for new collection member and commiting to Redis
+            # Creating node for new collection member and committing to Redis
             self.graph_utils.add_node("objects" + resource['@type'],
                                       resource['@type'] + resource_id,
                                       resource)
@@ -95,6 +97,7 @@ class GraphOperations():
             supported_properties = class_doc.supportedProperty
             embedded_resources = []
             for supported_prop in supported_properties:
+                # TODO discover embedded resources in proper manner
                     if (self.vocabulary + ":") in str(supported_prop.prop):
                         if resource[supported_prop.title]:
                             new_resource = {}
@@ -273,6 +276,7 @@ class GraphOperations():
                                                     where_dest="id : \'" +
                                                     resource['@id'] + "\'")
         return str(response)
+
 
 if __name__ == "__main__":
     pass
