@@ -7,4 +7,4 @@ graphviz
 requests
 python-socketio
 -e git+https://github.com/RedisGraph/redisgraph-py#egg=redisgraph
--e git+https://github.com/HTTP-APIs/hydra-python-core#egg=hydra_python_core
+-e git+https://github.com/priyanshunayan/hydra-python-core@master#egg=hydra_python_core
