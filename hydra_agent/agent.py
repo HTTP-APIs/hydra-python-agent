@@ -20,17 +20,17 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
     CRUD interface - to query hydrus
     """
 
-    def __init__(self, entrypoint_url: str, listen: bool = True) -> None:
+    def __init__(self, entrypoint_url: str, sync: bool = True) -> None:
         """Initialize the Agent
         :param entrypoint_url: Entrypoint URL for the hydrus server
         :param namespace: Namespace endpoint to listen for updates
         :return: None
         """
         self.entrypoint_url = entrypoint_url.strip().rstrip('/')
-        self.listen = listen
+        self.sync = sync
         Session.__init__(self)
         self.fetch_apidoc()
-        if listen:
+        if sync:
             self.redis_proxy = RedisProxy()
             self.redis_connection = self.redis_proxy.get_connection()
             namespace = '/sync'
@@ -102,7 +102,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                     To Jump:
                     paginator.jump_to_page(2) 
         """
-        if self.listen:
+        if self.sync:
             redis_response = self.graph_operations.get_resource(url, resource_type, filters)
             if redis_response:
                 if type(redis_response) is dict:
@@ -128,7 +128,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
 
         if response.status_code == 200:
             # Graph_operations returns the embedded resources if finding any
-            if self.listen:
+            if self.sync:
                 embedded_resources = \
                     self.graph_operations.get_processing(url, response.json())
                 self.process_embedded(embedded_resources)
@@ -153,7 +153,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         if response.status_code == 201:
             url = response.headers['Location']
             # Graph_operations returns the embedded resources if finding any
-            if self.listen:
+            if self.sync:
                 embedded_resources = self.graph_operations.put_processing(url, new_object)
                 self.process_embedded(embedded_resources)
             return response.json(), url
@@ -170,7 +170,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
 
         if response.status_code == 200:
             # Graph_operations returns the embedded resources if finding any
-            if self.listen:
+            if self.sync:
                 embedded_resources = \
                     self.graph_operations.post_processing(url, updated_object)
                 self.process_embedded(embedded_resources)
@@ -186,7 +186,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         response = super().delete(url)
 
         if response.status_code == 200:
-            if self.listen:
+            if self.sync:
                 self.graph_operations.delete_processing(url)
             return response.json()
         else:

@@ -26,6 +26,7 @@ class TestAgent(unittest.TestCase):
         socket_client_mock.return_value = None
 
         self.agent = Agent("http://localhost:8080/api")
+        self.agent_without_sync = Agent("http://localhost:8080/api", sync=False)
         self.redis_proxy = RedisProxy()
         self.redis_connection = self.redis_proxy.get_connection()
         self.redis_graph = Graph("apigraph", self.redis_connection)
@@ -45,8 +46,11 @@ class TestAgent(unittest.TestCase):
         get_session_mock.return_value.json.return_value = state_object
         response = self.agent.get("http://localhost:8080/api/" +
                                   "StateCollection/1")
+        response_without_sync = self.agent_without_sync.get("http://localhost:8080/api/" +
+                                                            "StateCollection/1")
 
         self.assertEqual(response, state_object)
+        self.assertEqual(response_without_sync, state_object)
 
     @patch('hydra_agent.agent.Session.get')
     def test_get_class_properties(self, get_session_mock):
@@ -73,7 +77,11 @@ class TestAgent(unittest.TestCase):
 
         response_not_cached = self.agent.get("http://localhost:8080/api/" +
                                              "StateCollection/1")
+
+        response_without_sync = self.agent_without_sync.get("http://localhost:8080/api/" +
+                                                            "StateCollection/1")
         self.assertEqual(response_not_cached, response_cached)
+        self.assertEqual(response_not_cached, response_without_sync)
 
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.put')
@@ -139,10 +147,15 @@ class TestAgent(unittest.TestCase):
 
         embedded_get_mock.return_value.json.return_value = simplified_collection
         get_collection_url = self.agent.get(collection_url)
+        get_collection_url_without_sync = self.agent_without_sync.get(collection_url)
         get_collection_resource_type = self.agent.get(resource_type="Drone")
+        get_collection_resource_type_without_sync = self.agent_without_sync.get(resource_type="Drone")
         self.assertEqual(type(get_collection_url), dict)
         self.assertEqual(type(get_collection_resource_type), dict)
+        self.assertEqual(type(get_collection_url_without_sync), dict)
+        self.assertEqual(type(get_collection_resource_type_without_sync), dict)
         self.assertEqual(get_collection_resource_type, get_collection_url)
+        self.assertEqual(get_collection_resource_type_without_sync, get_collection_url_without_sync)
         get_collection_cached = self.agent.get(resource_type="Drone",
                                                cached_limit=1)
         self.assertEqual(get_collection_cached[0]["@id"],
@@ -177,15 +190,24 @@ class TestAgent(unittest.TestCase):
         embedded_get_mock.return_value.json.return_value = state_object
 
         response, new_object_url = self.agent.put(collection_url, new_object)
-
+        response_without_sync, new_object_url_without_sync = self.agent_without_sync.put(collection_url, new_object)
         # Assert if object was inserted queried and inserted successfully
         get_new_object_url = self.agent.get(new_object_url)
+
         self.assertEqual(get_new_object_url, new_object)
 
         get_new_object_type = self.agent.get(resource_type="Drone",
                                              filters={'name': "Smart Drone"},
                                              cached_limit=1)
         self.assertEqual(get_new_object_url, get_new_object_type[0])
+        # Mocking the object without the embedding link
+        embedded_get_mock.return_value.json.return_value = new_object
+
+        get_new_object_url_without_sync = self.agent_without_sync.get(new_object_url_without_sync)
+        self.assertEqual(get_new_object_url_without_sync, new_object)
+        get_new_object_type_without_sync = self.agent_without_sync.get(resource_type="Drone",
+                                                                       filters={'name': "Smart Drone"})
+        self.assertEqual(get_new_object_url_without_sync, get_new_object_type_without_sync)
 
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.post')
@@ -207,7 +229,7 @@ class TestAgent(unittest.TestCase):
         put_session_mock.return_value.json.return_value = new_object
         put_session_mock.return_value.headers = {'Location': new_object_url}
         response, new_object_url = self.agent.put(collection_url, new_object)
-
+        response_without_sync, new_object_url_without_sync = self.agent_without_sync.put(collection_url, new_object)
         post_session_mock.return_value.status_code = 200
         post_session_mock.return_value.json.return_value = {"msg": "success"}
         new_object['name'] = "Updated Name"
@@ -220,12 +242,16 @@ class TestAgent(unittest.TestCase):
         # Mocking an object to be used for a property that has an embedded link
         embedded_get_mock.return_value.status_code = 200
         embedded_get_mock.return_value.json.return_value = state_object
-
         response = self.agent.post(new_object_url, new_object)
-
         # Assert if object was updated successfully as intended
         get_new_object = self.agent.get(new_object_url)
         self.assertEqual(get_new_object, new_object)
+
+        # Mocking an object without embedding
+        embedded_get_mock.return_value.json.return_value = new_object
+        response_without_sync = self.agent_without_sync.post(new_object_url_without_sync, new_object)
+        get_new_object_without_sync = self.agent_without_sync.get(new_object_url_without_sync)
+        self.assertEqual(get_new_object_without_sync, new_object)
 
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.delete')
@@ -252,12 +278,13 @@ class TestAgent(unittest.TestCase):
         delete_session_mock.return_value.status_code = 200
         delete_session_mock.return_value.json.return_value = {"msg": "success"}
         response = self.agent.delete(new_object_url)
-
+        response_without_sync = self.agent_without_sync.delete(new_object_url)
         get_session_mock.return_value.text = {"msg": "resource doesn't exist"}
         get_new_object = self.agent.get(new_object_url)
-
+        get_new_object_without_sync = self.agent_without_sync.get(new_object_url)
         # Assert if nothing different was returned by Redis
         self.assertEqual(get_new_object, {"msg": "resource doesn't exist"})
+        self.assertEqual(get_new_object_without_sync, {"msg": "resource doesn't exist"})
 
     def test_basic_iri_templates(self):
         """Tests the URI constructed on the basis of Basic Representation
