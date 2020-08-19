@@ -39,7 +39,6 @@ class InitialGraph:
                 api_doc,
                 self.url)
 
-
     def get_endpoints(self,api_doc, redis_connection):
         """Create node for entrypoint"""
         print("creating entrypoint node")

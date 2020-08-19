@@ -44,34 +44,28 @@ class GraphOperations():
         url_list = url.rstrip('/').replace(self.entrypoint_url, "EntryPoint")
         url_list = url_list.split('/')
         # Updating Redis
+        breakpoint()
         # First case - When processing a GET for a resource
-
+        # When processing GET for a Resource, instead of finding the collection of that resource create a connection
+        # in that class only.
         if len(url_list) == 3:
             entrypoint, resource_endpoint, resource_id = url_list
             # Building the the collection id, i.e. vocab:Entrypoint/Collection
-            # TODO build the correct collection id from the resource
+            # TODO Don't build the collection id, add it to the class like class_has_instance then the instance
             # Earlier it used to come as collection/<id> now it comes as class/<id>
-            redis_collection_id = self.vocabulary + \
-                ":" + entrypoint + \
-                "/" + resource_endpoint
+            redis_resource_parent_id = self.complete_vocabulary_url.doc_url
 
-            collection_members = self.graph_utils.read(
-                match=":collection",
-                where="id='{}'".format(redis_collection_id),
+            redis_parent_resource = self.graph_utils.read(
+                match="",
+                where="id='{}'".format(redis_resource_parent_id),
                 ret="")
 
-            # Checking if it's the first member to be loaded
-            if 'members' not in collection_members:
-                collection_members = []
-            else:
-                collection_members = eval(collection_members['members'])
-
-            collection_members.append({'@id': resource['@id'],
-                                       '@type': resource['@type']})
+            resource_to_append = {'@id': resource['@id'],
+                                  '@type': resource['@type']}
             # Updating the collection properties with the nem member
             self.graph_utils.update(
-                match="collection",
-                where="id='{}'".format(redis_collection_id),
+                match="",
+                where="id='{}'".format(redis_resource_parent_id),
                 set="members = \"{}\"".format(str(collection_members)))
 
             # Creating node for new collection member and committing to Redis
@@ -141,6 +135,7 @@ class GraphOperations():
         url_list = url.split('/', 3)
         new_object["@id"] = '/' + url_list[-1]
         # Simply call self.get_processing to add the resource to the collection at Redis
+        breakpoint()
         embedded_resources = self.get_processing(url, new_object)
 
         return embedded_resources
