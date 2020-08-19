@@ -44,39 +44,52 @@ class GraphOperations():
         url_list = url.rstrip('/').replace(self.entrypoint_url, "EntryPoint")
         url_list = url_list.split('/')
         # Updating Redis
-        breakpoint()
         # First case - When processing a GET for a resource
         # When processing GET for a Resource, instead of finding the collection of that resource create a connection
         # in that class only.
-        if len(url_list) == 3:
-            entrypoint, resource_endpoint, resource_id = url_list
+        # TODO change the identification of request for Collection or member
+        if len(url_list) == 6:
+            resource_endpoint, resource_id = url_list[-2:]
             # Building the the collection id, i.e. vocab:Entrypoint/Collection
             # TODO Don't build the collection id, add it to the class like class_has_instance then the instance
-            # Earlier it used to come as collection/<id> now it comes as class/<id>
-            redis_resource_parent_id = self.complete_vocabulary_url.doc_url
+            redis_resource_parent_id = self.complete_vocabulary_url.doc_url + 'EntryPoint/' + resource_endpoint
 
-            redis_parent_resource = self.graph_utils.read(
-                match="",
+            class_instances = self.graph_utils.read(
+                match=":classes",
                 where="id='{}'".format(redis_resource_parent_id),
                 ret="")
 
+            if 'instances' not in class_instances:
+                class_instances = []
+            else:
+                class_instances = eval(class_instances['instances'])
+
             resource_to_append = {'@id': resource['@id'],
                                   '@type': resource['@type']}
+
+            class_instances.append(resource_to_append)
             # Updating the collection properties with the nem member
+            print("Updating")
             self.graph_utils.update(
-                match="",
+                match="classes",
                 where="id='{}'".format(redis_resource_parent_id),
-                set="members = \"{}\"".format(str(collection_members)))
+                set="instances = \"{}\"".format(class_instances))
 
             # Creating node for new collection member and committing to Redis
+            print("Adding node")
+            # TODO encode the dict value in strings
+            for key, value in resource.items():
+                if type(value) is not str:
+                    resource[key] = json.dumps(value)
+
             self.graph_utils.add_node("objects" + resource['@type'],
                                       resource['@type'] + resource_id,
                                       resource)
             # Commits the graph
             self.graph_utils.flush()
-
+            print("Creating relations")
             # Creating relation between collection node and member
-            self.graph_utils.create_relation(label_source="collection",
+            self.graph_utils.create_relation(label_source="classes",
                                              where_source="type : \'" +
                                              resource_endpoint + "\'",
                                              relation_type="has_" +
@@ -135,7 +148,6 @@ class GraphOperations():
         url_list = url.split('/', 3)
         new_object["@id"] = '/' + url_list[-1]
         # Simply call self.get_processing to add the resource to the collection at Redis
-        breakpoint()
         embedded_resources = self.get_processing(url, new_object)
 
         return embedded_resources

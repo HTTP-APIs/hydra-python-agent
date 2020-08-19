@@ -40,9 +40,8 @@ class GraphUtils:
         # Processing Redis-set response format
         query_result = self.process_result(query_result)
 
-        if not query_result:
-            query_result = None
-
+        # if not query_result:
+        #     query_result = None
         return query_result
 
     def update(self, match: str, set: str, where: Optional[str]=None) -> list:
@@ -57,7 +56,7 @@ class GraphUtils:
         if where is not None:
             query += " WHERE(p.{})".format(where)
         query += " SET p.{}".format(set)
-
+        print("Query", query)
         return self.redis_connection.execute_command("GRAPH.QUERY",
                                                      self.graph_name,
                                                      query)
@@ -93,6 +92,7 @@ class GraphUtils:
         query = "MATCH(s:{} {{{}}}), ".format(label_source, where_source)
         query += "(d:{} {{{}}})".format(label_dest, where_dest)
         query += " CREATE (s)-[:{}]->(d)".format(relation_type)
+        breakpoint()
         return self.redis_connection.execute_command("GRAPH.QUERY",
                                                      self.graph_name,
                                                      query)
@@ -106,6 +106,7 @@ class GraphUtils:
         :return: Created Node
         """
         node = Node(label=label, alias=alias, properties=properties)
+        print(node)
         self.redis_graph.add_node(node)
         return node
 
