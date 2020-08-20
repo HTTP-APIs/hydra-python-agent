@@ -41,18 +41,25 @@ class GraphOperations():
         :param resource: Resource object fetched from server.
         :return: list of embedded resources to be fetched.
         """
-        url_list = url.rstrip('/').replace(self.entrypoint_url, "EntryPoint")
+        url_list = url.rstrip('/')
         url_list = url_list.split('/')
         # Updating Redis
-        # First case - When processing a GET for a resource
-        # When processing GET for a Resource, instead of finding the collection of that resource create a connection
-        # in that class only.
-        # TODO Make the identification of whether it is a processing GET for resource or Collection
-        if len(url_list) == 6:
-            resource_endpoint, resource_id = url_list[-2:]
-            # Building the the collection id, i.e. vocab:Entrypoint/Collection
-            redis_resource_parent_id = self.complete_vocabulary_url.doc_url + 'EntryPoint/' + resource_endpoint
+        class_uris = []
+        class_title = []
+        collection_title = []
+        for class_name, class_def in self.api_doc.parsed_classes.items():
+            class_uris.append(class_def['class'].id_)
+            class_title.append(class_name)
 
+        for collection_name, collection__def in self.api_doc.collections.items():
+            collection_title.append(collection_name)
+
+        resource_endpoint, resource_id = url_list[-2:]
+        breakpoint()
+        # If processing for a resource
+        if resource_endpoint in class_title or resource_id in class_title:
+            # Building the the id of the parent of resource
+            redis_resource_parent_id = self.complete_vocabulary_url.doc_url + 'EntryPoint/' + resource_endpoint
             class_instances = self.graph_utils.read(
                 match="",
                 where="id='{}'".format(redis_resource_parent_id),
@@ -96,9 +103,6 @@ class GraphOperations():
 
             # Checking for embedded resources in the properties of resource
             class_doc = self.api_doc.parsed_classes[resource['@type']]['class']
-            class_uris = []
-            for class_name, class_def in self.api_doc.parsed_classes.items():
-                class_uris.append(class_def['class'].id_)
             supported_properties = class_doc.supportedProperty
             embedded_resources = []
             for supported_prop in supported_properties:
@@ -109,14 +113,10 @@ class GraphOperations():
 
             return embedded_resources
         # Second Case - When processing a GET for a Collection
-        elif len(url_list) == 2:
-            entrypoint, resource_endpoint = url_list
-            redis_collection_id = self.vocabulary + \
-                ":" + entrypoint + \
-                "/" + resource_endpoint
-
+        elif resource_endpoint in collection_title or resource_id in collection_title:
+            redis_collection_id = self.complete_vocabulary_url.doc_url + 'EntryPoint/' + resource_endpoint
             self.graph_utils.update(
-                match="collection",
+                match=":collection",
                 where="id='{}'".format(redis_collection_id),
                 set="members = \"{}\"".format(str(resource["members"])))
             return []
@@ -125,7 +125,7 @@ class GraphOperations():
         # with the Redis Hydra structure, only returns response
         else:
             logger.info("No modification to Redis was made")
-            return
+            return []
 
     def put_processing(self, url: str, new_object: dict) -> None:
         """Synchronize Redis upon new PUT operations
