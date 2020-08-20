@@ -47,11 +47,10 @@ class GraphOperations():
         # First case - When processing a GET for a resource
         # When processing GET for a Resource, instead of finding the collection of that resource create a connection
         # in that class only.
-        # TODO change the identification of request for Collection or member
+        # TODO Make the identification of whether it is a processing GET for resource or Collection
         if len(url_list) == 6:
             resource_endpoint, resource_id = url_list[-2:]
             # Building the the collection id, i.e. vocab:Entrypoint/Collection
-            # TODO Don't build the collection id, add it to the class like class_has_instance then the instance
             redis_resource_parent_id = self.complete_vocabulary_url.doc_url + 'EntryPoint/' + resource_endpoint
 
             class_instances = self.graph_utils.read(
@@ -97,23 +96,16 @@ class GraphOperations():
 
             # Checking for embedded resources in the properties of resource
             class_doc = self.api_doc.parsed_classes[resource['@type']]['class']
+            class_uris = []
+            for class_name, class_def in self.api_doc.parsed_classes.items():
+                class_uris.append(class_def['class'].id_)
             supported_properties = class_doc.supportedProperty
             embedded_resources = []
             for supported_prop in supported_properties:
-                # TODO discover embedded resources in proper manner
-                    if (self.vocabulary + ":") in str(supported_prop.prop):
-                        if resource[supported_prop.title]:
-                            new_resource = {}
-                            collection_name = supported_prop.prop.replace(
-                                self.vocabulary + ":", "") + "Collection"
-                            discovered_url = (self.api_doc.entrypoint.url 
-                                + self.api_doc.entrypoint.api + "/" + 
-                                collection_name + "/" + 
-                                resource[supported_prop.title])
-                            new_resource['parent_id'] = resource['@id']
-                            new_resource['parent_type'] = resource['@type']
-                            new_resource['embedded_url'] = discovered_url
-                            embedded_resources.append(new_resource)
+                if supported_prop.prop in class_uris:
+                    new_resource = {'parent_id': resource['@id'], 'parent_type': resource['@type'],
+                                    'embedded_url': supported_prop.prop}
+                    embedded_resources.append(new_resource)
 
             return embedded_resources
         # Second Case - When processing a GET for a Collection
@@ -145,7 +137,6 @@ class GraphOperations():
         new_object["@id"] = '/' + url_list[-1]
         # Simply call self.get_processing to add the resource to the collection at Redis
         embedded_resources = self.get_processing(url, new_object)
-
         return embedded_resources
 
     def post_processing(self, url: str, updated_object: dict) -> None:
