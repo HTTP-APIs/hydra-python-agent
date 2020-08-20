@@ -55,7 +55,7 @@ class GraphOperations():
             redis_resource_parent_id = self.complete_vocabulary_url.doc_url + 'EntryPoint/' + resource_endpoint
 
             class_instances = self.graph_utils.read(
-                match=":classes",
+                match="",
                 where="id='{}'".format(redis_resource_parent_id),
                 ret="")
 
@@ -69,25 +69,21 @@ class GraphOperations():
 
             class_instances.append(resource_to_append)
             # Updating the collection properties with the nem member
-            print("Updating")
             self.graph_utils.update(
-                match="classes",
+                match="",
                 where="id='{}'".format(redis_resource_parent_id),
-                set="instances = \"{}\"".format(class_instances))
+                set="instances = \"{}\"".format(str(class_instances)))
 
             # Creating node for new collection member and committing to Redis
-            print("Adding node")
-            # TODO encode the dict value in strings
             for key, value in resource.items():
                 if type(value) is not str:
-                    resource[key] = json.dumps(value)
+                    resource[key] = str(value)
 
             self.graph_utils.add_node("objects" + resource['@type'],
                                       resource['@type'] + resource_id,
                                       resource)
             # Commits the graph
             self.graph_utils.flush()
-            print("Creating relations")
             # Creating relation between collection node and member
             self.graph_utils.create_relation(label_source="classes",
                                              where_source="type : \'" +
