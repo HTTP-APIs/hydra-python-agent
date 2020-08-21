@@ -199,6 +199,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         """
         # Embedded resources are fetched and then properly linked
         for embedded_resource in embedded_resources:
+            print('embedded_resource', embedded_resource)
             self.get(embedded_resource['embedded_url'])
             self.graph_operations.link_resources(
                 embedded_resource['parent_id'],

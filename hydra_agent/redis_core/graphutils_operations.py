@@ -103,11 +103,14 @@ class GraphOperations():
             # Checking for embedded resources in the properties of resource
             class_doc = self.api_doc.parsed_classes[resource['@type']]['class']
             supported_properties = class_doc.supportedProperty
+            obtained_resource = self.get_resource()
             embedded_resources = []
             for supported_prop in supported_properties:
                 if supported_prop.prop in class_uris:
+                    # TODO give correct embedded url
                     new_resource = {'parent_id': resource['@id'], 'parent_type': resource['@type'],
-                                    'embedded_url': supported_prop.prop}
+                                    'embedded_url': self.complete_vocabulary_url.doc_url + 'EntryPoint/' +
+                                    eval(resource[supported_prop.title])['@type']}
                     embedded_resources.append(new_resource)
 
             return embedded_resources
@@ -146,7 +149,7 @@ class GraphOperations():
         # Manually add the id that will be on the server for the object added
         url_list = url.split('/')
         updated_object["@id"] = '/' + url_list[-1]
-        print("Updated OBject", updated_object)
+        print("Updated Object", updated_object)
         # Simply call self.get_processing to add the resource to the collection at Redis
         self.delete_processing(url)
         embedded_resources = self.get_processing(url, updated_object)
@@ -207,6 +210,7 @@ class GraphOperations():
             url_aux = url.rstrip('/')
             url_list = url_aux.split('/')
             # Checking if querying for cached Collection or Member
+            breakpoint()
             if url_list[-1] in initial_graph.collection_endpoints or url_list[-2] in initial_graph.collection_endpoints:
                 # When checking for collections we will always fetch the server
                 return None
