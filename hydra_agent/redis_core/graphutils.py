@@ -52,7 +52,7 @@ class GraphUtils:
         :param where: Used to filter results, not mandatory.
         :return: Query results
         """
-        query = "MATCH(p:{})".format(match)
+        query = "MATCH(p{})".format(match)
         if where is not None:
             query += " WHERE(p.{})".format(where)
         query += " SET p.{}".format(set)
@@ -92,7 +92,6 @@ class GraphUtils:
         query = "MATCH(s:{} {{{}}}), ".format(label_source, where_source)
         query += "(d:{} {{{}}})".format(label_dest, where_dest)
         query += " CREATE (s)-[:{}]->(d)".format(relation_type)
-        breakpoint()
         return self.redis_connection.execute_command("GRAPH.QUERY",
                                                      self.graph_name,
                                                      query)
@@ -106,7 +105,6 @@ class GraphUtils:
         :return: Created Node
         """
         node = Node(label=label, alias=alias, properties=properties)
-        print(node)
         self.redis_graph.add_node(node)
         return node
 

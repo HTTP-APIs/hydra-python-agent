@@ -55,7 +55,6 @@ class GraphOperations():
             collection_title.append(collection_name)
 
         resource_endpoint, resource_id = url_list[-2:]
-        breakpoint()
         # If processing for a resource
         if resource_endpoint in class_title or resource_id in class_title:
             # Building the the id of the parent of resource
@@ -127,27 +126,27 @@ class GraphOperations():
             logger.info("No modification to Redis was made")
             return []
 
-    def put_processing(self, url: str, new_object: dict) -> None:
+    def put_processing(self, url: str, new_object: dict) -> list:
         """Synchronize Redis upon new PUT operations
         :param url: URL for the resource to be created.
         :return: None.
         """
         # Manually add the id that will be on the server for the object added
-        url_list = url.split('/', 3)
+        url_list = url.split('/')
         new_object["@id"] = '/' + url_list[-1]
         # Simply call self.get_processing to add the resource to the collection at Redis
         embedded_resources = self.get_processing(url, new_object)
         return embedded_resources
 
-    def post_processing(self, url: str, updated_object: dict) -> None:
+    def post_processing(self, url: str, updated_object: dict) -> list:
         """Synchronize Redis upon new POST operations
         :param url: URL for the resource to be updated.
         :return: None.
         """
         # Manually add the id that will be on the server for the object added
-        url_list = url.split('/', 3)
+        url_list = url.split('/')
         updated_object["@id"] = '/' + url_list[-1]
-
+        print("Updated OBject", updated_object)
         # Simply call self.get_processing to add the resource to the collection at Redis
         self.delete_processing(url)
         embedded_resources = self.get_processing(url, updated_object)
@@ -159,23 +158,19 @@ class GraphOperations():
         :return: None.
         """
         # MEMBER NODE Deleting from Redis Graph
-        url_list = url.split('/', 3)
+        url_list = url.rstrip('/')
+        url_list = url_list.split('/')
         object_id = '/' + url_list[-1]
-
         self.graph_utils.delete(where="id='{}'".format(object_id))
 
         # COLLECTION Property members update
-        url = url.rstrip('/').replace(self.entrypoint_url, "EntryPoint")
-        entrypoint, resource_endpoint, resource_id = url.split('/')
-
+        resource_endpoint, resource_id = url_list[-2:]
         # Building the the collection id, i.e. vocab:Entrypoint/Collection
-        redis_collection_id = self.vocabulary + \
-            ":" + entrypoint + \
-            "/" + resource_endpoint
+        redis_resource_parent_id = self.complete_vocabulary_url.doc_url + 'EntryPoint/' + resource_endpoint
 
         collection_members = self.graph_utils.read(
             match=":collection",
-            where="id='{}'".format(redis_collection_id),
+            where="id='{}'".format(redis_resource_parent_id),
             ret="")
 
         # Checking if it's the first member to be loaded
@@ -189,8 +184,8 @@ class GraphOperations():
                 collection_members.remove(member)
 
         self.graph_utils.update(
-            match="collection",
-            where="id='{}'".format(redis_collection_id),
+            match=":collection",
+            where="id='{}'".format(redis_resource_parent_id),
             set="members = \"{}\"".format(str(collection_members)))
 
         return
@@ -243,7 +238,7 @@ class GraphOperations():
             logger.info("get_resource failed and couldn't fetch Redis")
 
     def link_resources(self, parent_id: str, parent_type: str,
-                       node_url: str) -> str:
+                       node_url: str, initial_graph: InitialGraph=None) -> str:
         """Checks for existence of discovered resource and creates links
         for embedded resources inside other resources properties
         :parent_id: Resource ID for the parent node that had this reference
@@ -251,7 +246,7 @@ class GraphOperations():
         :node_url: URL Reference for resource found inside a property
         "return: Default Redis response with amount of relations created
         """
-        resource = self.get_resource(node_url)
+        resource = self.get_resource(node_url, initial_graph=initial_graph)
         if resource is None:
             logger.info("\n Embedded link {}".format(node_url) +
                         "cannot be fetched")
