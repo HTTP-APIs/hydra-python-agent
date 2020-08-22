@@ -35,7 +35,7 @@ class TestAgent(unittest.TestCase):
         """Tests get method from the Agent with URL
         :param get_session_mock: MagicMock object for patching session.get
         """
-        state_object = {"@id": "/api/StateCollection/1", "@type": "State",
+        state_object = {"@id": "/api/State/1", "@type": "State",
                         "Battery": "sensor Ex", "Direction": "speed Ex",
                         "DroneID": "sensor Ex", "Position": "model Ex",
                         "SensorStatus": "sensor Ex", "Speed": "2",
@@ -44,7 +44,7 @@ class TestAgent(unittest.TestCase):
         get_session_mock.return_value.status_code = 200
         get_session_mock.return_value.json.return_value = state_object
         response = self.agent.get("http://localhost:8080/api/" +
-                                  "StateCollection/1")
+                                  "State/1")
 
         self.assertEqual(response, state_object)
 
@@ -53,16 +53,16 @@ class TestAgent(unittest.TestCase):
         """Tests get method from the Agent by class name and properties
         :param get_session_mock: MagicMock object for patching session.get
         """
-        state_object = {"@id": "/api/StateCollection/1", "@type": "State",
+        state_object = {"@id": "/api/State/1", "@type": "State",
                         "Battery": "sensor Ex", "Direction": "North",
                         "DroneID": "sensor Ex", "Position": "model Ex",
                         "SensorStatus": "sensor Ex", "Speed": "2",
-                        "@context": "/api/contexts/StateCollection.jsonld"}
+                        "@context": "/api/contexts/State.jsonld"}
 
         get_session_mock.return_value.status_code = 200
         get_session_mock.return_value.json.return_value = state_object
         response_url = self.agent.get("http://localhost:8080/api/" +
-                                      "StateCollection/1")
+                                      "State/1")
 
         response_cached = self.agent.get(resource_type="State",
                                          filters={"Direction": "North"},
@@ -72,9 +72,9 @@ class TestAgent(unittest.TestCase):
         self.assertEqual(response_url, response_cached)
 
         response_not_cached = self.agent.get("http://localhost:8080/api/" +
-                                             "StateCollection/1")
+                                             "State/1")
         self.assertEqual(response_not_cached, response_cached)
-
+    #TODO Fix this test
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.put')
     def test_get_collection(self, put_session_mock, embedded_get_mock):
@@ -407,7 +407,7 @@ class TestAgent(unittest.TestCase):
         """
         new_object = {"@type": "Drone", "DroneState": {
                       "@type": "State", "Battery": "C1WE92", "Direction": "Q9VV88", "DroneID": "6EBGT5", "Position": "A"
-                      , "SensorStatus": "335Y8B", "Speed": "IZPSTE"},
+                      ,"SensorStatus": "335Y8B", "Speed": "IZPSTE"},
                       "name": "Smart Drone", "model": "Hydra Drone",
                       "MaxSpeed": "999", "Sensor": "Wind"}
 
@@ -418,19 +418,32 @@ class TestAgent(unittest.TestCase):
         put_session_mock.return_value.json.return_value = new_object
         put_session_mock.return_value.headers = {'Location': new_object_url}
 
-        state_object = {"@context": "/api/contexts/StateCollection.jsonld",
-                        "@id": "/api/StateCollection/1", "@type": "State",
-                        "Battery": "sensor Ex", "Direction": "speed Ex",
-                        "DroneID": "sensor Ex", "Position": "model Ex",
-                        "SensorStatus": "sensor Ex", "Speed": "2"}
+        drone_res = {
+                    "@context": "/serverapi/contexts/Drone.jsonld",
+                    "@id": "/serverapi/Drone/1",
+                    "@type": "Drone",
+                    "DroneState": {
+                        "@id": "/serverapi/State/1",
+                        "@type": "State",
+                        "Battery": "C1WE92",
+                        "Direction": "Q9VV88",
+                        "DroneID": "6EBGT5",
+                        "Position": "A",
+                        "SensorStatus": "335Y8B",
+                        "Speed": "IZPSTE"
+                    },
+                    "MaxSpeed": "A3GZ37",
+                    "Sensor": "E7JD5Q",
+                    "model": "HB14CX",
+                    "name": "Priaysnhu"
+        }
 
         # Mocking an object to be used for a property that has an embedded link
         embedded_get_mock.return_value.status_code = 200
-        embedded_get_mock.return_value.json.return_value = state_object
-
+        embedded_get_mock.return_value.json.return_value = drone_res
         response, new_object_url = self.agent.put(class_url, new_object)
-
         # Checking if Drone Collection has an edge to the Drone Resource
+
         query = "MATCH (p)-[r]->() WHERE p.type = 'Drone' \
             RETURN type(r)"
         query_result = self.redis_graph.query(query)

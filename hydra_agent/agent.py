@@ -5,12 +5,12 @@ from hydra_agent.redis_core.redis_proxy import RedisProxy
 from hydra_agent.redis_core.graphutils_operations import GraphOperations
 from hydra_agent.redis_core.graph_init import InitialGraph
 from hydra_python_core import doc_maker
+from hydra_python_core.doc_writer import HydraDoc
 from typing import Union, Tuple
 from requests import Session
 import json
 from hydra_agent.helpers import expand_template
 from hydra_agent.collection_paginator import Paginator
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
 
@@ -20,33 +20,30 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
     CRUD interface - to query hydrus
     """
 
-    def __init__(self, entrypoint_url: str, sync: bool = True) -> None:
+    def __init__(self, entrypoint_url: str, namespace: str = '/sync') -> None:
         """Initialize the Agent
         :param entrypoint_url: Entrypoint URL for the hydrus server
         :param namespace: Namespace endpoint to listen for updates
         :return: None
         """
         self.entrypoint_url = entrypoint_url.strip().rstrip('/')
-        self.sync = sync
+        self.redis_proxy = RedisProxy()
+        self.redis_connection = self.redis_proxy.get_connection()
         Session.__init__(self)
         self.fetch_apidoc()
-        if sync:
-            self.redis_proxy = RedisProxy()
-            self.redis_connection = self.redis_proxy.get_connection()
-            namespace = '/sync'
-            self.initialize_graph()
-            self.graph_operations = GraphOperations(self.entrypoint_url,
-                                                    self.api_doc,
-                                                    self.redis_proxy)
-            # Declaring Socket Rules and instantiating Synchronization Socket
-            socketio.ClientNamespace.__init__(self, namespace)
-            socketio.Client.__init__(self, logger=True)
-            socketio.Client.register_namespace(self, self)
-            socketio.Client.connect(self, self.entrypoint_url,
-                                    namespaces=namespace)
-            self.last_job_id = ""
+        self.initialize_graph()
+        self.graph_operations = GraphOperations(self.entrypoint_url,
+                                                self.api_doc,
+                                                self.redis_proxy)
+        # Declaring Socket Rules and instantiation Synchronization Socket
+        socketio.ClientNamespace.__init__(self, namespace)
+        socketio.Client.__init__(self, logger=True)
+        socketio.Client.register_namespace(self, self)
+        socketio.Client.connect(self, self.entrypoint_url,
+                                namespaces=namespace)
+        self.last_job_id = ""
 
-    def fetch_apidoc(self) -> dict:
+    def fetch_apidoc(self) -> HydraDoc:
         """Fetches API DOC from Link Header by checking the hydra apiDoc
         relation and passes the obtained JSON-LD to doc_maker module of
         hydra_python_core to return HydraDoc which is used by the agent.
@@ -59,8 +56,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             self.api_doc = doc_maker.create_doc(jsonld_api_doc, self.entrypoint_url, 'serverapi')
             return self.api_doc
         except:
-            print("Error parsing your API Documentation. Please make sure Link header \
-                contains the URL of APIDOC with rel http://www.w3.org/ns/hydra/core#apiDocumentation")
+            print("Error parsing your API Documentation")
             raise
 
     def initialize_graph(self) -> None:
@@ -102,13 +98,13 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                     To Jump:
                     paginator.jump_to_page(2) 
         """
-        if self.sync:
-            redis_response = self.graph_operations.get_resource(url, resource_type, filters)
-            if redis_response:
-                if type(redis_response) is dict:
-                    return redis_response
-                elif len(redis_response) >= cached_limit:
-                    return redis_response
+        redis_response = self.graph_operations.get_resource(url, self.graph, resource_type,
+                                                            filters)
+        if redis_response:
+            if type(redis_response) is dict:
+                return redis_response
+            elif len(redis_response) >= cached_limit:
+                return redis_response
 
         # If querying with resource type build url
         # This can be more stable when adding Manages Block
@@ -128,10 +124,9 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
 
         if response.status_code == 200:
             # Graph_operations returns the embedded resources if finding any
-            if self.sync:
-                embedded_resources = \
-                    self.graph_operations.get_processing(url, response.json())
-                self.process_embedded(embedded_resources)
+            embedded_resources = \
+                self.graph_operations.get_processing(url, response.json())
+            self.process_embedded(embedded_resources)
             if response.json()['@type'] in self.api_doc.parsed_classes:
                 return response.json()
             else:
@@ -153,9 +148,9 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         if response.status_code == 201:
             url = response.headers['Location']
             # Graph_operations returns the embedded resources if finding any
-            if self.sync:
-                embedded_resources = self.graph_operations.put_processing(url, new_object)
-                self.process_embedded(embedded_resources)
+            full_resource = super().get(url)
+            embedded_resources = self.graph_operations.put_processing(url, full_resource.json())
+            self.process_embedded(embedded_resources)
             return response.json(), url
         else:
             return response.text, ""
@@ -170,10 +165,10 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
 
         if response.status_code == 200:
             # Graph_operations returns the embedded resources if finding any
-            if self.sync:
-                embedded_resources = \
-                    self.graph_operations.post_processing(url, updated_object)
-                self.process_embedded(embedded_resources)
+            print("Embedding resources")
+            embedded_resources = \
+                self.graph_operations.post_processing(url, updated_object)
+            self.process_embedded(embedded_resources)
             return response.json()
         else:
             return response.text
@@ -186,8 +181,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         response = super().delete(url)
 
         if response.status_code == 200:
-            if self.sync:
-                self.graph_operations.delete_processing(url)
+            self.graph_operations.delete_processing(url)
             return response.json()
         else:
             return response.text
@@ -199,12 +193,13 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         """
         # Embedded resources are fetched and then properly linked
         for embedded_resource in embedded_resources:
-            print('embedded_resource', embedded_resource)
             self.get(embedded_resource['embedded_url'])
             self.graph_operations.link_resources(
                 embedded_resource['parent_id'],
                 embedded_resource['parent_type'],
-                embedded_resource['embedded_url'])
+                embedded_resource['embedded_url'],
+                embedded_resource['embedded_type'],
+                self.graph)
 
     # Below are the functions that are responsible to process Socket Events
     def on_connect(self, data: dict = None) -> None:

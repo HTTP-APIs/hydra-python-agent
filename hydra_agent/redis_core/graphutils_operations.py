@@ -1,4 +1,4 @@
-import urllib.request
+import requests
 import json
 import logging
 from urllib.error import URLError, HTTPError
@@ -103,19 +103,20 @@ class GraphOperations():
             # Checking for embedded resources in the properties of resource
             class_doc = self.api_doc.parsed_classes[resource['@type']]['class']
             supported_properties = class_doc.supportedProperty
-            obtained_resource = self.get_resource()
             embedded_resources = []
             for supported_prop in supported_properties:
                 if supported_prop.prop in class_uris:
-                    # TODO give correct embedded url
+                    embedded_url = eval(resource[supported_prop.title])['@id']
+                    embedded_type = eval(resource[supported_prop.title])['@type']
                     new_resource = {'parent_id': resource['@id'], 'parent_type': resource['@type'],
-                                    'embedded_url': self.complete_vocabulary_url.doc_url + 'EntryPoint/' +
-                                    eval(resource[supported_prop.title])['@type']}
+                                    'embedded_url': "{}{}".format(self.entrypoint_url, embedded_url),
+                                    'embedded_type': embedded_type}
                     embedded_resources.append(new_resource)
 
             return embedded_resources
         # Second Case - When processing a GET for a Collection
         elif resource_endpoint in collection_title or resource_id in collection_title:
+            # TODO  correct redis_collection_id
             redis_collection_id = self.complete_vocabulary_url.doc_url + 'EntryPoint/' + resource_endpoint
             self.graph_utils.update(
                 match=":collection",
@@ -149,7 +150,6 @@ class GraphOperations():
         # Manually add the id that will be on the server for the object added
         url_list = url.split('/')
         updated_object["@id"] = '/' + url_list[-1]
-        print("Updated Object", updated_object)
         # Simply call self.get_processing to add the resource to the collection at Redis
         self.delete_processing(url)
         embedded_resources = self.get_processing(url, updated_object)
@@ -172,24 +172,24 @@ class GraphOperations():
         redis_resource_parent_id = self.complete_vocabulary_url.doc_url + 'EntryPoint/' + resource_endpoint
 
         collection_members = self.graph_utils.read(
-            match=":collection",
+            match="",
             where="id='{}'".format(redis_resource_parent_id),
             ret="")
 
         # Checking if it's the first member to be loaded
-        if 'members' not in collection_members:
+        if 'instances' not in collection_members:
             collection_members = []
         else:
-            collection_members = eval(collection_members['members'])
+            collection_members = eval(collection_members['instances'])
 
         for member in collection_members:
             if resource_id in member['@id']:
                 collection_members.remove(member)
 
         self.graph_utils.update(
-            match=":collection",
+            match="",
             where="id='{}'".format(redis_resource_parent_id),
-            set="members = \"{}\"".format(str(collection_members)))
+            set="instances = \"{}\"".format(str(collection_members)))
 
         return
 
@@ -210,7 +210,6 @@ class GraphOperations():
             url_aux = url.rstrip('/')
             url_list = url_aux.split('/')
             # Checking if querying for cached Collection or Member
-            breakpoint()
             if url_list[-1] in initial_graph.collection_endpoints or url_list[-2] in initial_graph.collection_endpoints:
                 # When checking for collections we will always fetch the server
                 return None
@@ -242,7 +241,7 @@ class GraphOperations():
             logger.info("get_resource failed and couldn't fetch Redis")
 
     def link_resources(self, parent_id: str, parent_type: str,
-                       node_url: str, initial_graph: InitialGraph=None) -> str:
+                       node_url: str, node_type: str, initial_graph: InitialGraph=None) -> str:
         """Checks for existence of discovered resource and creates links
         for embedded resources inside other resources properties
         :parent_id: Resource ID for the parent node that had this reference
@@ -257,17 +256,17 @@ class GraphOperations():
             return "\n Embedded link {}".format(node_url) + \
                    "cannot be fetched"
 
-        # Creating relation between collection node and member
-        response = self.graph_utils.create_relation(label_source="objects" +
+        # Creating relation between node and class
+        response = self.graph_utils.create_relation(label_source="classes" +
                                                     parent_type,
                                                     where_source="id : \'" +
                                                     parent_id + "\'",
                                                     relation_type="has_" +
                                                     resource['@type'],
                                                     label_dest="objects" +
-                                                    resource['@type'],
+                                                    node_type,
                                                     where_dest="id : \'" +
-                                                    resource['@id'] + "\'")
+                                                    node_url + "\'")
         return str(response)
 
 

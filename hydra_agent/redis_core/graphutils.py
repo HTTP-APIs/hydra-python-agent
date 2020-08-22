@@ -56,7 +56,6 @@ class GraphUtils:
         if where is not None:
             query += " WHERE(p.{})".format(where)
         query += " SET p.{}".format(set)
-        print("Query", query)
         return self.redis_connection.execute_command("GRAPH.QUERY",
                                                      self.graph_name,
                                                      query)
@@ -92,6 +91,7 @@ class GraphUtils:
         query = "MATCH(s:{} {{{}}}), ".format(label_source, where_source)
         query += "(d:{} {{{}}})".format(label_dest, where_dest)
         query += " CREATE (s)-[:{}]->(d)".format(relation_type)
+        print(query)
         return self.redis_connection.execute_command("GRAPH.QUERY",
                                                      self.graph_name,
                                                      query)
