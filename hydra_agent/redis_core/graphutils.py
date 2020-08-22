@@ -34,7 +34,7 @@ class GraphUtils:
         if where:
             query += " WHERE(p.{})".format(where)
         query += " RETURN p{}".format(ret)
-
+        print("READING>>>>", query)
         query_result = self.redis_graph.query(query)
 
         # Processing Redis-set response format

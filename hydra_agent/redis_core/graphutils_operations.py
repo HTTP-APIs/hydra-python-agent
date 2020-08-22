@@ -41,6 +41,7 @@ class GraphOperations():
         :param resource: Resource object fetched from server.
         :return: list of embedded resources to be fetched.
         """
+        print("GET Processing", resource)
         url_list = url.rstrip('/')
         url_list = url_list.split('/')
         # Updating Redis
@@ -109,7 +110,7 @@ class GraphOperations():
                     embedded_url = eval(resource[supported_prop.title])['@id']
                     embedded_type = eval(resource[supported_prop.title])['@type']
                     new_resource = {'parent_id': resource['@id'], 'parent_type': resource['@type'],
-                                    'embedded_url': "{}{}".format(self.entrypoint_url, embedded_url),
+                                    'embedded_url': "http://localhost:8080{}".format(embedded_url),
                                     'embedded_type': embedded_type}
                     embedded_resources.append(new_resource)
 
@@ -128,7 +129,7 @@ class GraphOperations():
         # with the Redis Hydra structure, only returns response
         else:
             logger.info("No modification to Redis was made")
-            return []
+            return None
 
     def put_processing(self, url: str, new_object: dict) -> list:
         """Synchronize Redis upon new PUT operations
@@ -207,8 +208,10 @@ class GraphOperations():
             raise Exception("ERR: You should set at least" +
                             "url OR resource_type")
         if url:
+            print("GET RESOURCE", url)
             url_aux = url.rstrip('/')
             url_list = url_aux.split('/')
+            print("URL LIST", url_list)
             # Checking if querying for cached Collection or Member
             if url_list[-1] in initial_graph.collection_endpoints or url_list[-2] in initial_graph.collection_endpoints:
                 # When checking for collections we will always fetch the server
@@ -218,10 +221,11 @@ class GraphOperations():
                 object_id = '/' + url_list[-1]
                 resource = self.graph_utils.read(
                                     match="",
-                                    where="id='{}'".format(object_id),
+                                    where="id='/{}/{}{}'".format(url_list[-3], url_list[-2], object_id),
                                     ret="")
             # If having only one object/querying by id return only dict
                 if resource is not None and len(resource) == 1:
+                    print("Retruning resources", resource[0])
                     return resource[0]
         elif resource_type:
             where_filter = ""
@@ -256,8 +260,8 @@ class GraphOperations():
             return "\n Embedded link {}".format(node_url) + \
                    "cannot be fetched"
 
-        # Creating relation between node and class
-        response = self.graph_utils.create_relation(label_source="classes" +
+        # Creating relation between the nodes
+        response = self.graph_utils.create_relation(label_source="objects" +
                                                     parent_type,
                                                     where_source="id : \'" +
                                                     parent_id + "\'",

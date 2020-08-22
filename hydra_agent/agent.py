@@ -98,8 +98,12 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                     To Jump:
                     paginator.jump_to_page(2) 
         """
+        print("I am called", url)
+        url = url.replace("None", "State")
+        print(url)
         redis_response = self.graph_operations.get_resource(url, self.graph, resource_type,
                                                             filters)
+        print("redis response", redis_response)
         if redis_response:
             if type(redis_response) is dict:
                 return redis_response
@@ -124,6 +128,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
 
         if response.status_code == 200:
             # Graph_operations returns the embedded resources if finding any
+            print("Again going for embedding resources", url)
             embedded_resources = \
                 self.graph_operations.get_processing(url, response.json())
             self.process_embedded(embedded_resources)
