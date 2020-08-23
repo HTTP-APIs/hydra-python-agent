@@ -1,6 +1,7 @@
 import requests
 import json
 import logging
+from urllib.parse import urlparse
 from urllib.error import URLError, HTTPError
 from hydra_python_core.doc_writer import HydraDoc
 from hydra_agent.redis_core.redis_proxy import RedisProxy
@@ -26,6 +27,9 @@ class GraphOperations():
         :return: None
         """
         self.entrypoint_url = entrypoint_url
+        url_parse = urlparse(entrypoint_url)
+        self.entrypoint = url_parse.scheme + "://" + url_parse.netloc
+        self.api_name = url_parse.path.rstrip('/')
         self.api_doc = api_doc
         self.redis_proxy = redis_proxy
         self.redis_connection = redis_proxy.get_connection()
@@ -100,7 +104,6 @@ class GraphOperations():
                                              resource['@type'],
                                              where_dest="id : \'" +
                                              resource['@id'] + "\'")
-
             # Checking for embedded resources in the properties of resource
             class_doc = self.api_doc.parsed_classes[resource['@type']]['class']
             supported_properties = class_doc.supportedProperty
@@ -110,7 +113,7 @@ class GraphOperations():
                     embedded_url = eval(resource[supported_prop.title])['@id']
                     embedded_type = eval(resource[supported_prop.title])['@type']
                     new_resource = {'parent_id': resource['@id'], 'parent_type': resource['@type'],
-                                    'embedded_url': "http://localhost:8080{}".format(embedded_url),
+                                    'embedded_url': "{}{}".format(self.entrypoint, embedded_url),
                                     'embedded_type': embedded_type}
                     embedded_resources.append(new_resource)
             return embedded_resources

@@ -1,6 +1,7 @@
 import logging
 import sys
 import socketio
+from urllib.parse import urlparse
 from hydra_agent.redis_core.redis_proxy import RedisProxy
 from hydra_agent.redis_core.graphutils_operations import GraphOperations
 from hydra_agent.redis_core.graph_init import InitialGraph
@@ -27,6 +28,9 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         :return: None
         """
         self.entrypoint_url = entrypoint_url.strip().rstrip('/')
+        url_parse = urlparse(entrypoint_url)
+        self.entrypoint = url_parse.scheme + "://" + url_parse.netloc
+        self.api_name = url_parse.path.rstrip('/')
         self.redis_proxy = RedisProxy()
         self.redis_connection = self.redis_proxy.get_connection()
         Session.__init__(self)
@@ -53,7 +57,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             res = super().get(self.entrypoint_url)
             api_doc_url = res.links['http://www.w3.org/ns/hydra/core#apiDocumentation']['url']
             jsonld_api_doc = super().get(api_doc_url).json()
-            self.api_doc = doc_maker.create_doc(jsonld_api_doc, self.entrypoint_url, 'serverapi')
+            self.api_doc = doc_maker.create_doc(jsonld_api_doc, self.entrypoint, self.api_name )
             return self.api_doc
         except:
             print("Error parsing your API Documentation")

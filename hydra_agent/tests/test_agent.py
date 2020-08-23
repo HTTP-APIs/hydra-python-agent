@@ -27,6 +27,8 @@ class TestAgent(unittest.TestCase):
             self.agent = Agent("http://localhost:8080/api")
         except SyntaxError:
             self.setUp(self, get_session_mock, socket_client_mock)
+        except ConnectionResetError:
+            self.setUp(self, get_session_mock, socket_client_mock)
         self.redis_proxy = RedisProxy()
         self.redis_connection = self.redis_proxy.get_connection()
         self.redis_graph = Graph("apigraph", self.redis_connection)
