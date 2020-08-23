@@ -203,9 +203,12 @@ class TestAgent(unittest.TestCase):
         :param put_session_mock: MagicMock object for patching session.put
         :param post_session_mock: MagicMock object for patching session.post
         """
-        new_object = {"@type": "Drone", "DroneState": "1",
-                      "name": "Smart Drone", "model": "Hydra Drone",
-                      "MaxSpeed": "999", "Sensor": "Wind"}
+        new_object = {"@type": "Drone", "DroneState": {
+            "@type": "State", "Battery": "C1WE92", "Direction": "Q9VV88", "DroneID": "6EBGT5", "Position": "A"
+            , "SensorStatus": "335Y8B", "Speed": "IZPSTE"},
+            "MaxSpeed": "A3GZ37", "Sensor": "E7JD5Q",
+            "model": "HB14CX",
+            "name": "Priyanshu"}
 
         class_url = "http://localhost:8080/api/Drone/"
         new_object_url = class_url + "2"
@@ -213,25 +216,52 @@ class TestAgent(unittest.TestCase):
         put_session_mock.return_value.status_code = 201
         put_session_mock.return_value.json.return_value = new_object
         put_session_mock.return_value.headers = {'Location': new_object_url}
-        response, new_object_url = self.agent.put(new_object_url, new_object)
-
-        post_session_mock.return_value.status_code = 200
-        post_session_mock.return_value.json.return_value = {"msg": "success"}
-        new_object['name'] = "Updated Name"
-
         state_object = {"@context": "/api/contexts/State.jsonld",
                         "@id": "/api/State/1", "@type": "State",
                         "Battery": "sensor Ex", "Direction": "speed Ex",
                         "DroneID": "sensor Ex", "Position": "model Ex",
                         "SensorStatus": "sensor Ex", "Speed": "2"}
+        drone_res = {
+            "@context": "/api/contexts/Drone.jsonld",
+            "@id": "/api/Drone/2",
+            "@type": "Drone",
+            "DroneState": {
+                "@id": "/api/State/1",
+                "@type": "State",
+                "Battery": "C1WE92",
+                "Direction": "Q9VV88",
+                "DroneID": "6EBGT5",
+                "Position": "A",
+                "SensorStatus": "335Y8B",
+                "Speed": "IZPSTE"
+            },
+            "MaxSpeed": "A3GZ37",
+            "Sensor": "E7JD5Q",
+            "model": "HB14CX",
+            "name": "Priaysnhu"
+        }
+        fake_responses = [Mock(), Mock(), Mock()]
+        fake_responses[0].json.return_value = drone_res
+        fake_responses[0].status_code = 200
+        fake_responses[1].json.return_value = state_object
+        fake_responses[1].status_code = 200
         # Mocking an object to be used for a property that has an embedded link
         embedded_get_mock.return_value.status_code = 200
-        embedded_get_mock.return_value.json.return_value = state_object
+        embedded_get_mock.side_effect = fake_responses
 
+        response, new_object_url = self.agent.put(new_object_url, new_object)
+
+        post_session_mock.return_value.status_code = 200
+        post_session_mock.return_value.json.return_value = {"msg": "success"}
+        new_object['DroneState']['@id'] = "/api/State/1"
+        new_object['name'] = "Updated Name"
+        # Mocking an object to be used for a property that has an embedded link
         response = self.agent.post(new_object_url, new_object)
-
         # Assert if object was updated successfully as intended
+        fake_responses[2].json.return_value = new_object
+        fake_responses[2].status_code = 200
         get_new_object = self.agent.get(new_object_url)
+
         self.assertEqual(get_new_object, new_object)
 
     @patch('hydra_agent.agent.Session.get')
