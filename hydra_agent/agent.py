@@ -98,10 +98,9 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                     To Jump:
                     paginator.jump_to_page(2) 
         """
-        print("I am called", url)
+        # TODO if not collection search redis else directly get the resource
         redis_response = self.graph_operations.get_resource(url, self.graph, resource_type,
                                                             filters)
-        print("redis response", redis_response)
         if redis_response:
             if type(redis_response) is dict:
                 return redis_response
@@ -111,24 +110,29 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         # If querying with resource type build url
         # This can be more stable when adding Manages Block
         # More on: https://www.hydra-cg.com/spec/latest/core/#manages-block
-        if resource_type:
-            url = self.entrypoint_url + "/" + resource_type + "Collection"
-            response = super().get(url, params=filters)
-        else:
+        # if resource_type:
+        #     url = self.entrypoint_url + "/" + resource_type + "Collection"
+        #     response = super().get(url, params=filters)
+        # else:
+        if url:
+            print("I have url")
             if not bool(filters):
-                print("Getting resource")
+                print("jo filters")
                 response = super().get(url)
-                print("RESPONSE", response.json(), response.status_code)
+                print("RESPONSE", response.status_code)
             else:
-                response_body = super().get(url)
+                print("Getting response body")
+                response_body = super().get(url, filters)
                 # filters can be simple dict or a json-ld
-                templated_url = expand_template(
+                try:
+                    templated_url = expand_template(
                     url, response_body.json(), filters)
-                response = super().get(templated_url)
+                    response = super().get(templated_url)
+                except KeyError:
+                    response = response_body
 
         if response.status_code == 200:
             # Graph_operations returns the embedded resources if finding any
-            print("Again going for embedding resources", url)
             embedded_resources = \
                 self.graph_operations.get_processing(url, response.json())
             self.process_embedded(embedded_resources)
@@ -154,9 +158,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             url = response.headers['Location']
             # Graph_operations returns the embedded resources if finding any
             full_resource = super().get(url)
-            print("Going into put processing.....")
             embedded_resources = self.graph_operations.put_processing(url, full_resource.json())
-            print("Now processing emvedded resources")
             self.process_embedded(embedded_resources)
             return response.json(), url
         else:
@@ -172,7 +174,6 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
 
         if response.status_code == 200:
             # Graph_operations returns the embedded resources if finding any
-            print("Embedding resources")
             embedded_resources = \
                 self.graph_operations.post_processing(url, updated_object)
             self.process_embedded(embedded_resources)
@@ -200,7 +201,6 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         """
         # Embedded resources are fetched and then properly linked
         for embedded_resource in embedded_resources:
-            print("Getting embedded Resources")
             self.get(embedded_resource['embedded_url'])
             self.graph_operations.link_resources(
                 embedded_resource['parent_id'],

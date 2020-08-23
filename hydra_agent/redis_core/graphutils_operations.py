@@ -41,7 +41,6 @@ class GraphOperations():
         :param resource: Resource object fetched from server.
         :return: list of embedded resources to be fetched.
         """
-        print("GET Processing", resource)
         url_list = url.rstrip('/')
         url_list = url_list.split('/')
         # Updating Redis
@@ -117,8 +116,12 @@ class GraphOperations():
             return embedded_resources
         # Second Case - When processing a GET for a Collection
         elif resource_endpoint in collection_title or resource_id in collection_title:
-            # TODO  correct redis_collection_id
-            redis_collection_id = self.complete_vocabulary_url.doc_url + 'EntryPoint/' + resource_endpoint
+            print("IN collection_block", resource_endpoint, resource_id)
+            redis_collection_id = ""
+            if resource_endpoint in collection_title:
+                redis_collection_id = self.complete_vocabulary_url.doc_url + 'EntryPoint/' + resource_endpoint
+            if resource_id in collection_title:
+                redis_collection_id = self.complete_vocabulary_url.doc_url + 'EntryPoint/' + resource_id
             self.graph_utils.update(
                 match=":collection",
                 where="id='{}'".format(redis_collection_id),
@@ -206,15 +209,12 @@ class GraphOperations():
         :return: Object with resource found.
         """
         # Checking which kind of query, by URL or type
-        print("Asking for resource, ", url)
         if not url and not resource_type:
             raise Exception("ERR: You should set at least" +
                             "url OR resource_type")
         if url:
-            print("GET RESOURCE", url)
             url_aux = url.rstrip('/')
             url_list = url_aux.split('/')
-            print("URL LIST", url_list)
             # Checking if querying for cached Collection or Member
             if url_list[-1] in initial_graph.collection_endpoints or url_list[-2] in initial_graph.collection_endpoints:
                 # When checking for collections we will always fetch the server
@@ -222,7 +222,6 @@ class GraphOperations():
             # since class endpoints will always in the form of /class/<id>
             elif url_list[-2] in initial_graph.class_endpoints:
                 object_id = '/' + url_list[-1]
-                print("Reading resource")
                 resource = self.graph_utils.read(
                                     match="",
                                     where="id='/{}/{}{}'".format(url_list[-3], url_list[-2], object_id),

@@ -34,7 +34,6 @@ class GraphUtils:
         if where:
             query += " WHERE(p.{})".format(where)
         query += " RETURN p{}".format(ret)
-        print("READING>>>>", query)
         query_result = self.redis_graph.query(query)
 
         # Processing Redis-set response format
@@ -91,7 +90,6 @@ class GraphUtils:
         query = "MATCH(s:{} {{{}}}), ".format(label_source, where_source)
         query += "(d:{} {{{}}})".format(label_dest, where_dest)
         query += " CREATE (s)-[:{}]->(d)".format(relation_type)
-        print(query)
         return self.redis_connection.execute_command("GRAPH.QUERY",
                                                      self.graph_name,
                                                      query)

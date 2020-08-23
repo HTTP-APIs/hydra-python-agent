@@ -707,6 +707,58 @@ doc = {
             "title": "Collection"
         },
         {
+            "@id": "http://localhost:8080/api/vocab#DroneCollection",
+            "@type": "hydra:Class",
+            "description": "A collection of drone",
+            "subClassOf": "http://www.w3.org/ns/hydra/core#Collection",
+            "manages": {
+                "object": "http://localhost:8080/api/vocab#Drone",
+                "property": "rdfs:type"
+            },
+            "supportedOperation": [
+                {
+                    "@id": "_:drone_collection_retrieve",
+                    "@type": "http://schema.org/FindAction",
+                    "description": "Retrieves all Drone entities",
+                    "expects": "null",
+                    "method": "GET",
+                    "returns": "http://localhost:8080/api/vocab#DroneCollection",
+                    "expectsHeader": [],
+                    "returnsHeader": [],
+                    "possibleStatus": []
+                },
+                {
+                    "@id": "_:drone_create",
+                    "@type": "http://schema.org/AddAction",
+                    "description": "Create new Drone entity",
+                    "expects": "http://localhost:8080/api/vocab#Drone",
+                    "method": "PUT",
+                    "returns": "http://localhost:8080/api/vocab#Drone",
+                    "expectsHeader": [],
+                    "returnsHeader": [],
+                    "possibleStatus": [
+                        {
+                            "title": "If the Drone entity was created successfully.",
+                            "statusCode": 201,
+                            "description": ""
+                        }
+                    ]
+                }
+            ],
+            "supportedProperty": [
+                {
+                    "@type": "SupportedProperty",
+                    "description": "The drone",
+                    "property": "http://www.w3.org/ns/hydra/core#member",
+                    "readable": "true",
+                    "required": "false",
+                    "title": "members",
+                    "writeable": "true"
+                }
+            ],
+            "title": "DroneCollection"
+        },
+        {
             "@id": "http://localhost:8080/api/vocab#MessageCollection",
             "@type": "Collection",
             "description": "A collection of messages",
@@ -1665,6 +1717,51 @@ doc = {
                                 ],
                                 "returns": "null",
                                 "returnsHeader": []
+                            }
+                        ]
+                    },
+                    "readable": "true",
+                    "required": "null",
+                    "writeable": "false"
+                },
+                {
+                    "hydra:description": "The DroneCollection collection",
+                    "hydra:title": "dronecollection",
+                    "property": {
+                        "@id": "http://localhost:8080/api/vocab#EntryPoint/DroneCollection",
+                        "@type": "hydra:Link",
+                        "description": "The DroneCollection collection",
+                        "domain": "http://localhost:8080/api/vocab#EntryPoint",
+                        "label": "DroneCollection",
+                        "range": "http://localhost:8080/api/vocab#DroneCollection",
+                        "supportedOperation": [
+                            {
+                                "@id": "_:drone_collection_retrieve",
+                                "@type": "http://schema.org/FindAction",
+                                "description": "Retrieves all Drone entities",
+                                "expects": "null",
+                                "method": "GET",
+                                "returns": "http://localhost:8080/api/vocab#DroneCollection",
+                                "expectsHeader": [],
+                                "returnsHeader": [],
+                                "possibleStatus": []
+                            },
+                            {
+                                "@id": "_:drone_create",
+                                "@type": "http://schema.org/AddAction",
+                                "description": "Create new Drone entity",
+                                "expects": "http://localhost:8080/api/vocab#Drone",
+                                "method": "PUT",
+                                "returns": "http://localhost:8080/api/vocab#Drone",
+                                "expectsHeader": [],
+                                "returnsHeader": [],
+                                "possibleStatus": [
+                                    {
+                                        "title": "If the Drone entity was created successfully.",
+                                        "statusCode": 201,
+                                        "description": ""
+                                    }
+                                ]
                             }
                         ]
                     },
