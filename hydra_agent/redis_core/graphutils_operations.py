@@ -88,6 +88,7 @@ class GraphOperations():
                                       resource['@type'] + resource_id,
                                       resource)
             # Commits the graph
+
             self.graph_utils.flush()
             # Creating relation between collection node and member
             self.graph_utils.create_relation(label_source="classes",
@@ -112,11 +113,9 @@ class GraphOperations():
                                     'embedded_url': "http://localhost:8080{}".format(embedded_url),
                                     'embedded_type': embedded_type}
                     embedded_resources.append(new_resource)
-            print("Returning embedding resources", embedded_resources)
             return embedded_resources
         # Second Case - When processing a GET for a Collection
         elif resource_endpoint in collection_title or resource_id in collection_title:
-            print("IN collection_block", resource_endpoint, resource_id)
             redis_collection_id = ""
             if resource_endpoint in collection_title:
                 redis_collection_id = self.complete_vocabulary_url.doc_url + 'EntryPoint/' + resource_endpoint
@@ -143,9 +142,7 @@ class GraphOperations():
         url_list = url.split('/')
         new_object["@id"] = '/' + url_list[-1]
         # Simply call self.get_processing to add the resource to the collection at Redis
-        print("Going into get_processing")
         embedded_resources = self.get_processing(url, new_object)
-        print("REturing embedded resources from put_processing")
         return embedded_resources
 
     def post_processing(self, url: str, updated_object: dict) -> list:
@@ -228,7 +225,6 @@ class GraphOperations():
                                     ret="")
             # If having only one object/querying by id return only dict
                 if resource is not None and len(resource) == 1:
-                    print("Retruning resources", resource[0])
                     return resource[0]
         elif resource_type:
             where_filter = ""

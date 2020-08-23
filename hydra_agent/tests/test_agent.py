@@ -23,8 +23,10 @@ class TestAgent(unittest.TestCase):
         # Mocking get for ApiDoc to Server, so hydrus doesn't need to be up
         get_session_mock.return_value.json.return_value = drone_doc
         socket_client_mock.return_value = None
-
-        self.agent = Agent("http://localhost:8080/api")
+        try:
+            self.agent = Agent("http://localhost:8080/api")
+        except SyntaxError:
+            self.setUp(self, get_session_mock, socket_client_mock)
         self.redis_proxy = RedisProxy()
         self.redis_connection = self.redis_proxy.get_connection()
         self.redis_graph = Graph("apigraph", self.redis_connection)

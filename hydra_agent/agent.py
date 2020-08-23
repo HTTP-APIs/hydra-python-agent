@@ -57,7 +57,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             return self.api_doc
         except:
             print("Error parsing your API Documentation")
-            raise
+            raise SyntaxError
 
     def initialize_graph(self) -> None:
         """Initialize the Graph on Redis based on ApiDoc
@@ -98,7 +98,6 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                     To Jump:
                     paginator.jump_to_page(2) 
         """
-        # TODO if not collection search redis else directly get the resource
         redis_response = self.graph_operations.get_resource(url, self.graph, resource_type,
                                                             filters)
         if redis_response:
@@ -106,22 +105,11 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                 return redis_response
             elif len(redis_response) >= cached_limit:
                 return redis_response
-
-        # If querying with resource type build url
-        # This can be more stable when adding Manages Block
-        # More on: https://www.hydra-cg.com/spec/latest/core/#manages-block
-        # if resource_type:
-        #     url = self.entrypoint_url + "/" + resource_type + "Collection"
-        #     response = super().get(url, params=filters)
-        # else:
         if url:
-            print("I have url")
+
             if not bool(filters):
-                print("jo filters")
                 response = super().get(url)
-                print("RESPONSE", response.status_code)
             else:
-                print("Getting response body")
                 response_body = super().get(url, filters)
                 # filters can be simple dict or a json-ld
                 try:
@@ -187,7 +175,6 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         :return: Dict with server's response
         """
         response = super().delete(url)
-
         if response.status_code == 200:
             self.graph_operations.delete_processing(url)
             return response.json()
