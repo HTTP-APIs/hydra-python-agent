@@ -113,7 +113,7 @@ class GraphOperations():
                                     'embedded_url': "http://localhost:8080{}".format(embedded_url),
                                     'embedded_type': embedded_type}
                     embedded_resources.append(new_resource)
-
+            print("Returning embedding resources", embedded_resources)
             return embedded_resources
         # Second Case - When processing a GET for a Collection
         elif resource_endpoint in collection_title or resource_id in collection_title:
@@ -140,7 +140,9 @@ class GraphOperations():
         url_list = url.split('/')
         new_object["@id"] = '/' + url_list[-1]
         # Simply call self.get_processing to add the resource to the collection at Redis
+        print("Going into get_processing")
         embedded_resources = self.get_processing(url, new_object)
+        print("REturing embedded resources from put_processing")
         return embedded_resources
 
     def post_processing(self, url: str, updated_object: dict) -> list:
@@ -204,6 +206,7 @@ class GraphOperations():
         :return: Object with resource found.
         """
         # Checking which kind of query, by URL or type
+        print("Asking for resource, ", url)
         if not url and not resource_type:
             raise Exception("ERR: You should set at least" +
                             "url OR resource_type")
@@ -219,6 +222,7 @@ class GraphOperations():
             # since class endpoints will always in the form of /class/<id>
             elif url_list[-2] in initial_graph.class_endpoints:
                 object_id = '/' + url_list[-1]
+                print("Reading resource")
                 resource = self.graph_utils.read(
                                     match="",
                                     where="id='/{}/{}{}'".format(url_list[-3], url_list[-2], object_id),
@@ -261,6 +265,7 @@ class GraphOperations():
                    "cannot be fetched"
 
         # Creating relation between the nodes
+        node_url = '/' + '/'.join(node_url.split('/')[-3:])
         response = self.graph_utils.create_relation(label_source="objects" +
                                                     parent_type,
                                                     where_source="id : \'" +

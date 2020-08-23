@@ -99,8 +99,6 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                     paginator.jump_to_page(2) 
         """
         print("I am called", url)
-        url = url.replace("None", "State")
-        print(url)
         redis_response = self.graph_operations.get_resource(url, self.graph, resource_type,
                                                             filters)
         print("redis response", redis_response)
@@ -118,7 +116,9 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             response = super().get(url, params=filters)
         else:
             if not bool(filters):
+                print("Getting resource")
                 response = super().get(url)
+                print("RESPONSE", response.json(), response.status_code)
             else:
                 response_body = super().get(url)
                 # filters can be simple dict or a json-ld
@@ -154,7 +154,9 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             url = response.headers['Location']
             # Graph_operations returns the embedded resources if finding any
             full_resource = super().get(url)
+            print("Going into put processing.....")
             embedded_resources = self.graph_operations.put_processing(url, full_resource.json())
+            print("Now processing emvedded resources")
             self.process_embedded(embedded_resources)
             return response.json(), url
         else:
@@ -198,6 +200,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         """
         # Embedded resources are fetched and then properly linked
         for embedded_resource in embedded_resources:
+            print("Getting embedded Resources")
             self.get(embedded_resource['embedded_url'])
             self.graph_operations.link_resources(
                 embedded_resource['parent_id'],

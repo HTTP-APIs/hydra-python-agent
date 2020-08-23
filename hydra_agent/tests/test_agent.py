@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock, call, Mock
 from hydra_agent.agent import Agent
 from hydra_agent.redis_core.graphutils_operations import GraphOperations
 from hydra_agent.redis_core.redis_proxy import RedisProxy
@@ -7,7 +7,6 @@ from redisgraph import Graph
 from hydra_agent.tests.test_examples.hydra_doc_sample import doc as drone_doc
 from hydra_agent.helpers import expand_template
 from urllib.parse import urlparse
-
 
 class TestAgent(unittest.TestCase):
     """
@@ -418,12 +417,17 @@ class TestAgent(unittest.TestCase):
         put_session_mock.return_value.json.return_value = new_object
         put_session_mock.return_value.headers = {'Location': new_object_url}
 
+        state_object = {"@context": "/api/contexts/State.jsonld",
+                        "@id": "/api/State/1", "@type": "State",
+                        "Battery": "sensor Ex", "Direction": "speed Ex",
+                        "DroneID": "sensor Ex", "Position": "model Ex",
+                        "SensorStatus": "sensor Ex", "Speed": "2"}
         drone_res = {
-                    "@context": "/serverapi/contexts/Drone.jsonld",
-                    "@id": "/serverapi/Drone/1",
+                    "@context": "/api/contexts/Drone.jsonld",
+                    "@id": "/api/Drone/1",
                     "@type": "Drone",
                     "DroneState": {
-                        "@id": "/serverapi/State/1",
+                        "@id": "/api/State/1",
                         "@type": "State",
                         "Battery": "C1WE92",
                         "Direction": "Q9VV88",
@@ -437,20 +441,22 @@ class TestAgent(unittest.TestCase):
                     "model": "HB14CX",
                     "name": "Priaysnhu"
         }
-
+        fake_responses = [Mock(), Mock()]
+        fake_responses[0].json.return_value = drone_res
+        fake_responses[0].status_code = 200
+        fake_responses[1].json.return_value = state_object
+        fake_responses[1].status_code = 200
         # Mocking an object to be used for a property that has an embedded link
         embedded_get_mock.return_value.status_code = 200
-        embedded_get_mock.return_value.json.return_value = drone_res
+        embedded_get_mock.side_effect = fake_responses
         response, new_object_url = self.agent.put(class_url, new_object)
-        # Checking if Drone Collection has an edge to the Drone Resource
-
+        # Checking if Drone Class has an edge to the Drone Resource
         query = "MATCH (p)-[r]->() WHERE p.type = 'Drone' \
             RETURN type(r)"
         query_result = self.redis_graph.query(query)
-        breakpoint()
         self.assertEqual(query_result.result_set[0][0], 'has_Drone')
 
-        # Checking if State Collection has an edge to the State Resource
+        # Checking if State  has an edge to the State Resource
         query = "MATCH (p)-[r]->() WHERE p.type = 'State' \
             RETURN type(r)"
         query_result = self.redis_graph.query(query)
@@ -459,7 +465,7 @@ class TestAgent(unittest.TestCase):
         # Checking if Drone Resource has an edge to the State Resource
         query = "MATCH (p)-[r]->() WHERE p.type = 'Drone' RETURN type(r)"
         query_result = self.redis_graph.query(query)
-        self.assertEqual(query_result.result_set[0][0], 'has_State')
+        self.assertEqual(query_result.result_set[1][0], 'has_State')
 
 
 if __name__ == "__main__":
