@@ -34,15 +34,13 @@ class GraphUtils:
         if where:
             query += " WHERE(p.{})".format(where)
         query += " RETURN p{}".format(ret)
-
         query_result = self.redis_graph.query(query)
 
         # Processing Redis-set response format
         query_result = self.process_result(query_result)
 
-        if not query_result:
-            query_result = None
-
+        # if not query_result:
+        #     query_result = None
         return query_result
 
     def update(self, match: str, set: str, where: Optional[str]=None) -> list:
@@ -53,11 +51,10 @@ class GraphUtils:
         :param where: Used to filter results, not mandatory.
         :return: Query results
         """
-        query = "MATCH(p:{})".format(match)
+        query = "MATCH(p{})".format(match)
         if where is not None:
             query += " WHERE(p.{})".format(where)
         query += " SET p.{}".format(set)
-
         return self.redis_connection.execute_command("GRAPH.QUERY",
                                                      self.graph_name,
                                                      query)

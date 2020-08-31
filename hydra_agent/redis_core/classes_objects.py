@@ -11,6 +11,7 @@ class RequestError(Exception):
     """A class for client-side exceptions"""
     pass
 
+
 class ClassEndpoints:
     """Contains all the classes endpoint and the objects"""
 
