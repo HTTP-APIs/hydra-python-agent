@@ -1,13 +1,17 @@
 import logging
 import sys
 import socketio
+from urllib.parse import urlparse
 from hydra_agent.redis_core.redis_proxy import RedisProxy
 from hydra_agent.redis_core.graphutils_operations import GraphOperations
 from hydra_agent.redis_core.graph_init import InitialGraph
 from hydra_python_core import doc_maker
+from hydra_python_core.doc_writer import HydraDoc
 from typing import Union, Tuple
 from requests import Session
-
+import json
+from hydra_agent.helpers import expand_template
+from hydra_agent.collection_paginator import Paginator
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
 
@@ -17,13 +21,16 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
     CRUD interface - to query hydrus
     """
 
-    def __init__(self, entrypoint_url: str, namespace: str='/sync') -> None:
+    def __init__(self, entrypoint_url: str, namespace: str = '/sync') -> None:
         """Initialize the Agent
         :param entrypoint_url: Entrypoint URL for the hydrus server
         :param namespace: Namespace endpoint to listen for updates
         :return: None
         """
         self.entrypoint_url = entrypoint_url.strip().rstrip('/')
+        url_parse = urlparse(entrypoint_url)
+        self.entrypoint = url_parse.scheme + "://" + url_parse.netloc
+        self.api_name = url_parse.path.rstrip('/')
         self.redis_proxy = RedisProxy()
         self.redis_connection = self.redis_proxy.get_connection()
         Session.__init__(self)
@@ -32,7 +39,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         self.graph_operations = GraphOperations(self.entrypoint_url,
                                                 self.api_doc,
                                                 self.redis_proxy)
-        # Declaring Socket Rules and instaciating Synchronization Socket
+        # Declaring Socket Rules and instantiation Synchronization Socket
         socketio.ClientNamespace.__init__(self, namespace)
         socketio.Client.__init__(self, logger=True)
         socketio.Client.register_namespace(self, self)
@@ -40,13 +47,21 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                                 namespaces=namespace)
         self.last_job_id = ""
 
-    def fetch_apidoc(self) -> dict:
-        if hasattr(self, 'api_doc'):
-            return self.api_doc 
-        else:
-            jsonld_api_doc = super().get(self.entrypoint_url + '/vocab').json()
-            self.api_doc = doc_maker.create_doc(jsonld_api_doc)
-            return self.api_doc 
+    def fetch_apidoc(self) -> HydraDoc:
+        """Fetches API DOC from Link Header by checking the hydra apiDoc
+        relation and passes the obtained JSON-LD to doc_maker module of
+        hydra_python_core to return HydraDoc which is used by the agent.
+        :return HydraDoc created from doc_maker module
+        """
+        try:
+            res = super().get(self.entrypoint_url)
+            api_doc_url = res.links['http://www.w3.org/ns/hydra/core#apiDocumentation']['url']
+            jsonld_api_doc = super().get(api_doc_url).json()
+            self.api_doc = doc_maker.create_doc(jsonld_api_doc, self.entrypoint, self.api_name )
+            return self.api_doc
+        except:
+            print("Error parsing your API Documentation")
+            raise SyntaxError
 
     def initialize_graph(self) -> None:
         """Initialize the Graph on Redis based on ApiDoc
@@ -59,31 +74,54 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         self.redis_connection.sadd("fs:url", self.entrypoint_url)
 
     def get(self, url: str = None, resource_type: str = None,
+            follow_partial_links: bool = False,
             filters: dict = {},
-            cached_limit: int = sys.maxsize) -> Union[dict, list]:
+            cached_limit: int = sys.maxsize) -> Union[dict, list, Paginator]:
         """READ Resource from Server/cached Redis
         :param url: Resource URL to be fetched
         :param resource_type: Resource object type
         :param filters: filters to apply when searching, resources properties
         :param cached_limit : Minimum amount of resources to be fetched
-        :return: Dict when one object or a list when multiple targerted objects
+        :param follow_partial_links: If set to True, Paginator can go through pages.
+        :return: Dict when one object or a list when multiple targeted objects
+        :return: Iterator when param follow_partial_links is set to true
+                    Iterator will be returned.
+                    Usage:
+                    paginator = agent.get('http://localhost:8080/serverapi/DroneCollection', \
+                                        follow_partial_links=True)
+                    To paginate forward:
+                    ford = paginator.initialize_forward()
+                    To get the members of first page:
+                    next(ford)
+                    To get the members of second page:
+                    next(ford)
+                    To paginate Backwards:
+                    back = paginator.initialize_backward()
+                    To get the members of prev page:
+                    next(back)
+                    To Jump:
+                    paginator.jump_to_page(2) 
         """
-        redis_response = self.graph_operations.get_resource(url, resource_type,
+        redis_response = self.graph_operations.get_resource(url, self.graph, resource_type,
                                                             filters)
         if redis_response:
             if type(redis_response) is dict:
                 return redis_response
             elif len(redis_response) >= cached_limit:
                 return redis_response
+        if url:
 
-        # If querying with resource type build url
-        # This can be more stable when adding Manages Block
-        # More on: https://www.hydra-cg.com/spec/latest/core/#manages-block
-        if resource_type:
-            url = self.entrypoint_url + "/" + resource_type + "Collection"
-            response = super().get(url, params=filters)
-        else:
-            response = super().get(url)
+            if not bool(filters):
+                response = super().get(url)
+            else:
+                response_body = super().get(url, filters)
+                # filters can be simple dict or a json-ld
+                try:
+                    templated_url = expand_template(
+                    url, response_body.json(), filters)
+                    response = super().get(templated_url)
+                except KeyError:
+                    response = response_body
 
         if response.status_code == 200:
             # Graph_operations returns the embedded resources if finding any
@@ -93,7 +131,10 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             if response.json()['@type'] in self.api_doc.parsed_classes:
                 return response.json()
             else:
-                return response.json()['members']
+                if follow_partial_links:
+                    return Paginator(response=response.json())
+                else:
+                    return response.json()
         else:
             return response.text
 
@@ -108,8 +149,8 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         if response.status_code == 201:
             url = response.headers['Location']
             # Graph_operations returns the embedded resources if finding any
-            embedded_resources = \
-                self.graph_operations.put_processing(url, new_object)
+            full_resource = super().get(url)
+            embedded_resources = self.graph_operations.put_processing(url, full_resource.json())
             self.process_embedded(embedded_resources)
             return response.json(), url
         else:
@@ -138,7 +179,6 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         :return: Dict with server's response
         """
         response = super().delete(url)
-
         if response.status_code == 200:
             self.graph_operations.delete_processing(url)
             return response.json()
@@ -156,7 +196,9 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             self.graph_operations.link_resources(
                 embedded_resource['parent_id'],
                 embedded_resource['parent_type'],
-                embedded_resource['embedded_url'])
+                embedded_resource['embedded_url'],
+                embedded_resource['embedded_type'],
+                self.graph)
 
     # Below are the functions that are responsible to process Socket Events
     def on_connect(self, data: dict = None) -> None:
@@ -182,10 +224,12 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
             # Checking if it's an already cached resource, if not it will ignore
             if self.graph_operations.get_resource(row['resource_url']):
                 if row['method'] == 'POST':
-                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.graph_operations.delete_processing(
+                        row['resource_url'])
                     self.get(row['resource_url'])
                 elif row['method'] == 'DELETE':
-                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.graph_operations.delete_processing(
+                        row['resource_url'])
                 if row['method'] == 'PUT':
                     pass
             # Updating the last job id
@@ -209,10 +253,12 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         for row in new_rows:
             if self.graph_operations.get_resource(row['resource_url']):
                 if row['method'] == 'POST':
-                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.graph_operations.delete_processing(
+                        row['resource_url'])
                     self.get(row['resource_url'])
                 elif row['method'] == 'DELETE':
-                    self.graph_operations.delete_processing(row['resource_url'])
+                    self.graph_operations.delete_processing(
+                        row['resource_url'])
                 if row['method'] == 'PUT':
                     pass
 
@@ -232,6 +278,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
         :param data: Object with the data broadcasted
         """
         pass
+
 
 if __name__ == "__main__":
     pass

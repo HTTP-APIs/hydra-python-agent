@@ -64,27 +64,85 @@ The agent supports GET, PUT, POST or DELETE:
 
 **To GET** a existing resource you should:
 ```
-agent.get("http://localhost:8080/serverapi/<CollectionType>/<Resource-ID>")
+agent.get("http://localhost:8080/serverapi/<ResourceType>/<Resource-ID>")
 agent.get("http://localhost:8080/serverapi/<CollectionType>/")
+agent.get("http://localhost:8080/serverapi/<CollectionType>/<Collection-ID>")
 ```
 
-**To PUT** a new resource you should:
+**To PUT** a new resource say on a Drone endpoint, you should:
 ```
-new_resource = {"@type": "Drone", "name": "Drone 1", "model": "Model S", ...}
-agent.put("http://localhost:8080/serverapi/<CollectionType>/", new_resource)
+new_resource = {
+    "@type": "Drone",
+    "DroneState": {
+        "@type": "State",
+        "Battery": "50%",
+        "Direction": "N",
+        "Position": "50.34",
+        "SensorStatus": "Active",
+        "Speed": "100"
+    },
+    "MaxSpeed": "500",
+    "Sensor": "Active",
+    "model": "Drone_1",
+    "name": "Drone1"
+}
+agent.put("http://localhost:8080/serverapi/Drone/", new_resource)
 ```
 
 **To UPDATE** a resource you should:
 ```
 existing_resource["name"] = "Updated Name"
-agent.post("http://localhost:8080/serverapi/<CollectionType>/<Resource-ID>", existing_resource)
+agent.post("http://localhost:8080/serverapi/<ResourceType>/<Resource-ID>", existing_resource)
 ```
 
 **To DELETE** a resource you should:
 ```
-agent.delete("http://localhost:8080/serverapi/<CollectionType>/<Resource-ID>")
+agent.delete("http://localhost:8080/serverapi/<ResourceType>/<Resource-ID>")
 ```
+**To ADD** members in collection:
+```
+request_body = {
+    "@type": "<CollectionType>",
+    "members": [
+        {
+            "@id": "<ResourceID>",
+            "@type": "<ResourceType>"
+        },
+        {
+            "@id": "<ResourceID>",
+            "@type": "<ResourceType>"
+        },
+    ]
+}
+agent.put("http://localhost:8080/serverapi/<CollectionType>", request_body)
+```
+NOTE: \<ResourceType\> can be different in given request body. 
 
+**TO GET** members of specific Collection:
+```
+agent.get("http://localhost:8080/serverapi/<CollectionType>/<CollectionID>")
+```
+**TO UPDATE** members of specific collection:
+```
+updated_collection = {
+    "@type": "<CollectionType>",
+    "members": [
+        {
+            "@id": "<ResourceID>",
+            "@type": "<ResourceType>"
+        },
+        {
+            "@id": "<ResourceID>",
+            "@type": "<ResourceType>"
+        },
+    ]
+}
+agent.post("http://localhost:8080/serverapi/<CollectionType>/<CollectionID>",updated_collection )
+```
+**TO DELETE** members of specific Collection:
+```
+agent.delete("http://localhost:8080/serverapi/<CollectionType>/<CollectionID>")
+```
 More than that, Agent extends Session from https://2.python-requests.org/en/master/api/#request-sessions, so all methods like auth, cookies, headers and so on can also be used.
 
 ### Natural-language-like Command Line Tool
