@@ -91,13 +91,15 @@ c) To get members of a specific resource, the syntax is
    
    agent.get("http://localhost:8080/serverapi/<ResourceType>/<Resource-ID>")
 
+Note: Collection-IDs and Resource-IDs are present in the database file generated after running hydrus.
+
 3. To add a new resource using a *PUT* request:
    
    Syntax
 
 .. code-block:: python
    
-   agent.post("http://localhost:8080/serverapi/<ResourceType>/<Resource-ID>,<new_property>")
+   agent.put("http://localhost:8080/serverapi/<ResourceType>/<Resource-ID>,<new_property>")
 
 .. code-block:: python
    
@@ -118,7 +120,7 @@ c) To get members of a specific resource, the syntax is
 .. code-block:: python
    
    existing_resource["movie_name"] = "The Green Mile"
-   agent.post("http://localhost:8080/serverapi/Movie/", existing_resource)
+   agent.post("http://localhost:8080/serverapi/Movie/<Resource-ID>", existing_resource)
 
 .. toctree::
    :maxdepth: 2
