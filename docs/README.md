@@ -12,7 +12,7 @@
 &nbsp;```sphinx-build -b html ./source/ ./build/html/```<br>
 HTML files are generated in the build/html folder which can be used to check the pages.
 <br><br>
-<b>In order to make a clean build:<br>
+<b>In order to make a clean build:</b><br>
 &nbsp;```make clean```<br>
 &nbsp;```sphinx-build -b html ./source/ ./build/html/```
 
