@@ -8,3 +8,5 @@ requests
 python-socketio
 -e git+https://github.com/RedisGraph/redisgraph-py@d790e35b7017510c4baad85e3c572249a9ed7279#egg=redisgraph
 -e git+https://github.com/http-apis/hydra-python-core@master#egg=hydra_python_core
+Sphinx==3.1.2
+sphinx-rtd-theme==0.5.1
