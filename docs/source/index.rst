@@ -62,7 +62,66 @@ For the installation process, click `here <https://github.com/HTTP-APIs/hydra-py
    from hydra_agent.agent import Agent
    agent = Agent("http://localhost:8080/serverapi")
 
-2. To *GET* a resource:
+2. To add a new resource using a *PUT* request:
+   
+Syntax:
+
+.. code-block:: python
+   
+   agent.put("http://localhost:8080/serverapi/<ResourceType>,<new_property>")
+
+Example:
+
+.. code-block:: python
+   
+   new_resource={
+      "@type" : "Movie",
+      "movie_name" : "The Shining",
+      "movie_director" : "Stanley Kubrick"
+   }
+   agent.put("http://localhost:8080/serverapi/Movie/", new_resource)
+
+Example output:
+
+.. code-block:: python
+
+   ({'@context': 'http://www.w3.org/ns/hydra/context.jsonld', '@type': 'Status', 'description': 'Object with ID 9b1a5cb1-aaa3-411c-a4a6-93d0c4446fed successfully added', 'statusCode': 201, 'title': 'Object successfully added'}, 'http://localhost:8080/serverapi/Movie/9b1a5cb1-aaa3-411c-a4a6-93d0c4446fed')
+
+3. To add new members to a collection:
+
+Syntax:
+
+.. code-block:: python
+
+   request_body = {
+      "@type": "<CollectionType>",
+      "members": [
+         {
+               "@id": "<ResourceID>",
+               "@type": "<ResourceType>"
+         },
+         {
+               "@id": "<ResourceID>",
+               "@type": "<ResourceType>"
+         },
+      ]
+   }
+   agent.put("http://localhost:8080/serverapi/<CollectionType>", request_body)
+
+Example:
+
+.. code-block:: python
+
+   request_body = {"@type" : "MovieCollection","members": [{"@id" : "9b1a5cb1-aaa3-411c-a4a6-93d0c4446fed","@type" : "Movie"},]}
+   agent.put("http://localhost:8080/serverapi/MovieCollection", request_body)
+
+Example output:
+
+.. code-block:: python
+
+   ({'@context': 'http://www.w3.org/ns/hydra/context.jsonld', '@type': 'Status', 'description': 'Object with ID 2d2bdaa9-8f9c-46fe-ac16-6d69b7e52bf3 successfully added', 'statusCode': 201, 'title': 'Object successfully added'}, 'http://localhost:8080/serverapi/MovieCollection/2d2bdaa9-8f9c-46fe-ac16-6d69b7e52bf3')
+
+4. To *GET* a resource:
 
 a) To get a collection, the syntax is
 
@@ -85,42 +144,46 @@ b) To get members of a specific collection, the syntax is
    
    agent.get("http://localhost:8080/serverapi/<CollectionType>/<Collection-ID>")
 
+Example:
+
+.. code-block:: python
+   
+   agent.get("http://localhost:8080/serverapi/MovieCollection/2d2bdaa9-8f9c-46fe-ac16-6d69b7e52bf3")
+
 c) To get members of a specific resource, the syntax is
 
 .. code-block:: python
    
    agent.get("http://localhost:8080/serverapi/<ResourceType>/<Resource-ID>")
 
+Example:
+
+.. code-block:: python
+   
+   agent.get("http://localhost:8080/serverapi/Movie/9b1a5cb1-aaa3-411c-a4a6-93d0c4446fed")
+
+Example output:
+
+.. code-block:: python
+
+   {'@context': '/serverapi/contexts/Movie.jsonld', '@id': '/serverapi/Movie/9b1a5cb1-aaa3-411c-a4a6-93d0c4446fed', '@type': 'Movie', 'movie_director': 'Stanley Kubrick', 'movie_name': 'The Shining'}
+
 Note: Collection-IDs and Resource-IDs are present in the database file generated after running hydrus.
 
-3. To add a new resource using a *PUT* request:
+5. To update a resource using a *POST* request:
    
-   Syntax
-
-.. code-block:: python
-   
-   agent.put("http://localhost:8080/serverapi/<ResourceType>/<Resource-ID>,<new_property>")
-
-.. code-block:: python
-   
-   new_resource={
-      "@type" : "Movie",
-      "movie_name" : "The Shawshank Redemption",
-   }
-   agent.put("http://localhost:8080/serverapi/Movie/", new_resource)
-
-4. To update a resource using a *POST* request:
-   
-   Syntax
+Syntax:
 
 .. code-block:: python
    
    agent.post("http://localhost:8080/serverapi/<ResourceType>/<Resource-ID>,<updated_property>")
 
+Example:
+
 .. code-block:: python
    
-   existing_resource["movie_name"] = "The Green Mile"
-   agent.post("http://localhost:8080/serverapi/Movie/<Resource-ID>", existing_resource)
+   existing_resource["movie_name"] = "A Clockwork Orange"
+   agent.post("http://localhost:8080/serverapi/Movie/9b1a5cb1-aaa3-411c-a4a6-93d0c4446fed", existing_resource)
 
 .. toctree::
    :maxdepth: 2
