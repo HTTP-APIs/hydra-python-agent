@@ -18,8 +18,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = 'hydra-python-agent'
-copyright = '2021, Ashish Rao'
-author = 'Ashish Rao'
+copyright = '2021, Hydra Ecosystem'
+author = 'Hydra Ecosystem'
 
 # The full version, including alpha/beta/rc tags
 release = '0.0.1'
