@@ -113,7 +113,7 @@ class GraphOperations():
                     embedded_url = eval(resource[supported_prop.title])['@id']
                     embedded_type = eval(resource[supported_prop.title])['@type']
                     new_resource = {'parent_id': resource['@id'], 'parent_type': resource['@type'],
-                                    'embedded_url': "{}{}".format(self.entrypoint, embedded_url),
+                                    'embedded_url': "{}".format(embedded_url),
                                     'embedded_type': embedded_type}
                     embedded_resources.append(new_resource)
             return embedded_resources

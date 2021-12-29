@@ -1,10 +1,11 @@
-rdflib
-rdflib-jsonld
-uritemplate
-httplib2
-redis
-graphviz
-requests
-python-socketio
-hydra_python_core
+graphviz==0.19.1
+httplib2==0.20.2
+hydra-python-core==0.3.1
+PyLD==2.0.3
+python-socketio==4.4.0
+rdflib==5.0.0
+rdflib-jsonld==0.6.2
+redis==4.1.0
 -e git+https://github.com/RedisGraph/redisgraph-py@d790e35b7017510c4baad85e3c572249a9ed7279#egg=redisgraph
+requests==2.26.0
+uritemplate==4.1.1
