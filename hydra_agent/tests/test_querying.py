@@ -1,86 +1,55 @@
-import unittest
-from unittest.mock import patch, MagicMock, call
-from hydra_agent.querying_mechanism import HandleData, logger
-from hydra_agent.querying_mechanism import EndpointQuery, CollectionmembersQuery, PropertiesQuery, ClassPropertiesValue
+import pytest
 
 
-class TestHandleData(unittest.TestCase):
-    """
-    TestCase for HandleData Class
-    """
-    def setUp(self):
-        """Setting up HandleData object"""
-        self.handle_data = HandleData()
+@pytest.mark.usefixtures("handle_data")
+class TestHandleData:
+    """TestCase for HandleData Class"""
 
-    @patch('hydra_agent.querying_mechanism.json.loads', spec_set=True)
-    @patch('hydra_agent.querying_mechanism.urllib.request.urlopen', spec_set=True)
-    def test_load_data(self, request_mock, json_mock):
-        """
-        Tests load_data method case without exceptions
+    @pytest.fixture(autouse=True)
+    def load_data_mocks(self, mocker):
+        self.mock_request = mocker.patch(
+            "hydra_agent.querying_mechanism.urllib.request.urlopen", autospec=True
+        )
+        self.mock_json = mocker.patch(
+            "hydra_agent.querying_mechanism.json.loads", autospec=True
+        )
 
-        Args:
-            request_mock : MagicMock object from patching out urllib.request.urlopen function
-            json_mock: MagicMock object from patching out json.loads function
-        """
-
-        # url passed to load_data as an argument
-        url = "TestURL"
-
+    def test_load_data(self, mocker):
+        """Tests load_data method case without exceptions"""
         # mock to return byte code for response.read()
-        intermediate_mock = MagicMock()
+        intermediate_mock = mocker.MagicMock()
         intermediate_mock.__enter__.return_value.read.return_value = b"TestResponse"
 
         # making sure that request doesn't raise an exception
-        request_mock.return_value = intermediate_mock
+        self.mock_request.return_value = intermediate_mock
 
         # call load_data with url as param
-        self.handle_data.load_data(url)
+        self.handle_data.load_data(self.test_url)
 
         # assert that json.loads was called with right params
-        json_mock.assert_called_with("TestResponse")
+        self.mock_json.assert_called_with("TestResponse")
 
-    @patch('hydra_agent.querying_mechanism.json.loads', spec_set=True)
-    @patch('hydra_agent.querying_mechanism.logger')
-    @patch('hydra_agent.querying_mechanism.urllib.request.urlopen', spec_set=True)
-    def test_load_data_with_errors(self, request_mock, logger_mock, json_mock):
-        """
-        Tests load_data method case with exception
+    def test_load_data_with_errors(self, mocker):
+        """Tests load_data method case with exception"""
+        # logger_mock : MagicMock object from patching out the logger object
+        mocker.patch("hydra_agent.querying_mechanism.logger")
 
-        Args:
-            request_mock : MagicMock object from patching out urllib.request.urlopen function
-            logger_mock : MagicMock object from patching out the logger object
-            json_mock : MagicMock object from patching out the json.loads function
-        """
-        # url passed to load_data as an argument
-        url = "TestURL"
         # request raises an exception (ValueError can be replaced by URLError or HTTPError)
-        request_mock.side_effect = ValueError
+        self.mock_request.side_effect = ValueError
 
         # Call load_data
-        self.handle_data.load_data(url)
+        self.handle_data.load_data(self.test_url)
 
         # Assert that json.loads wasn't called
-        json_mock.assert_not_called()
+        self.mock_json.assert_not_called()
 
 
-class TestEndpointQuery(unittest.TestCase):
-    """
-    TestCase for EndpointQuery Class
-    """
+@pytest.mark.usefixtures("endpoint_query")
+class TestEndpointQuery:
+    """TestCase for EndpointQuery Class"""
 
-    @patch('hydra_agent.querying_mechanism.RedisProxy', autospec=True)
-    def setUp(self, redis_mock):
-        """
-        Setting up EndpointQuery object
-        Args:
-            redis_mock : MagicMock object from patching out RedisProxy
-        """
-        self.endpoint_query = EndpointQuery()
-
-    def test_get_allEndpoints(self):
-        """
-        Tests get_allEndpoints method
-        """
+    def test_get_allEndpoints(self, mocker):
+        """Tests get_allEndpoints method"""
         # query to be passed as a param to get_allEndpoints
         query = "get endpoints"
 
@@ -91,14 +60,14 @@ class TestEndpointQuery(unittest.TestCase):
         self.endpoint_query.get_allEndpoints(query)
 
         # asserting the connection.execute_command had calls with right parameters
-        calls = [call('GRAPH.QUERY', 'apigraph', 'MATCH (p:classes) RETURN p'), call('GRAPH.QUERY', 'apigraph',
-                 'MATCH (p:collection) RETURN p')]
+        calls = [
+            mocker.call("GRAPH.QUERY", "apigraph", "MATCH (p:classes) RETURN p"),
+            mocker.call("GRAPH.QUERY", "apigraph", "MATCH (p:collection) RETURN p"),
+        ]
         connection_mock.execute_command.assert_has_calls(calls)
 
-    def test_get_classEndpoints(self):
-        """
-        Tests get_classEndpoints method
-        """
+    def test_get_classEndpoints(self, mocker):
+        """Tests get_classEndpoints method"""
         # query to be passed as a param to get_classEndpoints
         query = "get classEndpoints"
 
@@ -109,10 +78,10 @@ class TestEndpointQuery(unittest.TestCase):
         self.endpoint_query.get_classEndpoints(query)
 
         # asserting the connection.execute_command had calls with right parameters
-        calls = [call('GRAPH.QUERY', 'apigraph', 'MATCH (p:classes) RETURN p')]
+        calls = [mocker.call("GRAPH.QUERY", "apigraph", "MATCH (p:classes) RETURN p")]
         connection_mock.execute_command.assert_has_calls(calls)
 
-    def test_get_collectionEndpoints(self):
+    def test_get_collectionEndpoints(self, mocker):
         """
         Tests get_collectionEndpoints method
         """
@@ -126,32 +95,19 @@ class TestEndpointQuery(unittest.TestCase):
         self.endpoint_query.get_collectionEndpoints(query)
 
         # asserting the connection.execute_command had calls with right parameters
-        calls = [call('GRAPH.QUERY', 'apigraph',
-            'MATCH (p:collection) RETURN p')]
+        calls = [
+            mocker.call("GRAPH.QUERY", "apigraph", "MATCH (p:collection) RETURN p")
+        ]
         connection_mock.execute_command.assert_has_calls(calls)
 
 
-class TestCollectionmembersQuery(unittest.TestCase):
+@pytest.mark.usefixtures("collection_members_query")
+class TestCollectionmembersQuery:
     """
     TestCase for CollectionmembersQuery class
     """
-    @patch('hydra_agent.querying_mechanism.CollectionEndpoints', autospec=True)
-    @patch('hydra_agent.querying_mechanism.RedisProxy', autospec=True)
-    def setUp(self, redis_mock, collections_mock):
-        """
-        Setting up CollectionmembersQuery object
 
-        Args:
-            redis_mock : MagicMock object from patching out RedisProxy
-            collections_mock: MagicMock object from patching out CollectionEndpoints
-        """
-
-        api_doc = MagicMock()
-        url = MagicMock()
-        graph = MagicMock()
-        self.cmq = CollectionmembersQuery(api_doc, url, graph)
-
-    def test_data_from_server(self):
+    def test_data_from_server(self, mocker):
         """
         Tests data_from_server method
         """
@@ -165,13 +121,18 @@ class TestCollectionmembersQuery(unittest.TestCase):
         self.cmq.data_from_server(endpoint)
 
         # asserting that load_from_server was called with right params
-        load_server_mock.assert_called_with(endpoint,
-                self.cmq.api_doc,
-                self.cmq.url,
-                self.cmq.connection)
+        load_server_mock.assert_called_with(
+            endpoint, self.cmq.api_doc, self.cmq.url, self.cmq.connection
+        )
 
         # asserting that execute_command was called with right params
-        calls = [call('GRAPH.QUERY', 'apigraph', 'MATCH(p:collection) WHERE(p.type="TestEndpoint") RETURN p.members')]
+        calls = [
+            mocker.call(
+                "GRAPH.QUERY",
+                "apigraph",
+                'MATCH(p:collection) WHERE(p.type="TestEndpoint") RETURN p.members',
+            )
+        ]
         connection_mock.execute_command.assert_has_calls(calls)
 
     def smembers_mock_func(self, inp):
@@ -193,16 +154,20 @@ class TestCollectionmembersQuery(unittest.TestCase):
         connection_mock = self.cmq.connection
 
         # making the if condition true
-        connection_mock.keys.return_value = [b'fs:endpoints']
+        connection_mock.keys.return_value = [b"fs:endpoints"]
         connection_mock.smembers.side_effect = self.smembers_mock_func
 
         # call to get_members
         self.cmq.get_members(query)
 
         # checking the call made to connection_mock.execute_command with correct params
-        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apigraph', """MATCH(p:collection)
+        connection_mock.execute_command.assert_called_with(
+            "GRAPH.QUERY",
+            "apigraph",
+            """MATCH(p:collection)
                    WHERE(p.type='TestEndpoint')
-                   RETURN p.members""")
+                   RETURN p.members""",
+        )
 
         # asserting that connection.sadd was not called
         connection_mock.sadd.assert_not_called()
@@ -236,19 +201,11 @@ class TestCollectionmembersQuery(unittest.TestCase):
         connection_mock.sadd.assert_called_with("fs:endpoints", "TestEndpoint")
 
 
-class TestPropertiesQuery(unittest.TestCase):
+@pytest.mark.usefixtures("properties_query")
+class TestPropertiesQuery:
     """
     TestCase for PropertiesQuery Class
     """
-    @patch('hydra_agent.querying_mechanism.RedisProxy')
-    def setUp(self, redis_mock):
-        """
-        Setting up PropertiesQuery object
-
-        Args:
-            redis_mock : MagicMock object from patching out RedisProxy
-        """
-        self.properties_query = PropertiesQuery()
 
     def test_get_classes_properties(self):
         """
@@ -262,7 +219,11 @@ class TestPropertiesQuery(unittest.TestCase):
         self.properties_query.get_classes_properties(query)
 
         # asserting that redis_query was called with correct params
-        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apigraph', 'MATCH ( p:classes ) WHERE (p.type="ClassEndpoint") RETURN p.properties')
+        connection_mock.execute_command.assert_called_with(
+            "GRAPH.QUERY",
+            "apigraph",
+            'MATCH ( p:classes ) WHERE (p.type="ClassEndpoint") RETURN p.properties',
+        )
 
     def test_get_collection_properties(self):
         """
@@ -276,7 +237,11 @@ class TestPropertiesQuery(unittest.TestCase):
         self.properties_query.get_collection_properties(query)
 
         # asserting that redis query was called with correct params
-        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apigraph', 'MATCH ( p:collection ) WHERE (p.type="collectionEndpoint") RETURN p.properties')
+        connection_mock.execute_command.assert_called_with(
+            "GRAPH.QUERY",
+            "apigraph",
+            'MATCH ( p:collection ) WHERE (p.type="collectionEndpoint") RETURN p.properties',
+        )
 
     def test_members_properties(self):
         """
@@ -291,7 +256,9 @@ class TestPropertiesQuery(unittest.TestCase):
         self.properties_query.get_members_properties(query)
 
         # asserting that redis query was called with correct params
-        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apigraph', 'MATCH ( p:testMember ) RETURN p.id,p.properties')
+        connection_mock.execute_command.assert_called_with(
+            "GRAPH.QUERY", "apigraph", "MATCH ( p:testMember ) RETURN p.id,p.properties"
+        )
 
     def test_object_properties(self):
         """
@@ -306,29 +273,27 @@ class TestPropertiesQuery(unittest.TestCase):
         self.properties_query.get_object_property(query)
 
         # asserting that redis query was called with correct params
-        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apigraph', 'MATCH ( p:objectTest) WHERE (p.parent_id = "/api/TestCollection/2") RETURN p.properties')
+        connection_mock.execute_command.assert_called_with(
+            "GRAPH.QUERY",
+            "apigraph",
+            'MATCH ( p:objectTest) WHERE (p.parent_id = "/api/TestCollection/2") RETURN p.properties',
+        )
 
 
-class TestClassPropertiesValue(unittest.TestCase):
-    """
-    TestCase for ClassPropertiesValue
-    """
-    @patch('hydra_agent.querying_mechanism.ClassEndpoints', autospec=True)
-    @patch('hydra_agent.querying_mechanism.RedisProxy')
-    def setUp(self, redis_mock, classEndpoint_mock):
-        """
-        Setting up ClassPropertiesValue object
+@pytest.mark.usefixtures("class_properties_value")
+class TestClassPropertiesValue:
+    """TestCase for ClassPropertiesValue"""
 
-        Args:
-            redis_mock : MagicMock object from patching out RedisProxy
-            classEndpoint_mock : MagicMock object from patching out ClassEndpoint class
-        """
-        api_doc = MagicMock()
-        url = MagicMock()
-        graph = MagicMock()
-        self.cpv = ClassPropertiesValue(api_doc, url, graph)
+    @pytest.fixture(autouse=True)
+    def load_data_mocks(self, mocker):
+        self.mock_request = mocker.patch(
+            "hydra_agent.querying_mechanism.urllib.request.urlopen", autospec=True
+        )
+        self.mock_json = mocker.patch(
+            "hydra_agent.querying_mechanism.json.loads", autospec=True
+        )
 
-    def test_data_from_server(self):
+    def test_data_from_server(self, mocker):
         """
         Tests data_from_server method
         """
@@ -336,22 +301,26 @@ class TestClassPropertiesValue(unittest.TestCase):
         endpoint = "TestEndpoint"
         clas_mock = self.cpv.clas
         connection_mock = self.cpv.connection
-
+        mocker.patch.object(self.cpv.clas, "load_from_server")
         # call to data_from_server
         self.cpv.data_from_server(endpoint)
-
         # asserting that load_from_server was called with correct params
-        clas_mock.load_from_server.assert_called_with(endpoint, self.cpv.api_doc, self.cpv.url, connection_mock)
+        clas_mock.load_from_server.assert_called_with(
+            endpoint, self.cpv.api_doc, self.cpv.url, connection_mock
+        )
 
         # asserting that redis_query was called with correct params
-        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apigraph', """MATCH(p:classes)
+        connection_mock.execute_command.assert_called_with(
+            "GRAPH.QUERY",
+            "apigraph",
+            """MATCH(p:classes)
                WHERE(p.type='TestEndpoint')
-               RETURN p.property_value""")
+               RETURN p.property_value""",
+        )
 
     def smembers_mock_func(self, inp):
         """
         SideEffect for mock object used in testing get_property_value
-
         Args:
             inp : Input to the SideEffect equivalent to smembers method
         """
@@ -367,16 +336,20 @@ class TestClassPropertiesValue(unittest.TestCase):
         connection_mock = self.cpv.connection
 
         # making the if condition true
-        connection_mock.keys.return_value = [b'fs:endpoints']
+        connection_mock.keys.return_value = [b"fs:endpoints"]
         connection_mock.smembers.side_effect = self.smembers_mock_func
 
         # call to get_members
         self.cpv.get_property_value(query)
 
         # checking the call made to connection_mock.execute_command with correct params
-        connection_mock.execute_command.assert_called_with('GRAPH.QUERY', 'apigraph', """MATCH (p:classes)
+        connection_mock.execute_command.assert_called_with(
+            "GRAPH.QUERY",
+            "apigraph",
+            """MATCH (p:classes)
                    WHERE (p.type = 'TestClass')
-                   RETURN p.property_value""")
+                   RETURN p.property_value""",
+        )
 
         # asserting that connection.sadd was not called
         connection_mock.sadd.assert_not_called()
@@ -404,7 +377,3 @@ class TestClassPropertiesValue(unittest.TestCase):
 
         # asserting that connection.sadd was called
         connection_mock.sadd.assert_called_with("fs:endpoints", "TestClass")
-
-
-if __name__ == "__main__":
-    unittest.main()
