@@ -3,6 +3,8 @@ from hydra_agent.agent import Agent
 from hydra_agent.helpers import expand_template
 from urllib.parse import urlparse
 
+from hydra_agent.tests.conftest import constants
+
 
 @pytest.mark.usefixtures("setup_agent_for_tests")
 class TestAgent:
@@ -20,7 +22,7 @@ class TestAgent:
         """Tests get method from the Agent with URL"""
         get_session_mock.return_value.status_code = 200
         get_session_mock.return_value.json.return_value = state_object
-        response = self.agent.get(self.entrypoint_url + "State/1")
+        response = self.agent.get(self.entrypoint_url + "/State/1")
 
         assert response == state_object
 
@@ -29,7 +31,7 @@ class TestAgent:
 
         get_session_mock.return_value.status_code = 200
         get_session_mock.return_value.json.return_value = state_object
-        response_url = self.agent.get("http://localhost:8080/api/" + "State/1")
+        response_url = self.agent.get(self.entrypoint_url + "/State/1")
 
         response_cached = self.agent.get(
             resource_type="State", filters={"Direction": "North"}, cached_limit=1
@@ -38,7 +40,7 @@ class TestAgent:
         response_cached = response_cached[0]
         assert response_url == response_cached
 
-        response_not_cached = self.agent.get("http://localhost:8080/api/" + "State/1")
+        response_not_cached = self.agent.get(self.entrypoint_url + "/State/1")
         assert response_not_cached == response_cached
 
     def test_get_collection(
@@ -48,7 +50,7 @@ class TestAgent:
 
         new_object = {"@type": "DroneCollection", "members": ["1"]}
 
-        collection_url = "http://localhost:8080/api/DroneCollection/"
+        collection_url = self.entrypoint_url + "/DroneCollection/"
         new_collection_url = collection_url + "1"
 
         put_session_mock.return_value.status_code = 201
@@ -76,7 +78,7 @@ class TestAgent:
     ):
         """Tests put method from the Agent"""
 
-        class_url = "http://localhost:8080/api/Drone/"
+        class_url = self.entrypoint_url + "/Drone/"
         new_object_url = class_url + "1"
 
         put_session_mock.return_value.status_code = 201
@@ -117,7 +119,7 @@ class TestAgent:
         mocker,
     ):
         """Tests post method from the Agent"""
-        class_url = "http://localhost:8080/api/Drone/"
+        class_url = self.entrypoint_url + "/Drone/"
         new_object_url = class_url + "2"
 
         put_session_mock.return_value.status_code = 201
@@ -137,7 +139,7 @@ class TestAgent:
 
         post_session_mock.return_value.status_code = 200
         post_session_mock.return_value.json.return_value = {"msg": "success"}
-        new_object["DroneState"]["@id"] = "/api/State/1"
+        new_object["DroneState"]["@id"] = "/serverapi/State/1"
         new_object["name"] = "Updated Name"
         # Mocking an object to be used for a property that has an embedded link
         response = self.agent.post(new_object_url, new_object)
@@ -160,7 +162,7 @@ class TestAgent:
     ):
         """Tests post method from the Agent"""
 
-        class_url = "http://localhost:8080/api/Drone/"
+        class_url = self.entrypoint_url + "/Drone/"
         new_object_url = class_url + "3"
 
         put_session_mock.return_value.status_code = 201
@@ -334,7 +336,7 @@ class TestAgent:
     ):
         """Tests to check if all edges are being created properly"""
 
-        class_url = "http://localhost:8080/api/Drone/"
+        class_url = self.entrypoint_url + "/Drone/"
         new_object_url = class_url + "1"
 
         put_session_mock.return_value.status_code = 201

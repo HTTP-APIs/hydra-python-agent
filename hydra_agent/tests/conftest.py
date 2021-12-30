@@ -161,7 +161,7 @@ def constants():
         "host": "localhost",
         "test_url": "TestURL",
         "redis_port": 6379,
-        "entrypoint_url": "http://localhost:8080/serverapi/",
+        "entrypoint_url": "http://localhost:8080/serverapi",
         "api_name": "serverapi",
         "graph_name": "apigraph",
     }
@@ -211,8 +211,8 @@ def delete_session_mock(mocker):
 def state_object(constants):
     """Dummy drone state object for tests"""
     state_object = {
-        "@context": "/api/contexts/State.jsonld",
-        "@id": "/api/State/1",
+        "@context": f"/{constants['api_name']}/contexts/State.jsonld",
+        "@id": f"/{constants['api_name']}/State/1",
         "@type": "State",
         "Battery": "sensor Ex",
         "Direction": "North",
@@ -242,16 +242,16 @@ def simplified_collection(constants):
                     "hydra:variable": "DroneState[Speed]",
                 }
             ],
-            "hydra:template": "/serverapi/Drone(DroneState[Speed])",
+            "hydra:template": f"/{constants['api_name']}/Drone(DroneState[Speed])",
             "hydra:variableRepresentation": "hydra:BasicRepresentation",
         },
         "totalItems": 1,
         "view": {
-            "@id": "/serverapi/DroneCollection?page=1",
+            "@id": f"/{constants['api_name']}/DroneCollection?page=1",
             "@type": "PartialCollectionView",
-            "first": "/serverapi/DroneCollection?page=1",
-            "last": "/serverapi/DroneCollection?page=1",
-            "next": "/serverapi/DroneCollection?page=1",
+            "first": f"/{constants['api_name']}/DroneCollection?page=1",
+            "last": f"/{constants['api_name']}/DroneCollection?page=1",
+            "next": f"/{constants['api_name']}/DroneCollection?page=1",
         },
     }
 
@@ -282,11 +282,11 @@ def new_object():
 def drone_res(constants):
     """Dummy drone response for tests"""
     drone_res = {
-        "@context": "/api/contexts/Drone.jsonld",
-        "@id": "/api/Drone/1",
+        "@context": f"/{constants['api_name']}/contexts/Drone.jsonld",
+        "@id": f"/{constants['api_name']}/Drone/1",
         "@type": "Drone",
         "DroneState": {
-            "@id": "/api/State/1",
+            "@id": f"/{constants['api_name']}/State/1",
             "@type": "State",
             "Battery": "C1WE92",
             "Direction": "Q9VV88",
