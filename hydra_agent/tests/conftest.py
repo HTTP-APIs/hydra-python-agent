@@ -8,12 +8,15 @@ from hydra_agent.querying_mechanism import (
 )
 import redis
 import os
+from hydra_agent.redis_core.redis_proxy import RedisProxy
+from redisgraph import Graph
+from hydra_agent.tests.test_examples.hydra_doc_sample import doc as drone_doc
 
 
 @pytest.fixture(scope="class")
-def handle_data(request):
+def handle_data(request, constants):
     """Setting up HandleData object"""
-    request.cls.test_url = "TestURL"
+    request.cls.test_url = constants["test_url"]
     request.cls.handle_data = HandleData()
 
 
@@ -54,9 +57,11 @@ def class_properties_value(request, class_mocker):
 
 
 @pytest.fixture(scope="module")
-def test_database():
+def test_database(constants):
     """Initialize redis database"""
-    test_db = redis.StrictRedis(host="localhost", port=6379, db=5)
+    test_db = redis.StrictRedis(
+        host=constants["host"], port=constants["redis_port"], db=5
+    )
     yield test_db
     test_db.flushdb()
 
@@ -147,3 +152,143 @@ def redis_reply():
 @pytest.fixture
 def redis_db_execute_command_query(redis_reply, mocker):
     return mocker.MagicMock(return_value=redis_reply)
+
+
+@pytest.fixture(scope="module")
+def constants():
+    return {
+        "host": "localhost",
+        "test_url": "TestURL",
+        "redis_port": 6379,
+        "entrypoint_url": "http://localhost:8080/serverapi/",
+        "api_name": "serverapi",
+        "graph_name": "apigraph",
+    }
+
+
+@pytest.fixture(scope="class")
+def setup_agent_for_tests(class_mocker, request, constants):
+    """Setting up RedisProxy and Graph for Agent"""
+    socket_client_mock = class_mocker.patch("hydra_agent.agent.socketio.Client.connect")
+    get_session_mock = class_mocker.patch("hydra_agent.agent.Session.get")
+    # Mocking get for ApiDoc to Server, so hydrus doesn't need to be up
+    get_session_mock.return_value.json.return_value = drone_doc
+    socket_client_mock.return_value = None
+    request.cls.redis_proxy = RedisProxy()
+    request.cls.redis_connection = request.cls.redis_proxy.get_connection()
+    request.cls.redis_graph = Graph(
+        constants["graph_name"], request.cls.redis_connection
+    )
+    request.cls.entrypoint_url = constants["entrypoint_url"]
+
+
+@pytest.fixture
+def get_session_mock(mocker):
+    return mocker.patch("hydra_agent.agent.Session.get")
+
+
+@pytest.fixture
+def put_session_mock(mocker):
+    return mocker.patch("hydra_agent.agent.Session.put")
+
+
+@pytest.fixture
+def post_session_mock(mocker):
+    return mocker.patch("hydra_agent.agent.Session.post")
+
+
+@pytest.fixture
+def delete_session_mock(mocker):
+    return mocker.patch("hydra_agent.agent.Session.delete")
+
+
+@pytest.fixture
+def state_object(constants):
+    state_object = {
+        "@context": "/api/contexts/State.jsonld",
+        "@id": "/api/State/1",
+        "@type": "State",
+        "Battery": "sensor Ex",
+        "Direction": "North",
+        "DroneID": "sensor Ex",
+        "Position": "model Ex",
+        "SensorStatus": "sensor Ex",
+        "Speed": "2",
+    }
+    return state_object
+
+
+@pytest.fixture
+def simplified_collection(constants):
+    return {
+        "@context": f"/{constants['api_name']}/contexts/DroneCollection.jsonld",
+        "@id": f"/{constants['api_name']}/DroneCollection/1",
+        "@type": "DroneCollection",
+        "members": [{"@id": f"/{constants['api_name']}/Drone/1", "@type": "Drone"}],
+        "search": {
+            "@type": "hydra:IriTemplate",
+            "hydra:mapping": [
+                {
+                    "@type": "hydra:IriTemplateMapping",
+                    "hydra:property": "http://auto.schema.org/speed",
+                    "hydra:required": False,
+                    "hydra:variable": "DroneState[Speed]",
+                }
+            ],
+            "hydra:template": "/serverapi/Drone(DroneState[Speed])",
+            "hydra:variableRepresentation": "hydra:BasicRepresentation",
+        },
+        "totalItems": 1,
+        "view": {
+            "@id": "/serverapi/DroneCollection?page=1",
+            "@type": "PartialCollectionView",
+            "first": "/serverapi/DroneCollection?page=1",
+            "last": "/serverapi/DroneCollection?page=1",
+            "next": "/serverapi/DroneCollection?page=1",
+        },
+    }
+
+
+@pytest.fixture
+def new_object():
+    new_object = {
+        "@type": "Drone",
+        "DroneState": {
+            "@type": "State",
+            "Battery": "C1WE92",
+            "Direction": "Q9VV88",
+            "DroneID": "6EBGT5",
+            "Position": "A",
+            "SensorStatus": "335Y8B",
+            "Speed": "IZPSTE",
+        },
+        "MaxSpeed": "A3GZ37",
+        "Sensor": "E7JD5Q",
+        "model": "HB14CX",
+        "name": "Smart Drone",
+    }
+    return new_object
+
+
+@pytest.fixture
+def drone_res(constants):
+    drone_res = {
+        "@context": "/api/contexts/Drone.jsonld",
+        "@id": "/api/Drone/1",
+        "@type": "Drone",
+        "DroneState": {
+            "@id": "/api/State/1",
+            "@type": "State",
+            "Battery": "C1WE92",
+            "Direction": "Q9VV88",
+            "DroneID": "6EBGT5",
+            "Position": "A",
+            "SensorStatus": "335Y8B",
+            "Speed": "IZPSTE",
+        },
+        "MaxSpeed": "A3GZ37",
+        "Sensor": "E7JD5Q",
+        "model": "HB14CX",
+        "name": "Smart Drone",
+    }
+    return drone_res
