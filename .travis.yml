@@ -1,16 +1,16 @@
 language: python
 services:
   - docker
-  
+
 before_script:
   - docker run -d -p 6379:6379 -it --rm --name redisgraph redislabs/redisgraph:2.0-edge
 
 python:
   - "3.6"
-  - "3.6-dev"  # 3.6 development branch
-  - "3.7"
-  - "3.7-dev" # 3.7 development branch
+  - "3.6-dev" # 3.6 development branch
+  - "3.8"
+  - "3.8-dev" # 3.8 development branch
 install:
   - pip install -r requirements.txt --no-cache
-  
-script: python -m unittest discover
+
+script: pytest

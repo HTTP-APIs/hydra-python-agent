@@ -123,20 +123,20 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                 except KeyError:
                     response = response_body
 
-        if response.status_code == 200:
-            # Graph_operations returns the embedded resources if finding any
-            embedded_resources = \
-                self.graph_operations.get_processing(url, response.json())
-            self.process_embedded(embedded_resources)
-            if response.json()['@type'] in self.api_doc.parsed_classes:
-                return response.json()
-            else:
-                if follow_partial_links:
-                    return Paginator(response=response.json())
-                else:
+            if response.status_code == 200:
+                # Graph_operations returns the embedded resources if finding any
+                embedded_resources = \
+                    self.graph_operations.get_processing(url, response.json())
+                self.process_embedded(embedded_resources)
+                if response.json()['@type'] in self.api_doc.parsed_classes:
                     return response.json()
-        else:
-            return response.text
+                else:
+                    if follow_partial_links:
+                        return Paginator(response=response.json())
+                    else:
+                        return response.json()
+            else:
+                return response.text
 
     def put(self, url: str, new_object: dict) -> Tuple[dict, str]:
         """CREATE resource in the Server/cache it on Redis
