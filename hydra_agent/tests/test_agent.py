@@ -17,9 +17,7 @@ class TestAgent:
             self.init_agent(constants["entrypoint_url"])
 
     def test_get_url(self, get_session_mock, state_object):
-        """Tests get method from the Agent with URL
-        :param get_session_mock: MagicMock object for patching session.get
-        """
+        """Tests get method from the Agent with URL"""
         get_session_mock.return_value.status_code = 200
         get_session_mock.return_value.json.return_value = state_object
         response = self.agent.get(self.entrypoint_url + "State/1")
@@ -27,9 +25,7 @@ class TestAgent:
         assert response == state_object
 
     def test_get_class_properties(self, get_session_mock, state_object):
-        """Tests get method from the Agent by class name and properties
-        :param get_session_mock: MagicMock object for patching session.get
-        """
+        """Tests get method from the Agent by class name and properties"""
 
         get_session_mock.return_value.status_code = 200
         get_session_mock.return_value.json.return_value = state_object
@@ -48,10 +44,8 @@ class TestAgent:
     def test_get_collection(
         self, get_session_mock, put_session_mock, simplified_collection
     ):
-        """Tests get method from the Agent when fetching collections
-        :param put_session_mock: MagicMock object for patching session.put
-        :param get_session_mock: MagicMock object for patching session.get
-        """
+        """Tests get method from the Agent when fetching collections"""
+
         new_object = {"@type": "DroneCollection", "members": ["1"]}
 
         collection_url = "http://localhost:8080/api/DroneCollection/"
@@ -80,10 +74,8 @@ class TestAgent:
         state_object,
         drone_res,
     ):
-        """Tests put method from the Agent
-        :param put_session_mock: MagicMock object for patching session.put
-        :param get_session_mock: MagicMock object for patching session.get
-        """
+        """Tests put method from the Agent"""
+
         class_url = "http://localhost:8080/api/Drone/"
         new_object_url = class_url + "1"
 
@@ -124,10 +116,7 @@ class TestAgent:
         drone_res,
         mocker,
     ):
-        """Tests post method from the Agent
-        :param put_session_mock: MagicMock object for patching session.put
-        :param post_session_mock: MagicMock object for patching session.post
-        """
+        """Tests post method from the Agent"""
         class_url = "http://localhost:8080/api/Drone/"
         new_object_url = class_url + "2"
 
@@ -169,11 +158,7 @@ class TestAgent:
         state_object,
         drone_res,
     ):
-        """Tests post method from the Agent
-        :param put_session_mock: MagicMock object for patching session.put
-        :param delete_session_mock: MagicMock object to patch session.delete
-        :param get_session_mock: MagicMock object for patching session.get
-        """
+        """Tests post method from the Agent"""
 
         class_url = "http://localhost:8080/api/Drone/"
         new_object_url = class_url + "3"
@@ -347,10 +332,7 @@ class TestAgent:
         drone_res,
         mocker,
     ):
-        """Tests to check if all edges are being created properly
-        :param put_session_mock: MagicMock object for patching session.put
-        :param get_session_mock: MagicMock object for patching session.get
-        """
+        """Tests to check if all edges are being created properly"""
 
         class_url = "http://localhost:8080/api/Drone/"
         new_object_url = class_url + "1"

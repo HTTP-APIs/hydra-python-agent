@@ -156,6 +156,7 @@ def redis_db_execute_command_query(redis_reply, mocker):
 
 @pytest.fixture(scope="module")
 def constants():
+    """Constants for tests"""
     return {
         "host": "localhost",
         "test_url": "TestURL",
@@ -184,26 +185,31 @@ def setup_agent_for_tests(class_mocker, request, constants):
 
 @pytest.fixture
 def get_session_mock(mocker):
+    """Mock for patching GET request"""
     return mocker.patch("hydra_agent.agent.Session.get")
 
 
 @pytest.fixture
 def put_session_mock(mocker):
+    """Mock for patching PUT request"""
     return mocker.patch("hydra_agent.agent.Session.put")
 
 
 @pytest.fixture
 def post_session_mock(mocker):
+    """Mock for patching POST request"""
     return mocker.patch("hydra_agent.agent.Session.post")
 
 
 @pytest.fixture
 def delete_session_mock(mocker):
+    """Mock for patching DELETE request"""
     return mocker.patch("hydra_agent.agent.Session.delete")
 
 
 @pytest.fixture
 def state_object(constants):
+    """Dummy drone state object for tests"""
     state_object = {
         "@context": "/api/contexts/State.jsonld",
         "@id": "/api/State/1",
@@ -220,6 +226,7 @@ def state_object(constants):
 
 @pytest.fixture
 def simplified_collection(constants):
+    """Dummy collection for tests"""
     return {
         "@context": f"/{constants['api_name']}/contexts/DroneCollection.jsonld",
         "@id": f"/{constants['api_name']}/DroneCollection/1",
@@ -251,6 +258,7 @@ def simplified_collection(constants):
 
 @pytest.fixture
 def new_object():
+    """Dummy drone object for tests"""
     new_object = {
         "@type": "Drone",
         "DroneState": {
@@ -272,6 +280,7 @@ def new_object():
 
 @pytest.fixture
 def drone_res(constants):
+    """Dummy drone response for tests"""
     drone_res = {
         "@context": "/api/contexts/Drone.jsonld",
         "@id": "/api/Drone/1",
