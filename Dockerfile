@@ -1,15 +1,19 @@
 FROM python:3
 
-MAINTAINER Sandeep Chauhan <sandeepsajan0@gmail.com>
+LABEL  maintainer="Sandeep Chauhan <sandeepsajan0@gmail.com>"
 
+COPY ./requirements.txt requirements.txt
 
-COPY ./requirements.txt /home/requirements.txt
-RUN pip install -r /home/requirements.txt
+RUN pip install -U pip && pip install --upgrade pip setuptools \
+    && pip install -r requirements.txt
 
-COPY ./hydra_agent /home/app/hydra_agent
-ENV PYTHONPATH $PYTHONPATH:/home/app/
+COPY ./hydra_agent /app/hydra_agent
 
-ENTRYPOINT ["python", "/home/app/hydra_agent/querying_mechanism.py"]
+ENV PYTHONPATH $PYTHONPATH:/app
+
+ENV MESSAGE "Hail Hydra"
+
+ENTRYPOINT ["python", "/app/hydra_agent/querying_mechanism.py"]
 
 
 
