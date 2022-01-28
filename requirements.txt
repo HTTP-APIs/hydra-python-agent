@@ -5,6 +5,7 @@ PyLD==2.0.3
 pytest==6.2.5
 pytest-mock==3.6.1
 python-socketio==4.4.0
+python-engineio==3.11.2
 rdflib==5.0.0
 rdflib-jsonld==0.6.2
 redis==4.1.0
