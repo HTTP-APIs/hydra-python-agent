@@ -134,7 +134,7 @@ class GraphOperations():
         # with the Redis Hydra structure, only returns response
         else:
             logger.info("No modification to Redis was made")
-            return None
+            return []
 
     def put_processing(self, url: str, new_object: dict) -> list:
         """Synchronize Redis upon new PUT operations
