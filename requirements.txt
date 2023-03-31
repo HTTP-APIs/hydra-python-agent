@@ -8,7 +8,7 @@ python-socketio==4.4.0
 python-engineio==3.11.2
 rdflib==5.0.0
 rdflib-jsonld==0.6.2
-redis==4.1.0
+redis==4.4.4
 -e git+https://github.com/RedisGraph/redisgraph-py@d790e35b7017510c4baad85e3c572249a9ed7279#egg=redisgraph
 requests==2.26.0
 uritemplate==4.1.1
